@@ -1,0 +1,49 @@
+# =========================================
+# Render Blueprint - WhatsFlow SaaS
+# =========================================
+services:
+  - type: web
+    name: whatsflow-backend
+    env: python
+    region: oregon
+    plan: starter
+    runtime: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DEBUG
+        value: "False"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: whatsflow-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: JWT_EXPIRATION_MINUTES
+        value: "43200"
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+    autoDeploy: true
+
+  - type: web
+    name: whatsflow-frontend
+    env: static
+    region: oregon
+    plan: free
+    buildCommand: "echo 'Frontend estático - sem build'"
+    staticPublishPath: ../frontend
+
+databases:
+  - name: whatsflow-db
+    plan: starter
+    databaseName: whatsflow
+    user: whatsflow
+    region: oregon
+    ipAllowList: []

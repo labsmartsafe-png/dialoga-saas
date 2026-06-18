@@ -1,0 +1,100 @@
+{
+  "slug": "academias",
+  "name": "Academia / Estúdio",
+  "description": "Academias, estúdios de pilates, crossfit e personal training. Mostra planos, agenda aulas e captura leads.",
+  "category": "Fitness",
+  "icon": "💪",
+  "nodes": [
+    {
+      "id": "boas_vindas",
+      "type": "message",
+      "content": "Olá! 💪 Bem-vindo à *Academia Power Fit* 🏋️‍♂️\n\nAqui você vai encontrar o plano perfeito para atingir seus objetivos!\n\nComo posso te ajudar?",
+      "next": "menu_principal"
+    },
+    {
+      "id": "menu_principal",
+      "type": "question",
+      "content": "Escolha uma opção:",
+      "variable": "interesse",
+      "options": [
+        { "label": "🏋️ Conhecer planos", "value": "planos", "next": "info_planos" },
+        { "label": "🧘 Aulas experimentais", "value": "aula_experimental", "next": "tipo_aula" },
+        { "label": "📍 Horário e localização", "value": "localizacao", "next": "info_localizacao" },
+        { "label": "💬 Falar com consultor", "value": "consultor", "next": "captura_nome" }
+      ]
+    },
+    {
+      "id": "info_planos",
+      "type": "message",
+      "content": "💪 *Nossos planos:*\n\n🥉 *Básico* - R$ 99/mês\n• Musculação\n• Acesso 6h às 22h\n\n🥈 *Premium* - R$ 169/mês\n• Musculação + aulas coletivas\n• Acesso 24h\n• Avaliação física mensal\n\n🥇 *VIP* - R$ 299/mês\n• Tudo do Premium\n• Personal trainer 2x/semana\n• Nutricionista\n\n🎁 *1ª semana grátis em qualquer plano!*",
+      "next": "tipo_plano"
+    },
+    {
+      "id": "tipo_plano",
+      "type": "question",
+      "content": "Qual plano te interessou?",
+      "variable": "plano",
+      "options": [
+        { "label": "Básico - R$ 99", "value": "basico", "next": "captura_nome" },
+        { "label": "Premium - R$ 169", "value": "premium", "next": "captura_nome" },
+        { "label": "VIP - R$ 299", "value": "vip", "next": "captura_nome" },
+        { "label": "Ainda em dúvida", "value": "duvida", "next": "captura_nome" }
+      ]
+    },
+    {
+      "id": "tipo_aula",
+      "type": "question",
+      "content": "Que tipo de aula você quer experimentar?",
+      "variable": "tipo_aula",
+      "options": [
+        { "label": "🏋️ Musculação", "value": "musculacao", "next": "captura_nome" },
+        { "label": "🧘 Pilates", "value": "pilates", "next": "captura_nome" },
+        { "label": "⚡ Crossfit", "value": "crossfit", "next": "captura_nome" },
+        { "label": "💃 Zumba", "value": "zumba", "next": "captura_nome" }
+      ]
+    },
+    {
+      "id": "info_localizacao",
+      "type": "message",
+      "content": "📍 *Nossa unidade:*\n\n🏢 Av. Paulista, 1000 - Bela Vista\nSão Paulo - SP\nCEP 01310-100\n\n🕐 Funcionamento:\nSeg a Sex: 6h às 23h\nSábado: 8h às 18h\nDomingo: 8h às 14h\n\n🚗 Estacionamento gratuito!",
+      "next": "menu_principal"
+    },
+    {
+      "id": "captura_nome",
+      "type": "input",
+      "content": "Ótimo! Para finalizar, me diga seu *nome*:",
+      "variable": "nome",
+      "next": "captura_telefone"
+    },
+    {
+      "id": "captura_telefone",
+      "type": "input",
+      "content": "{{nome}}, agora me informe seu *WhatsApp com DDD*:",
+      "variable": "telefone",
+      "next": "captura_objetivo"
+    },
+    {
+      "id": "captura_objetivo",
+      "type": "question",
+      "content": "Qual é seu principal objetivo?",
+      "variable": "objetivo",
+      "options": [
+        { "label": "💪 Ganhar massa", "value": "massa", "next": "confirmacao" },
+        { "label": "🏃 Emagrecer", "value": "emagrecer", "next": "confirmacao" },
+        { "label": "🧘 Saúde e bem-estar", "value": "saude", "next": "confirmacao" },
+        { "label": "🏆 Performance", "value": "performance", "next": "confirmacao" }
+      ]
+    },
+    {
+      "id": "confirmacao",
+      "type": "message",
+      "content": "✅ *Cadastro realizado!*\n\n👤 {{nome}}\n📱 {{telefone}}\n🎯 Objetivo: {{objetivo}}\n\nNosso consultor te ligará em até 24h para agendar uma visita e te mostrar a academia!\n\nAté logo! 💪",
+      "next": "end"
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "content": "Bem-vindo à família Power Fit! 💪"
+    }
+  ]
+}

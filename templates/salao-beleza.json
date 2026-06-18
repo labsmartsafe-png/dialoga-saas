@@ -1,0 +1,93 @@
+{
+  "slug": "salao-beleza",
+  "name": "Salão de Beleza",
+  "description": "Salões de beleza, barbearias e esmalterias. Agenda horários, mostra serviços e captura clientes.",
+  "category": "Beleza",
+  "icon": "💇",
+  "nodes": [
+    {
+      "id": "boas_vindas",
+      "type": "message",
+      "content": "Olá! 💇‍♀️ Bem-vindo ao *Salão Glamour* ✨\n\nAqui sua beleza é nossa prioridade!\n\nComo posso te ajudar?",
+      "next": "menu_principal"
+    },
+    {
+      "id": "menu_principal",
+      "type": "question",
+      "content": "Escolha uma opção:",
+      "variable": "interesse",
+      "options": [
+        { "label": "📅 Agendar horário", "value": "agendar", "next": "tipo_servico" },
+        { "label": "💰 Ver serviços", "value": "servicos", "next": "info_servicos" },
+        { "label": "🎁 Promoções", "value": "promocoes", "next": "info_promocoes" },
+        { "label": "📍 Localização", "value": "localizacao", "next": "info_localizacao" }
+      ]
+    },
+    {
+      "id": "tipo_servico",
+      "type": "question",
+      "content": "Qual serviço você quer agendar?",
+      "variable": "servico",
+      "options": [
+        { "label": "💇 Corte de cabelo", "value": "corte", "next": "captura_data" },
+        { "label": "🎨 Coloração", "value": "coloracao", "next": "captura_data" },
+        { "label": "💅 Manicure/Pedicure", "value": "manicure", "next": "captura_data" },
+        { "label": "✨ Escova progressiva", "value": "progressiva", "next": "captura_data" }
+      ]
+    },
+    {
+      "id": "info_servicos",
+      "type": "message",
+      "content": "💰 *Nossos serviços:*\n\n💇 *Cabelo:*\n• Corte feminino - R$ 80\n• Corte masculino - R$ 50\n• Escova - R$ 60\n• Coloração - R$ 200 a R$ 500\n• Progressiva - R$ 350\n\n💅 *Unhas:*\n• Manicure - R$ 40\n• Pedicure - R$ 45\n• Gel/Unha de fibra - R$ 120\n\n💄 *Maquiagem:*\n• Maquiagem social - R$ 150\n\n✨ Pacotes com 15% de desconto!",
+      "next": "tipo_servico"
+    },
+    {
+      "id": "info_promocoes",
+      "type": "message",
+      "content": "🎁 *Promoções do mês:*\n\n✨ Terça da Beleza: 20% off em todos os serviços\n💅 Quarta de Manicure: combo mão + pé por R$ 70\n👰 Noivas: pacote completo com 30% off\n🎂 Aniversariante do mês: ganhe uma hidratação grátis!\n\n📲 Siga @salaoglamour para mais novidades",
+      "next": "menu_principal"
+    },
+    {
+      "id": "info_localizacao",
+      "type": "message",
+      "content": "📍 *Nossa localização:*\n\n🏢 Rua Augusta, 1500 - Cerqueira César\nSão Paulo - SP\n\n🕐 Funcionamento:\nSeg a Sex: 9h às 20h\nSábado: 9h às 18h\nDomingo: Fechado\n\n🚗 Estacionamento conveniado!",
+      "next": "menu_principal"
+    },
+    {
+      "id": "captura_data",
+      "type": "question",
+      "content": "Para qual período você quer agendar?",
+      "variable": "periodo",
+      "options": [
+        { "label": "Manhã", "value": "manha", "next": "captura_nome" },
+        { "label": "Tarde", "value": "tarde", "next": "captura_nome" },
+        { "label": "Noite", "value": "noite", "next": "captura_nome" }
+      ]
+    },
+    {
+      "id": "captura_nome",
+      "type": "input",
+      "content": "Me diga seu *nome*:",
+      "variable": "nome",
+      "next": "captura_telefone"
+    },
+    {
+      "id": "captura_telefone",
+      "type": "input",
+      "content": "{{nome}}, me informe seu *WhatsApp com DDD*:",
+      "variable": "telefone",
+      "next": "confirmacao"
+    },
+    {
+      "id": "confirmacao",
+      "type": "message",
+      "content": "✅ *Agendamento solicitado!*\n\n💇 Serviço: {{servico}}\n🕐 Período: {{periodo}}\n👤 {{nome}}\n📱 {{telefone}}\n\nConfirmaremos o horário exato em até 30 minutos pelo WhatsApp.\n\nAté breve! ✨",
+      "next": "end"
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "content": "Obrigado por escolher o Salão Glamour! 💇✨"
+    }
+  ]
+}

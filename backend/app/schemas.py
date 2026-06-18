@@ -1,0 +1,195 @@
+"""
+Schemas Pydantic para validação de entrada/saída da API.
+"""
+from datetime import datetime
+from typing import Optional, List, Dict, Any, Literal
+from pydantic import BaseModel, EmailStr, Field
+
+
+# =================== AUTH ===================
+class UserCreate(BaseModel):
+    """Dados para cadastro de usuário."""
+    email: EmailStr
+    password: str = Field(..., min_length=6, max_length=128)
+    company_name: str = Field(..., min_length=2, max_length=255)
+    full_name: Optional[str] = Field(None, max_length=255)
+    phone: Optional[str] = Field(None, max_length=50)
+
+
+class UserLogin(BaseModel):
+    """Dados para login."""
+    email: EmailStr
+    password: str
+
+
+class UserOut(BaseModel):
+    """Dados públicos do usuário."""
+    id: int
+    email: EmailStr
+    company_name: str
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
+    plan: str = "basico"
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class Token(BaseModel):
+    """Resposta de autenticação."""
+    access_token: str
+    token_type: str = "bearer"
+    user: UserOut
+
+
+class PasswordResetRequest(BaseModel):
+    """Solicitação de recuperação de senha."""
+    email: EmailStr
+
+
+class PasswordResetConfirm(BaseModel):
+    """Confirmação de nova senha (simulado)."""
+    email: EmailStr
+    new_password: str = Field(..., min_length=6)
+
+
+# =================== TEMPLATE ===================
+class TemplateSummary(BaseModel):
+    """Resumo de um template (listagem)."""
+    slug: str
+    name: str
+    description: str
+    category: str
+    icon: str
+    node_count: int = 0
+
+    class Config:
+        from_attributes = True
+
+
+class TemplateDetail(BaseModel):
+    """Detalhes completos de um template."""
+    slug: str
+    name: str
+    description: str
+    category: str
+    icon: str
+    flow_data: Dict[str, Any]
+
+
+# =================== FLOW ===================
+class FlowNode(BaseModel):
+    """Estrutura de um nó do fluxo."""
+    id: str
+    type: Literal["message", "question", "input", "condition", "delay", "webhook", "human", "end"]
+    content: str = ""
+    options: Optional[List[Dict[str, str]]] = None  # [{"label": "x", "value": "y", "next": "node_id"}]
+    next: Optional[str] = None
+    variable: Optional[str] = None  # nome da variável a capturar (para input/question)
+    delay_seconds: Optional[int] = None
+    condition: Optional[Dict[str, Any]] = None
+    fallback: Optional[str] = None
+
+
+class FlowCreate(BaseModel):
+    """Criação de fluxo."""
+    name: str = Field(..., min_length=2, max_length=255)
+    description: Optional[str] = None
+    nodes: List[FlowNode] = []
+    start_node_id: Optional[str] = None
+    template_slug: Optional[str] = None
+
+
+class FlowUpdate(BaseModel):
+    """Atualização de fluxo."""
+    name: Optional[str] = None
+    description: Optional[str] = None
+    nodes: Optional[List[FlowNode]] = None
+    start_node_id: Optional[str] = None
+    active: Optional[bool] = None
+
+
+class FlowOut(BaseModel):
+    """Fluxo retornado pela API."""
+    id: int
+    name: str
+    description: Optional[str]
+    nodes: List[Dict[str, Any]]
+    start_node_id: Optional[str]
+    active: bool
+    template_slug: Optional[str]
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# =================== LEAD ===================
+class LeadOut(BaseModel):
+    id: int
+    flow_id: Optional[int]
+    name: Optional[str]
+    phone: Optional[str]
+    email: Optional[str]
+    stage: Optional[str]
+    context: Optional[Dict[str, Any]]
+    source: str
+    status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class LeadUpdate(BaseModel):
+    name: Optional[str] = None
+    status: Optional[str] = None
+
+
+# =================== SIMULATOR ===================
+class SimulatorStart(BaseModel):
+    """Iniciar uma simulação (flow_id vem da URL)."""
+    user_name: Optional[str] = "Visitante"
+    user_phone: Optional[str] = None
+
+
+class SimulatorMessage(BaseModel):
+    """Enviar mensagem dentro da simulação."""
+    conversation_id: int
+    text: Optional[str] = None
+    selected_option: Optional[str] = None
+
+
+class SimulatorResponse(BaseModel):
+    """Resposta do motor para o simulador."""
+    conversation_id: int
+    finished: bool = False
+    current_node: Optional[Dict[str, Any]] = None
+    bot_message: Optional[str] = None
+    options: Optional[List[Dict[str, str]]] = None
+    awaiting_input: bool = False
+    context: Dict[str, Any] = {}
+    messages: List[Dict[str, Any]] = []
+
+
+# =================== DASHBOARD ===================
+class DashboardMetrics(BaseModel):
+    flows_count: int
+    active_flows_count: int
+    leads_count: int
+    leads_today: int
+    leads_this_week: int
+    conversations_total: int
+    conversations_simulated: int
+    conversations_real: int
+    leads_by_day: List[Dict[str, Any]] = []
+    recent_flows: List[Dict[str, Any]] = []
+    recent_leads: List[Dict[str, Any]] = []
+
+
+# =================== WHATSAPP ===================
+class WhatsAppSendText(BaseModel):
+    to: str = Field(..., description="Número com DDI, ex: 5511999999999")
+    text: str

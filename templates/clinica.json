@@ -1,0 +1,93 @@
+{
+  "slug": "clinica",
+  "name": "Clínica Médica / Dentista",
+  "description": "Atendimento para clínicas e consultórios odontológicos. Agenda consultas, captura sintomas e envia lembretes.",
+  "category": "Saúde",
+  "icon": "🦷",
+  "nodes": [
+    {
+      "id": "boas_vindas",
+      "type": "message",
+      "content": "Olá! 👋 Bem-vindo à *Clínica Sorriso+* 😊\n\nSou a assistente virtual. Posso ajudar com agendamento, dúvidas sobre convênios e informações sobre tratamentos.\n\nComo posso te ajudar?",
+      "next": "menu_principal"
+    },
+    {
+      "id": "menu_principal",
+      "type": "question",
+      "content": "Escolha uma opção:",
+      "variable": "interesse",
+      "options": [
+        { "label": "📅 Agendar consulta", "value": "agendar", "next": "tipo_consulta" },
+        { "label": "🦷 Tratamentos", "value": "tratamentos", "next": "lista_tratamentos" },
+        { "label": "💳 Convênios", "value": "convenios", "next": "info_convenios" },
+        { "label": "🚨 Emergência", "value": "emergencia", "next": "emergencia" }
+      ]
+    },
+    {
+      "id": "tipo_consulta",
+      "type": "question",
+      "content": "Que tipo de consulta você precisa?",
+      "variable": "tipo_consulta",
+      "options": [
+        { "label": "Avaliação geral", "value": "avaliacao", "next": "captura_nome" },
+        { "label": "Limpeza", "value": "limpeza", "next": "captura_nome" },
+        { "label": "Clareamento", "value": "clareamento", "next": "captura_nome" },
+        { "label": "Canal", "value": "canal", "next": "captura_nome" }
+      ]
+    },
+    {
+      "id": "lista_tratamentos",
+      "type": "message",
+      "content": "🦷 *Nossos tratamentos:*\n\n✅ Limpeza e profilaxia\n✅ Clareamento dental\n✅ Implantes\n✅ Ortodontia (aparelhos)\n✅ Endodontia (canal)\n✅ Próteses e facetas\n✅ Urgência 24h\n\nTodos com tecnologia de ponta e profissionais especializados.",
+      "next": "menu_principal"
+    },
+    {
+      "id": "info_convenios",
+      "type": "message",
+      "content": "💳 *Convênios aceitos:*\n\n• Amil\n• Bradesco Saúde\n• SulAmérica\n• Unimed\n• Odontoprev\n• Hapvida\n\nAceitamos também particular com parcelamento em até 10x.\n\nPosso ajudar com mais alguma coisa?",
+      "next": "menu_principal"
+    },
+    {
+      "id": "emergencia",
+      "type": "message",
+      "content": "🚨 *EMERGÊNCIA ODONTOLÓGICA*\n\nPara emergências fora do horário comercial, ligue diretamente para:\n📞 (11) 99999-9999\n\nAtendemos urgências 24h!",
+      "next": "captura_nome"
+    },
+    {
+      "id": "captura_nome",
+      "type": "input",
+      "content": "Para agendar sua consulta de {{tipo_consulta}}, por favor me informe seu *nome completo*:",
+      "variable": "nome",
+      "next": "captura_telefone"
+    },
+    {
+      "id": "captura_telefone",
+      "type": "input",
+      "content": "Obrigada, {{nome}}! 😊\n\nAgora me informe seu *telefone com DDD*:",
+      "variable": "telefone",
+      "next": "captura_data"
+    },
+    {
+      "id": "captura_data",
+      "type": "question",
+      "content": "Qual período você prefere para a consulta?",
+      "variable": "periodo",
+      "options": [
+        { "label": "Manhã", "value": "manha", "next": "confirmacao" },
+        { "label": "Tarde", "value": "tarde", "next": "confirmacao" },
+        { "label": "Noite", "value": "noite", "next": "confirmacao" }
+      ]
+    },
+    {
+      "id": "confirmacao",
+      "type": "message",
+      "content": "✅ *Agendamento solicitado!*\n\n📋 Resumo:\n👤 Paciente: {{nome}}\n📱 Contato: {{telefone}}\n🦷 Tipo: {{tipo_consulta}}\n🕐 Período: {{periodo}}\n\nNossa recepcionadora entrará em contato em até 1 hora para confirmar o horário exato.",
+      "next": "end"
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "content": "Obrigado por escolher a Clínica Sorriso+! 🦷✨"
+    }
+  ]
+}

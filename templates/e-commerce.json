@@ -1,0 +1,124 @@
+{
+  "slug": "e-commerce",
+  "name": "E-commerce",
+  "description": "Lojas online de diversos segmentos. Mostra catálogo, processa pedidos e acompanha entregas.",
+  "category": "E-commerce",
+  "icon": "🛒",
+  "nodes": [
+    {
+      "id": "boas_vindas",
+      "type": "message",
+      "content": "Olá! 🛍️ Bem-vindo à *Shop Online Brasil* 🚀\n\nAqui você encontra de tudo com entrega rápida!\n\nComo posso te ajudar?",
+      "next": "menu_principal"
+    },
+    {
+      "id": "menu_principal",
+      "type": "question",
+      "content": "Escolha uma opção:",
+      "variable": "interesse",
+      "options": [
+        { "label": "🛍️ Ver produtos", "value": "produtos", "next": "categoria" },
+        { "label": "📦 Rastrear pedido", "value": "rastrear", "next": "rastreio_input" },
+        { "label": "💳 Formas de pagamento", "value": "pagamento", "next": "info_pagamento" },
+        { "label": "🔄 Trocas e devoluções", "value": "trocas", "next": "info_trocas" }
+      ]
+    },
+    {
+      "id": "categoria",
+      "type": "question",
+      "content": "Que categoria você quer ver?",
+      "variable": "categoria",
+      "options": [
+        { "label": "📱 Eletrônicos", "value": "eletronicos", "next": "info_categoria" },
+        { "label": "👕 Moda", "value": "moda", "next": "info_categoria" },
+        { "label": "🏠 Casa", "value": "casa", "next": "info_categoria" },
+        { "label": "🎁 Promoções", "value": "promocoes", "next": "info_promocoes" }
+      ]
+    },
+    {
+      "id": "info_categoria",
+      "type": "message",
+      "content": "🛍️ *{{categoria}} em destaque:*\n\n📱 Smartphones a partir de R$ 1.299\n👕 Camisetas premium R$ 79\n🏠 Decoração R$ 49\n🎧 Fones bluetooth R$ 159\n\n🚚 Frete grátis acima de R$ 199\n💳 Parcelamento em até 12x sem juros\n\nAcesse: shop.com.br/{{categoria}}",
+      "next": "quer_comprar"
+    },
+    {
+      "id": "info_promocoes",
+      "type": "message",
+      "content": "🎁 *Promoções imperdíveis:*\n\n⚡ Black Friday antecipada: até 70% off\n🎯 Compre 2, leve 3 em selecionados\n💰 Cupom WHATS10: 10% off na primeira compra\n🚚 Frete grátis acima de R$ 99\n\n⏰ Válido até domingo ou enquanto durar o estoque!",
+      "next": "quer_comprar"
+    },
+    {
+      "id": "info_pagamento",
+      "type": "message",
+      "content": "💳 *Formas de pagamento:*\n\n✅ Cartão de crédito (até 12x sem juros)\n✅ Cartão de débito\n✅ PIX (5% de desconto)\n✅ Boleto bancário\n✅ PayPal\n\n🔒 Ambiente 100% seguro!",
+      "next": "menu_principal"
+    },
+    {
+      "id": "info_trocas",
+      "type": "message",
+      "content": "🔄 *Trocas e devoluções:*\n\n• Prazo de 7 dias após o recebimento\n• Produto deve estar na embalagem original\n• Frete de devolução por nossa conta\n• Reembolso em até 10 dias úteis\n\n📋 Saiba mais em: shop.com.br/trocas",
+      "next": "menu_principal"
+    },
+    {
+      "id": "rastreio_input",
+      "type": "input",
+      "content": "📦 Para rastrear seu pedido, me informe o *número do pedido* (ex: #12345):",
+      "variable": "numero_pedido",
+      "next": "info_rastreio"
+    },
+    {
+      "id": "info_rastreio",
+      "type": "message",
+      "content": "📦 Pedido #{{numero_pedido}}\n\n📍 Status: Em trânsito\n🚚 Previsão de entrega: 2 a 4 dias úteis\n🏙️ Origem: São Paulo - SP\n\nVocê receberá atualizações automáticas!\n\nPosso ajudar com mais alguma coisa?",
+      "next": "menu_principal"
+    },
+    {
+      "id": "quer_comprar",
+      "type": "question",
+      "content": "Quer aproveitar as ofertas?",
+      "variable": "quer_comprar",
+      "options": [
+        { "label": "Sim! Quero comprar", "value": "sim", "next": "captura_nome" },
+        { "label": "Agora não", "value": "nao", "next": "despedida" }
+      ]
+    },
+    {
+      "id": "despedida",
+      "type": "message",
+      "content": "Tudo bem! 😊\n\nNosso cupom *WHATS10* está sempre disponível para você. Salve nosso contato para ofertas exclusivas!\n\nAté a próxima! 🛍️",
+      "next": "end"
+    },
+    {
+      "id": "captura_nome",
+      "type": "input",
+      "content": "Ótimo! 🎉 Me diga seu *nome*:",
+      "variable": "nome",
+      "next": "captura_telefone"
+    },
+    {
+      "id": "captura_telefone",
+      "type": "input",
+      "content": "{{nome}}, agora seu *WhatsApp com DDD*:",
+      "variable": "telefone",
+      "next": "captura_email"
+    },
+    {
+      "id": "captura_email",
+      "type": "input",
+      "content": "E seu *e-mail* para envio do pedido:",
+      "variable": "email",
+      "next": "confirmacao"
+    },
+    {
+      "id": "confirmacao",
+      "type": "message",
+      "content": "✅ *Quase lá!*\n\n👤 {{nome}}\n📱 {{telefone}}\n📧 {{email}}\n🎁 Cupom *WHATS10* aplicado (10% off)\n\nNossa equipe entrará em contato com o link de pagamento exclusivo para você!\n\n🛍️ Boas compras!",
+      "next": "end"
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "content": "Obrigado por escolher a Shop Online Brasil! 🛍️✨"
+    }
+  ]
+}

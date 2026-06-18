@@ -1,0 +1,165 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador â€” dIAloga+</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    body { background: #ece5dd; }
+    .sim-page { max-width: 480px; margin: 40px auto; }
+    .sim-page .chat-container { height: 70vh; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar" style="background: #fff;">
+  <div class="brand">
+    <div class="logo">âš¡</div>
+    <span>dIAloga+ â€” Simulador</span>
+  </div>
+  <div class="user-area">
+    <select id="flow-select" class="form-control" style="width: 260px;"></select>
+    <button class="btn btn-secondary btn-sm" id="btn-restart">ðŸ”„ Reiniciar</button>
+    <a href="dashboard.html" class="btn btn-secondary btn-sm">â† Voltar</a>
+  </div>
+</nav>
+
+<div class="sim-page">
+  <div class="chat-container">
+    <div class="chat-header">
+      <div class="avatar">ðŸ¤–</div>
+      <div>
+        <div class="name" id="sim-bot-name">dIAloga+ Bot</div>
+        <div class="status">online</div>
+      </div>
+    </div>
+    <div class="chat-messages" id="sim-messages"></div>
+    <div class="chat-options hidden" id="sim-options"></div>
+    <form class="chat-input" id="sim-form">
+      <input type="text" id="sim-input" placeholder="Digite sua resposta..." autocomplete="off">
+      <button type="submit">Enviar</button>
+    </form>
+  </div>
+  <div class="context-panel" id="sim-context"></div>
+</div>
+
+<script>window.API_BASE = "http://localhost:8000";</script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script>
+  const $ = (sel) => document.querySelector(sel);
+  let conv = null;
+
+  const user = await WFAuth.requireAuth();
+  if (!user) {
+    // redirect jÃ¡ foi feito
+  } else {
+    const flowSel = $("#flow-select");
+    let flows = [];
+    try {
+      flows = await WFApi.listFlows();
+    } catch (e) { console.error(e); }
+    flows.forEach(f => {
+      const opt = document.createElement("option");
+      opt.value = f.id; opt.textContent = f.name;
+      flowSel.appendChild(opt);
+    });
+    if (flows.length) {
+      start(flows[0].id);
+      flowSel.addEventListener("change", () => start(parseInt(flowSel.value, 10)));
+    } else {
+      $("#sim-messages").innerHTML = `<div class="empty-state"><div class="icon">ðŸ¤–</div>VocÃª ainda nÃ£o tem fluxos. <br><a href="builder.html" class="btn btn-primary btn-sm mt-2">Criar fluxo</a></div>`;
+    }
+
+    $("#btn-restart").addEventListener("click", () => start(parseInt(flowSel.value, 10)));
+
+    $("#sim-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const v = $("#sim-input").value.trim();
+      if (!v || !conv) return;
+      $("#sim-input").value = "";
+      await send(v, null);
+    });
+
+    async function start(flowId) {
+      $("#sim-messages").innerHTML = "";
+      $("#sim-options").classList.add("hidden");
+      $("#sim-context").innerHTML = "";
+      try {
+        const res = await WFApi.simulateStart(flowId, { user_name: "Visitante" });
+        conv = res;
+        render(res);
+      } catch (e) {
+        $("#sim-messages").innerHTML = `<div class="alert alert-error">${e.message}</div>`;
+      }
+    }
+
+    async function send(text, opt) {
+      try {
+        const res = await WFApi.simulateMessage({
+          conversation_id: conv.conversation_id, text, selected_option: opt
+        });
+        conv = res;
+        render(res);
+      } catch (e) {
+        alert("Erro: " + e.message);
+      }
+    }
+
+    function render(res) {
+      const c = $("#sim-messages");
+      c.innerHTML = (res.messages || []).map(m => {
+        const cls = m.sender === "bot" ? "bot" : m.sender === "user" ? "user" : "system";
+        return `<div class="chat-bubble ${cls}">${escape(m.content)}</div>`;
+      }).join("");
+      c.scrollTop = c.scrollHeight;
+      const ctx = res.context || {};
+      const ks = Object.keys(ctx);
+      $("#sim-context").innerHTML = ks.length
+        ? "<strong>VariÃ¡veis:</strong> " + ks.map(k => `<span class="key">${escape(k)}:</span> ${escape(ctx[k])}`).join(" Â· ")
+        : "";
+      if (res.finished) {
+        $("#sim-options").classList.add("hidden");
+        $("#sim-input").disabled = true;
+        $("#sim-input").placeholder = "Conversa encerrada.";
+        append("âœ… Conversa encerrada.", "system");
+        return;
+      }
+      if (res.options && res.options.length) {
+        $("#sim-options").classList.remove("hidden");
+        $("#sim-options").innerHTML = res.options.map(o =>
+          `<button data-opt="${escape(o.value || o.label)}">${escape(o.label || o.value)}</button>`
+        ).join("");
+        $("#sim-options").querySelectorAll("[data-opt]").forEach(b => {
+          b.addEventListener("click", () => {
+            $("#sim-options").classList.add("hidden");
+            send(null, b.dataset.opt);
+          });
+        });
+      } else {
+        $("#sim-options").classList.add("hidden");
+      }
+    }
+
+    function append(content, cls) {
+      const c = $("#sim-messages");
+      const div = document.createElement("div");
+      div.className = "chat-bubble " + cls;
+      div.textContent = content;
+      c.appendChild(div);
+      c.scrollTop = c.scrollHeight;
+    }
+    function escape(s) {
+      return String(s || "").replace(/[&<>"']/g, c => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[c]));
+    }
+  }
+</script>
+
+</body>
+</html>
+
+
+

@@ -1,0 +1,30 @@
+# Framework principal
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+
+# Banco de dados
+SQLAlchemy==2.0.36
+psycopg[binary]==3.2.3      # Driver PostgreSQL v3 (com wheels para Python 3.13)
+
+# Autenticação JWT
+python-jose[cryptography]==3.3.0
+passlib==1.7.4
+bcrypt==4.0.1   # Versão compatível com passlib 1.7.4
+
+# Validação de dados
+pydantic==2.9.2
+pydantic-settings==2.6.1
+email-validator==2.2.0
+
+# CORS e utilidades
+python-multipart==0.0.18
+
+# Variáveis de ambiente
+python-dotenv==1.0.1
+
+# Geração de IDs (opcional, não usado no MVP)
+shortuuid==1.0.13
+
+# Testes
+pytest==8.3.3
+httpx==0.27.2

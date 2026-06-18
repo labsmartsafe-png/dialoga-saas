@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.installed.cfg
+*.egg
+venv/
+env/
+ENV/
+.venv/
+
+# Banco de dados
+*.db
+*.sqlite
+*.sqlite3
+
+# Ambiente
+.env
+.env.local
+.env.production
+
+# Uploads
+data/uploads/*
+!data/uploads/.gitkeep
+data/*.db
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build/dist
+dist/
+build/
+*.whl
+
+# Coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Node (caso use no futuro)
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log

@@ -1,0 +1,116 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor de Fluxos â€” dIAloga+</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="brand">
+    <div class="logo">âš¡</div>
+    <span>dIAloga+</span>
+  </div>
+  <nav>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="builder.html" style="color: var(--primary-dark); border-bottom-color: var(--primary);">Fluxos</a>
+    <a href="leads.html">Leads</a>
+  </nav>
+  <div class="user-area" id="user-area"></div>
+</nav>
+
+<div class="builder-layout">
+
+  <!-- LISTA DE FLUXOS + TEMPLATES -->
+  <aside class="nodes-list">
+    <h3>Meus Fluxos</h3>
+    <div id="flows-list"></div>
+    <button class="btn btn-primary btn-sm" id="btn-new-flow" style="width: 100%; margin-top: 8px;">+ Novo fluxo</button>
+
+    <h3 style="margin-top: 24px;">Importar Template</h3>
+    <div id="templates-list"></div>
+  </aside>
+
+  <!-- ÃREA DO EDITOR -->
+  <main class="canvas-area">
+    <div class="flex justify-between items-center mb-2">
+      <div style="flex: 1;">
+        <input type="text" id="flow-name" class="form-control" placeholder="Nome do fluxo" style="font-size: 18px; font-weight: 700;">
+      </div>
+      <div class="flex gap-1">
+        <button class="btn btn-secondary btn-sm" id="btn-test">â–¶ Testar</button>
+        <button class="btn btn-primary btn-sm" id="btn-save">ðŸ’¾ Salvar</button>
+      </div>
+    </div>
+    <textarea class="form-control" id="flow-description" placeholder="DescriÃ§Ã£o (opcional)" style="margin-bottom: 12px;"></textarea>
+
+    <div class="flex gap-1 mb-2">
+      <button class="btn btn-secondary btn-sm" data-add="message">+ Mensagem</button>
+      <button class="btn btn-secondary btn-sm" data-add="question">+ Pergunta</button>
+      <button class="btn btn-secondary btn-sm" data-add="input">+ Input</button>
+      <button class="btn btn-secondary btn-sm" data-add="condition">+ CondiÃ§Ã£o</button>
+      <button class="btn btn-secondary btn-sm" data-add="delay">+ Delay</button>
+      <button class="btn btn-secondary btn-sm" data-add="webhook">+ Webhook</button>
+      <button class="btn btn-secondary btn-sm" data-add="human">+ Humano</button>
+      <button class="btn btn-secondary btn-sm" data-add="end">+ Fim</button>
+    </div>
+
+    <div id="nodes-canvas">
+      <div class="empty-state">
+        <div class="icon">ðŸ“‹</div>
+        Selecione um fluxo ou importe um template para comeÃ§ar.
+      </div>
+    </div>
+
+    <div id="alert-area"></div>
+  </main>
+
+  <!-- EDITOR DO NÃ“ -->
+  <aside class="node-editor" id="node-editor">
+    <h3>Editor de NÃ³</h3>
+    <div class="empty-state" id="editor-empty">
+      Selecione um nÃ³ Ã  esquerda para editar.
+    </div>
+    <div id="editor-form" class="hidden"></div>
+  </aside>
+
+</div>
+
+<!-- MODAL: SIMULADOR -->
+<div class="modal-backdrop hidden" id="sim-modal">
+  <div class="modal" style="max-width: 480px; padding: 0;">
+    <div class="modal-header" style="padding: 16px 20px; border-bottom: 1px solid var(--border); margin: 0;">
+      <h3>ðŸ§ª Simulador</h3>
+      <button class="modal-close" id="sim-close">&times;</button>
+    </div>
+    <div class="chat-container" style="border-radius: 0;">
+      <div class="chat-header">
+        <div class="avatar">ðŸ¤–</div>
+        <div>
+          <div class="name" id="sim-bot-name">dIAloga+ Bot</div>
+          <div class="status">online</div>
+        </div>
+      </div>
+      <div class="chat-messages" id="sim-messages"></div>
+      <div class="chat-options hidden" id="sim-options"></div>
+      <form class="chat-input" id="sim-form">
+        <input type="text" id="sim-input" placeholder="Digite sua resposta..." autocomplete="off">
+        <button type="submit">Enviar</button>
+      </form>
+    </div>
+    <div class="context-panel" id="sim-context" style="margin: 0; border-radius: 0;"></div>
+  </div>
+</div>
+
+<script>window.API_BASE = "http://localhost:8000";</script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/builder.js"></script>
+<script src="js/simulator.js"></script>
+</body>
+</html>
+
+
+

@@ -1,0 +1,88 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard â€” dIAloga+</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="brand">
+    <div class="logo">âš¡</div>
+    <span>dIAloga+</span>
+  </div>
+  <nav>
+    <a href="dashboard.html" style="color: var(--primary-dark); border-bottom-color: var(--primary);">Dashboard</a>
+    <a href="builder.html">Fluxos</a>
+    <a href="leads.html">Leads</a>
+  </nav>
+  <div class="user-area" id="user-area"></div>
+</nav>
+
+<main class="container container-lg">
+
+  <div class="flex justify-between items-center mb-3">
+    <div>
+      <h1 style="font-size: 26px;">Dashboard</h1>
+      <p class="text-muted">VisÃ£o geral da sua operaÃ§Ã£o.</p>
+    </div>
+    <div>
+      <button class="btn btn-secondary" id="btn-refresh">ðŸ”„ Atualizar</button>
+      <a href="builder.html" class="btn btn-primary">+ Novo fluxo</a>
+    </div>
+  </div>
+
+  <div id="alert-area"></div>
+
+  <!-- MÃ‰TRICAS -->
+  <section class="metrics-grid" id="metrics-grid">
+    <div class="metric-card"><div class="label">Fluxos</div><div class="value" id="m-flows">â€”</div></div>
+    <div class="metric-card"><div class="label">Fluxos ativos</div><div class="value" id="m-flows-active">â€”</div></div>
+    <div class="metric-card"><div class="label">Leads totais</div><div class="value" id="m-leads">â€”</div></div>
+    <div class="metric-card"><div class="label">Leads hoje</div><div class="value" id="m-leads-today">â€”</div></div>
+    <div class="metric-card"><div class="label">Leads esta semana</div><div class="value" id="m-leads-week">â€”</div></div>
+    <div class="metric-card"><div class="label">Conversas</div><div class="value" id="m-conv">â€”</div></div>
+    <div class="metric-card"><div class="label">Simuladas</div><div class="value" id="m-conv-sim">â€”</div></div>
+    <div class="metric-card"><div class="label">Reais (WhatsApp)</div><div class="value" id="m-conv-real">â€”</div></div>
+  </section>
+
+  <div class="dashboard-grid">
+
+    <!-- GRÃFICO -->
+    <div class="card">
+      <div class="card-title">ðŸ“ˆ Leads por dia (Ãºltimos 7 dias)</div>
+      <div class="bar-chart" id="bar-chart" style="margin: 30px 12px 12px;"></div>
+    </div>
+
+    <!-- FLUXOS RECENTES -->
+    <div class="card">
+      <div class="flex justify-between items-center">
+        <div class="card-title">ðŸ¤– Fluxos recentes</div>
+        <a href="builder.html" class="btn btn-secondary btn-sm">Ver todos</a>
+      </div>
+      <div id="recent-flows"><div class="empty-state"><div class="spinner"></div></div></div>
+    </div>
+
+    <!-- LEADS RECENTES -->
+    <div class="card" style="grid-column: 1 / -1;">
+      <div class="flex justify-between items-center">
+        <div class="card-title">ðŸŽ¯ Leads recentes</div>
+        <a href="leads.html" class="btn btn-secondary btn-sm">Ver todos</a>
+      </div>
+      <div id="recent-leads"><div class="empty-state"><div class="spinner"></div></div></div>
+    </div>
+
+  </div>
+</main>
+
+<script>window.API_BASE = "http://localhost:8000";</script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>
+
+
+

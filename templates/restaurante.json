@@ -1,0 +1,100 @@
+{
+  "slug": "restaurante",
+  "name": "Restaurante / Delivery",
+  "description": "Restaurantes, pizzarias e lanchonetes. Mostra cardápio, recebe pedidos e acompanha entrega.",
+  "category": "Alimentação",
+  "icon": "🍕",
+  "nodes": [
+    {
+      "id": "boas_vindas",
+      "type": "message",
+      "content": "Olá! 👋 Bem-vindo à *Pizzaria Forno a Lenha* 🍕🔥\n\nEstou aqui para te ajudar com:\n• Cardápio\n• Pedidos delivery\n• Reservas\n• Horário de funcionamento\n\nO que você deseja?",
+      "next": "menu_principal"
+    },
+    {
+      "id": "menu_principal",
+      "type": "question",
+      "content": "Escolha uma opção:",
+      "variable": "interesse",
+      "options": [
+        { "label": "🍕 Fazer pedido", "value": "pedido", "next": "tipo_pedido" },
+        { "label": "📋 Ver cardápio", "value": "cardapio", "next": "cardapio_info" },
+        { "label": "🪑 Reservar mesa", "value": "reserva", "next": "reserva_dados" },
+        { "label": "🕐 Horário", "value": "horario", "next": "horario_info" }
+      ]
+    },
+    {
+      "id": "tipo_pedido",
+      "type": "question",
+      "content": "Como você quer receber seu pedido?",
+      "variable": "tipo_entrega",
+      "options": [
+        { "label": "🛵 Delivery", "value": "delivery", "next": "captura_endereco" },
+        { "label": "🏪 Retirada no local", "value": "retirada", "next": "captura_nome" }
+      ]
+    },
+    {
+      "id": "cardapio_info",
+      "type": "message",
+      "content": "📋 *Nosso cardápio:*\n\n🍕 *Pizzas Salgadas:*\n• Mussarela R$ 45\n• Calabresa R$ 48\n• Portuguesa R$ 52\n• Quatro Queijos R$ 58\n\n🍕 *Pizzas Doces:*\n• Chocolate R$ 48\n• Banana R$ 46\n\n🥗 *Bebidas:*\n• Coca-Cola 2L R$ 12\n• Suco natural R$ 8\n\n📍 Ver cardápio completo: link.cardapio.com.br",
+      "next": "tipo_pedido"
+    },
+    {
+      "id": "horario_info",
+      "type": "message",
+      "content": "🕐 *Horário de funcionamento:*\n\n📅 Segunda a quinta: 18h às 23h\n📅 Sexta e sábado: 18h às 00h\n📅 Domingo: 18h às 22h\n\nDelivery até 30 minutos antes do fechamento!",
+      "next": "menu_principal"
+    },
+    {
+      "id": "captura_endereco",
+      "type": "input",
+      "content": "🛵 Para delivery, preciso do seu *endereço completo com CEP*:",
+      "variable": "endereco",
+      "next": "captura_nome"
+    },
+    {
+      "id": "reserva_dados",
+      "type": "input",
+      "content": "🪑 Para reservar uma mesa, me diga a *data e hora* (ex: 25/12 às 20h):",
+      "variable": "data_reserva",
+      "next": "captura_pessoas"
+    },
+    {
+      "id": "captura_pessoas",
+      "type": "question",
+      "content": "Quantas pessoas?",
+      "variable": "pessoas",
+      "options": [
+        { "label": "2 pessoas", "value": "2", "next": "captura_nome" },
+        { "label": "3-4 pessoas", "value": "3-4", "next": "captura_nome" },
+        { "label": "5-6 pessoas", "value": "5-6", "next": "captura_nome" },
+        { "label": "Mais de 6", "value": "6+", "next": "captura_nome" }
+      ]
+    },
+    {
+      "id": "captura_nome",
+      "type": "input",
+      "content": "Me informe seu *nome*:",
+      "variable": "nome",
+      "next": "captura_telefone"
+    },
+    {
+      "id": "captura_telefone",
+      "type": "input",
+      "content": "E seu *WhatsApp com DDD*:",
+      "variable": "telefone",
+      "next": "confirmacao"
+    },
+    {
+      "id": "confirmacao",
+      "type": "message",
+      "content": "✅ *Pedido/Reserva registrado!*\n\n👤 {{nome}}\n📱 {{telefone}}\n\nEm instantes nossa equipe confirmará seu pedido/reserva e te enviará o link de pagamento ou detalhes.",
+      "next": "end"
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "content": "Obrigado pela preferência! 🍕 Bom apetite!"
+    }
+  ]
+}

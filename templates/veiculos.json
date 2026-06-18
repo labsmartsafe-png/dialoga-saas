@@ -1,0 +1,87 @@
+{
+  "slug": "veiculos",
+  "name": "Loja de Veículos",
+  "description": "Atendimento para lojas de carros e motos. Apresenta o estoque, qualifica o cliente e encaminha para o vendedor.",
+  "category": "Veículos",
+  "icon": "🚗",
+  "nodes": [
+    {
+      "id": "boas_vindas",
+      "type": "message",
+      "content": "Olá! 👋 Bem-vindo à *AutoShow Veículos*. 🚗🏍️\n\nSou a Bia, assistente virtual. Posso te ajudar a encontrar o veículo dos seus sonhos!\n\nComo posso te ajudar hoje?",
+      "next": "menu_principal"
+    },
+    {
+      "id": "menu_principal",
+      "type": "question",
+      "content": "Escolha uma das opções abaixo:",
+      "variable": "interesse",
+      "options": [
+        { "label": "🚗 Ver carros", "value": "carro", "next": "tipo_carro" },
+        { "label": "🏍️ Ver motos", "value": "moto", "next": "tipo_moto" },
+        { "label": "💰 Financiamento", "value": "financiamento", "next": "captura_nome" },
+        { "label": "📞 Falar com vendedor", "value": "vendedor", "next": "captura_nome" }
+      ]
+    },
+    {
+      "id": "tipo_carro",
+      "type": "question",
+      "content": "Que tipo de carro você procura?",
+      "variable": "tipo_veiculo",
+      "options": [
+        { "label": "SUV", "value": "suv", "next": "orcamento" },
+        { "label": "Sedan", "value": "sedan", "next": "orcamento" },
+        { "label": "Hatch", "value": "hatch", "next": "orcamento" },
+        { "label": "Picape", "value": "picape", "next": "orcamento" }
+      ]
+    },
+    {
+      "id": "tipo_moto",
+      "type": "question",
+      "content": "Que tipo de moto você quer?",
+      "variable": "tipo_veiculo",
+      "options": [
+        { "label": "Esportiva", "value": "esportiva", "next": "orcamento" },
+        { "label": "Scooter", "value": "scooter", "next": "orcamento" },
+        { "label": "Custom", "value": "custom", "next": "orcamento" }
+      ]
+    },
+    {
+      "id": "orcamento",
+      "type": "question",
+      "content": "Qual é a sua faixa de orçamento?",
+      "variable": "orcamento",
+      "options": [
+        { "label": "Até R$ 40.000", "value": "ate_40k", "next": "captura_nome" },
+        { "label": "R$ 40.000 - R$ 80.000", "value": "40k_80k", "next": "captura_nome" },
+        { "label": "R$ 80.000 - R$ 150.000", "value": "80k_150k", "next": "captura_nome" },
+        { "label": "Acima de R$ 150.000", "value": "acima_150k", "next": "captura_nome" }
+      ]
+    },
+    {
+      "id": "captura_nome",
+      "type": "input",
+      "content": "Excelente! Já temos opções perfeitas para você. 😊\n\nPara enviar a proposta, por favor me diga seu *nome*:",
+      "variable": "nome",
+      "next": "captura_telefone"
+    },
+    {
+      "id": "captura_telefone",
+      "type": "input",
+      "content": "Prazer, {{nome}}! 😊\n\nAgora me passe seu *WhatsApp com DDD* para que um de nossos vendedores entre em contato:",
+      "variable": "telefone",
+      "next": "resumo"
+    },
+    {
+      "id": "resumo",
+      "type": "message",
+      "content": "Perfeito, {{nome}}! ✅\n\nResumo do seu interesse:\n🚘 Veículo: {{tipo_veiculo}}\n💰 Orçamento: {{orcamento}}\n📱 Contato: {{telefone}}\n\nEm até 30 minutos um vendedor entrará em contato com você!\n\nEnquanto isso, pode nos seguir no Instagram @autoshowveiculos",
+      "next": "humano"
+    },
+    {
+      "id": "humano",
+      "type": "human",
+      "content": ""
+    }
+  ]
+}

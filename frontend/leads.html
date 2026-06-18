@@ -1,0 +1,225 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leads â€” dIAloga+</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="brand">
+    <div class="logo">âš¡</div>
+    <span>dIAloga+</span>
+  </div>
+  <nav>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="builder.html">Fluxos</a>
+    <a href="leads.html" style="color: var(--primary-dark); border-bottom-color: var(--primary);">Leads</a>
+  </nav>
+  <div class="user-area" id="user-area"></div>
+</nav>
+
+<main class="container container-lg">
+
+  <div class="flex justify-between items-center mb-3">
+    <div>
+      <h1 style="font-size: 26px;">Leads</h1>
+      <p class="text-muted">Todos os contatos capturados pelos seus fluxos.</p>
+    </div>
+    <div class="flex gap-1">
+      <button class="btn btn-secondary" id="btn-export">ðŸ“¥ Exportar CSV</button>
+    </div>
+  </div>
+
+  <div id="alert-area"></div>
+
+  <!-- Filtros -->
+  <div class="filters-bar">
+    <div class="form-group">
+      <label>Fluxo</label>
+      <select class="form-control" id="filter-flow">
+        <option value="">Todos</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Status</label>
+      <select class="form-control" id="filter-status">
+        <option value="">Todos</option>
+        <option value="novo">Novo</option>
+        <option value="qualificado">Qualificado</option>
+        <option value="convertido">Convertido</option>
+        <option value="perdido">Perdido</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>De</label>
+      <input class="form-control" type="date" id="filter-from">
+    </div>
+    <div class="form-group">
+      <label>AtÃ©</label>
+      <input class="form-control" type="date" id="filter-to">
+    </div>
+    <button class="btn btn-primary" id="btn-filter">Filtrar</button>
+    <button class="btn btn-secondary" id="btn-clear">Limpar</button>
+  </div>
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Nome</th>
+          <th>Telefone</th>
+          <th>Fluxo</th>
+          <th>Etapa</th>
+          <th>Status</th>
+          <th>Origem</th>
+          <th>Data</th>
+          <th>AÃ§Ãµes</th>
+        </tr>
+      </thead>
+      <tbody id="leads-tbody">
+        <tr><td colspan="9" class="text-center"><div class="spinner"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</main>
+
+<script>window.API_BASE = "http://localhost:8000";</script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script>
+  (async function () {
+    const alertArea = document.getElementById("alert-area");
+    function showAlert(msg, type = "error") {
+      alertArea.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+    }
+    function escapeHtml(s) {
+      return String(s || "").replace(/[&<>"']/g, c => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[c]));
+    }
+    function fmt(iso) {
+      if (!iso) return "â€”";
+      try { return new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }); }
+      catch { return iso; }
+    }
+
+    const user = await WFAuth.requireAuth();
+    if (!user) return;
+    WFAuth.renderUserChip(document.getElementById("user-area"), user);
+
+    let flows = [];
+    try {
+      flows = await WFApi.listFlows();
+      const sel = document.getElementById("filter-flow");
+      flows.forEach(f => {
+        const opt = document.createElement("option");
+        opt.value = f.id;
+        opt.textContent = f.name;
+        sel.appendChild(opt);
+      });
+    } catch (e) { console.error(e); }
+
+    async function load() {
+      const params = new URLSearchParams();
+      const fid = document.getElementById("filter-flow").value;
+      const st = document.getElementById("filter-status").value;
+      const df = document.getElementById("filter-from").value;
+      const dt = document.getElementById("filter-to").value;
+      if (fid) params.set("flow_id", fid);
+      if (st) params.set("status", st);
+      if (df) params.set("date_from", df);
+      if (dt) params.set("date_to", dt);
+      const qs = params.toString() ? "?" + params.toString() : "";
+
+      try {
+        const leads = await WFApi.listLeads(qs);
+        const tbody = document.getElementById("leads-tbody");
+        if (!leads.length) {
+          tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="icon">ðŸŽ¯</div>Nenhum lead encontrado com os filtros atuais.</div></td></tr>`;
+          return;
+        }
+        const flowMap = {};
+        flows.forEach(f => flowMap[f.id] = f.name);
+        tbody.innerHTML = leads.map(l => `
+          <tr>
+            <td>${l.id}</td>
+            <td>${escapeHtml(l.name || "â€”")}</td>
+            <td>${escapeHtml(l.phone || "â€”")}</td>
+            <td>${escapeHtml(flowMap[l.flow_id] || "â€”")}</td>
+            <td>${escapeHtml(l.stage || "â€”")}</td>
+            <td>
+              <select class="form-control" data-status="${l.id}" style="width: 140px; padding: 4px 8px;">
+                ${["novo","qualificado","convertido","perdido"].map(s =>
+                  `<option value="${s}" ${l.status === s ? "selected" : ""}>${s}</option>`).join("")}
+              </select>
+            </td>
+            <td>${escapeHtml(l.source || "â€”")}</td>
+            <td>${fmt(l.created_at)}</td>
+            <td class="actions">
+              <button class="btn btn-danger btn-sm" data-del="${l.id}">Excluir</button>
+            </td>
+          </tr>
+        `).join("");
+
+        // Status change handlers
+        tbody.querySelectorAll("[data-status]").forEach(el => {
+          el.addEventListener("change", async () => {
+            try {
+              await WFApi.updateLead(parseInt(el.dataset.status, 10), { status: el.value });
+              showAlert("Status atualizado!", "success");
+            } catch (e) {
+              showAlert("Erro: " + e.message);
+            }
+          });
+        });
+        // Delete handlers
+        tbody.querySelectorAll("[data-del]").forEach(el => {
+          el.addEventListener("click", async () => {
+            if (!confirm("Excluir este lead?")) return;
+            try {
+              await WFApi.deleteLead(parseInt(el.dataset.del, 10));
+              load();
+            } catch (e) {
+              showAlert("Erro: " + e.message);
+            }
+          });
+        });
+      } catch (e) {
+        showAlert(e.message);
+      }
+    }
+
+    document.getElementById("btn-filter").addEventListener("click", load);
+    document.getElementById("btn-clear").addEventListener("click", () => {
+      ["filter-flow","filter-status","filter-from","filter-to"].forEach(id =>
+        document.getElementById(id).value = "");
+      load();
+    });
+    document.getElementById("btn-export").addEventListener("click", () => {
+      const fid = document.getElementById("filter-flow").value;
+      const qs = fid ? "?flow_id=" + fid : "";
+      // NecessÃ¡rio token: baixamos via fetch + blob para manter Authorization
+      fetch(WFApi.exportLeadsUrl(qs), {
+        headers: { "Authorization": "Bearer " + WFApi.getToken() }
+      }).then(r => r.blob()).then(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = "leads-dIAloga+.csv";
+        a.click(); URL.revokeObjectURL(url);
+      }).catch(err => alert("Erro ao exportar: " + err.message));
+    });
+
+    load();
+  })();
+</script>
+
+</body>
+</html>
+
+
+
