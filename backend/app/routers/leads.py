@@ -1,9 +1,11 @@
 """
 Rotas de leads - listagem, filtros e exportação CSV.
 """
+
 import csv
 import io
-from datetime import datetime
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
@@ -39,6 +41,7 @@ def list_leads(
             q = q.filter(Lead.created_at <= datetime.fromisoformat(date_to))
     except ValueError:
         raise HTTPException(400, "Datas devem estar em ISO 8601 (YYYY-MM-DD).")
+
     leads = q.order_by(Lead.created_at.desc()).all()
     return [LeadOut.model_validate(l) for l in leads]
 
@@ -56,6 +59,7 @@ def update_lead(
     ).first()
     if not lead:
         raise HTTPException(404, "Lead não encontrado")
+
     if payload.name is not None:
         lead.name = payload.name
     if payload.status is not None:
@@ -88,35 +92,50 @@ def export_leads_csv(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Exporta os leads filtrados em CSV."""
+    """Exporta os leads em CSV, incluindo todas as variáveis do contexto."""
     q = db.query(Lead).filter(Lead.owner_id == current_user.id)
     if flow_id:
         q = q.filter(Lead.flow_id == flow_id)
     leads = q.order_by(Lead.created_at.desc()).all()
+
     flows_map = {f.id: f.name for f in db.query(Flow).filter(Flow.owner_id == current_user.id).all()}
+
+    # Coleta todas as chaves únicas do contexto de todos os leads
+    all_context_keys = set()
+    for l in leads:
+        ctx = l.context if isinstance(l.context, dict) else {}
+        all_context_keys.update(ctx.keys())
+    context_keys = sorted(all_context_keys)
 
     output = io.StringIO()
     # BOM para Excel reconhecer UTF-8
     output.write("\ufeff")
     writer = csv.writer(output)
-    writer.writerow([
-        "id", "nome", "telefone", "email", "fluxo", "etapa", "status",
-        "origem", "data_criacao",
-    ])
+
+    # Cabeçalho: colunas fixas + colunas dinâmicas do contexto
+    header = ["id", "nome", "telefone", "email", "fluxo", "status", "origem", "data_criacao"]
+    header += context_keys
+    writer.writerow(header)
+
     for l in leads:
-        writer.writerow([
+        ctx = l.context if isinstance(l.context, dict) else {}
+        row = [
             l.id,
             l.name or "",
             l.phone or "",
             l.email or "",
             flows_map.get(l.flow_id, ""),
-            l.stage or "",
             l.status or "",
             l.source or "",
             l.created_at.isoformat() if l.created_at else "",
-        ])
+        ]
+        # Adiciona valores do contexto (ou vazio se não existir)
+        for key in context_keys:
+            row.append(ctx.get(key, ""))
+        writer.writerow(row)
+
     output.seek(0)
-    filename = f"leads-whatsflow-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}.csv"
+    filename = f"leads-dialoga-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}.csv"
     return StreamingResponse(
         iter([output.getvalue()]),
         media_type="text/csv",

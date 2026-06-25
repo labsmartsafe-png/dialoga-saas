@@ -3,12 +3,12 @@
   "name": "Pet Shop / Veterinária",
   "description": "Pet shops, clínicas veterinárias e banho/tosa. Agenda serviços, vende produtos e tira dúvidas.",
   "category": "Pet",
-  "icon": "🐶",
+  "icon": "<img src='img/icons/pet.svg' class='emoji-icon' alt='Pet Shop'>",
   "nodes": [
     {
       "id": "boas_vindas",
       "type": "message",
-      "content": "Olá! 🐶🐱 Bem-vindo ao *Pet Shop Amigo Fiel* 🐾\n\nAmor e cuidado para seu melhor amigo!\n\nComo posso ajudar?",
+      "content": "Olá! 🐾 Bem-vindo ao *Pet Shop Amigo Fiel* 🐶🐱\n\nAmor e cuidado para seu melhor amigo!\n\nComo posso ajudar?",
       "next": "menu_principal"
     },
     {
@@ -49,7 +49,7 @@
     {
       "id": "info_produtos",
       "type": "message",
-      "content": "🛒 *Nossos produtos:*\n\n🍖 *Ração:*\n• Premium (15kg) - R$ 180\n• Standard (15kg) - R$ 120\n\n🦴 *Petiscos:*\n• Ossinhos naturais - R$ 25\n• Biscoitos variados - R$ 18\n\n🧴 *Higiene:*\n• Shampoo - R$ 35\n• Tapete higiênico - R$ 65\n\n🧸 *Brinquedos e acessórios*\n\n📦 Entrega em domicílio!",
+      "content": "🛒 *Nossos produtos:*\n\n🍖 *Ração:*\n• Premium (15kg) - R$ 180\n• Standard (15kg) - R$ 120\n\n🦴 *Petiscos:*\n• Ossinhos naturais - R$ 25\n• Biscoitos variados - R$ 18\n\n🧴 *Higiene:*\n• Shampoo - R$ 35\n• Tapete higiênico - R$ 65\n\n🎾 *Brinquedos e acessórios*\n\n🛵 Entrega em domicílio!",
       "next": "menu_principal"
     },
     {
@@ -68,7 +68,7 @@
     {
       "id": "captura_nome",
       "type": "input",
-      "content": "Que fofo(a)! 😍\n\nAgora me diga seu *nome*:",
+      "content": "Que fofo(a)! 🥰\n\nAgora me diga seu *nome*:",
       "variable": "nome",
       "next": "captura_telefone"
     },
@@ -82,13 +82,13 @@
     {
       "id": "confirmacao",
       "type": "message",
-      "content": "✅ *Agendamento confirmado!*\n\n🐾 Pet: {{nome_pet}}\n👤 Tutor: {{nome}}\n📱 Contato: {{telefone}}\n\nEm até 1 hora entraremos em contato para confirmar data e horário do serviço.\n\nAté logo! 🐶❤️",
+      "content": "✅ *Agendamento confirmado!*\n\n🐾 Pet: {{nome_pet}}\n👤 Tutor: {{nome}}\n📱 Contato: {{telefone}}\n\nEm até 1 hora entraremos em contato para confirmar data e horário do serviço.\n\nAté logo! 🐾❤️",
       "next": "end"
     },
     {
       "id": "end",
       "type": "end",
-      "content": "Cuide do seu pet com muito amor! 🐾"
+      "content": "Cuide do seu pet com muito amor! 🐾❤️"
     }
   ]
 }

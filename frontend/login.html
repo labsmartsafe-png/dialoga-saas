@@ -1,16 +1,16 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Entrar — dIAloga+</title>
+  <title>Entrar - dIAloga+</title>
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body class="auth-page">
 
 <div class="auth-card">
   <div class="logo-row">
-    <img src="img/logo-dialoga.png" alt="dIAloga+" class="brand-logo" style="height: 36px;">
+    <img src="img/logo-dialoga.png" alt="dIAloga+">
     <h1>dIAloga+</h1>
     <p class="subtitle">Automatize seu WhatsApp em minutos</p>
   </div>
@@ -29,7 +29,7 @@
     </div>
     <div class="form-group">
       <label>Senha</label>
-      <input class="form-control" type="password" name="password" required placeholder="••••••••" minlength="6">
+      <input class="form-control" type="password" name="password" required minlength="6">
     </div>
     <button type="submit" class="btn btn-primary" style="width: 100%;">Entrar</button>
     <p style="text-align: center; margin-top: 12px; font-size: 13px;">
@@ -40,44 +40,41 @@
   <form id="form-register" class="hidden">
     <div class="form-group">
       <label>Nome da empresa</label>
-      <input class="form-control" type="text" name="company_name" required minlength="2" placeholder="Minha Empresa Ltda">
+      <input class="form-control" type="text" name="company_name" required minlength="2">
     </div>
     <div class="form-group">
       <label>Seu nome</label>
-      <input class="form-control" type="text" name="full_name" placeholder="João Silva">
+      <input class="form-control" type="text" name="full_name">
     </div>
     <div class="form-group">
       <label>E-mail</label>
-      <input class="form-control" type="email" name="email" required placeholder="seu@email.com">
+      <input class="form-control" type="email" name="email" required>
     </div>
     <div class="form-group">
-      <label>Telefone (opcional)</label>
-      <input class="form-control" type="text" name="phone" placeholder="(11) 99999-9999">
+      <label>Telefone</label>
+      <input class="form-control" type="text" name="phone">
     </div>
     <div class="form-group">
-      <label>Senha (mínimo 6 caracteres)</label>
-      <input class="form-control" type="password" name="password" required minlength="6" placeholder="••••••••">
+      <label>Senha</label>
+      <input class="form-control" type="password" name="password" required minlength="6">
     </div>
-    <button type="submit" class="btn btn-primary" style="width: 100%;">Criar conta grátis</button>
+    <button type="submit" class="btn btn-primary" style="width: 100%;">Criar conta</button>
   </form>
 
   <form id="form-reset" class="hidden">
-    <p class="text-muted mb-2">Informe seu e-mail. Enviaremos um link para redefinir sua senha.</p>
+    <p class="text-muted mb-2">Informe seu e-mail para receber o link de recuperacao.</p>
     <div class="form-group">
       <label>E-mail</label>
-      <input class="form-control" type="email" name="email" required placeholder="seu@email.com">
+      <input class="form-control" type="email" name="email" required>
     </div>
     <button type="submit" class="btn btn-primary" style="width: 100%;">Enviar link</button>
     <p style="text-align: center; margin-top: 12px;">
-      <a href="#" id="back-to-login">Voltar para login</a>
-    </p>
-    <p class="alert alert-info" style="margin-top: 12px; font-size: 12px;">
-      <strong>Modo demonstração:</strong> a "recuperação" apenas simula o envio de e-mail.
+      <a href="#" id="back-to-login">Voltar</a>
     </p>
   </form>
 
   <p style="text-align: center; margin-top: 16px; font-size: 13px;">
-    <a href="index.html">← Voltar para a página inicial</a>
+    <a href="index.html">Voltar para a pagina inicial</a>
   </p>
 </div>
 
@@ -88,101 +85,67 @@
 <script>
   const $ = (sel) => document.querySelector(sel);
   const alertArea = $("#alert-area");
-  const tabLogin = $("#tab-login");
-  const tabRegister = $("#tab-register");
-  const formLogin = $("#form-login");
-  const formRegister = $("#form-register");
-  const formReset = $("#form-reset");
 
-  function showAlert(msg, type = "error") {
-    alertArea.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
-    setTimeout(() => { if (alertArea.innerHTML.includes(msg)) alertArea.innerHTML = ""; }, 6000);
+  function showAlert(msg, type) {
+    alertArea.innerHTML = '<div class="alert alert-' + (type || "error") + '">' + msg + '</div>';
   }
 
   function showForm(name) {
-    formLogin.classList.toggle("hidden", name !== "login");
-    formRegister.classList.toggle("hidden", name !== "register");
-    formReset.classList.toggle("hidden", name !== "reset");
-    tabLogin.classList.toggle("active", name === "login");
-    tabRegister.classList.toggle("active", name === "register");
+    $("#form-login").classList.toggle("hidden", name !== "login");
+    $("#form-register").classList.toggle("hidden", name !== "register");
+    $("#form-reset").classList.toggle("hidden", name !== "reset");
+    $("#tab-login").classList.toggle("active", name === "login");
+    $("#tab-register").classList.toggle("active", name === "register");
     alertArea.innerHTML = "";
   }
 
-  tabLogin.addEventListener("click", () => showForm("login"));
-  tabRegister.addEventListener("click", () => showForm("register"));
+  $("#tab-login").addEventListener("click", () => showForm("login"));
+  $("#tab-register").addEventListener("click", () => showForm("register"));
   $("#link-forgot").addEventListener("click", (e) => { e.preventDefault(); showForm("reset"); });
   $("#back-to-login").addEventListener("click", (e) => { e.preventDefault(); showForm("login"); });
 
   const params = new URLSearchParams(window.location.search);
   if (params.get("tab") === "register") showForm("register");
 
-  formLogin.addEventListener("submit", async (e) => {
+  $("#form-login").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const fd = new FormData(formLogin);
-    const btn = formLogin.querySelector("button[type=submit]");
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> Entrando...';
+    const fd = new FormData(e.target);
     try {
-      const res = await WFApi.login({
-        email: fd.get("email"),
-        password: fd.get("password"),
-      });
+      const res = await WFApi.login({ email: fd.get("email"), password: fd.get("password") });
       WFApi.setToken(res.access_token);
-      localStorage.setItem("dIAloga+_user", JSON.stringify(res.user));
+      localStorage.setItem("whatsflow_user", JSON.stringify(res.user));
       window.location.href = "dashboard.html";
-    } catch (err) {
-      showAlert(err.message || "Erro ao entrar. Verifique seus dados.");
-    } finally {
-      btn.disabled = false;
-      btn.textContent = "Entrar";
-    }
+    } catch (err) { showAlert(err.message); }
   });
 
-  formRegister.addEventListener("submit", async (e) => {
+  $("#form-register").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const fd = new FormData(formRegister);
-    const btn = formRegister.querySelector("button[type=submit]");
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> Criando...';
+    const fd = new FormData(e.target);
+    const body = {
+      company_name: fd.get("company_name"),
+      email: fd.get("email"),
+      password: fd.get("password"),
+      full_name: fd.get("full_name") || null,
+      phone: fd.get("phone") || null,
+    };
     try {
-      const body = {
-        company_name: fd.get("company_name"),
-        email: fd.get("email"),
-        password: fd.get("password"),
-        full_name: fd.get("full_name") || null,
-        phone: fd.get("phone") || null,
-      };
       const res = await WFApi.register(body);
       WFApi.setToken(res.access_token);
-      localStorage.setItem("dIAloga+_user", JSON.stringify(res.user));
-      showAlert("Conta criada com sucesso! Redirecionando...", "success");
+      localStorage.setItem("whatsflow_user", JSON.stringify(res.user));
+      showAlert("Conta criada!", "success");
       setTimeout(() => { window.location.href = "dashboard.html"; }, 1000);
-    } catch (err) {
-      showAlert(err.message || "Erro ao criar conta.");
-    } finally {
-      btn.disabled = false;
-      btn.textContent = "Criar conta grátis";
-    }
+    } catch (err) { showAlert(err.message); }
   });
 
-  formReset.addEventListener("submit", async (e) => {
+  $("#form-reset").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const fd = new FormData(formReset);
-    const btn = formReset.querySelector("button[type=submit]");
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> Enviando...';
+    const fd = new FormData(e.target);
     try {
       await WFApi.passwordResetRequest({ email: fd.get("email") });
-      showAlert("Se o e-mail estiver cadastrado, você receberá as instruções.", "success");
-    } catch (err) {
-      showAlert(err.message || "Erro ao processar solicitação.");
-    } finally {
-      btn.disabled = false;
-      btn.textContent = "Enviar link";
-    }
+      showAlert("Se o e-mail existir, voce recebera instrucoes.", "success");
+    } catch (err) { showAlert(err.message); }
   });
 </script>
 
 </body>
 </html>
-

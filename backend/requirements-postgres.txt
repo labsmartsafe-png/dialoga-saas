@@ -1,0 +1,17 @@
+# =========================================================
+# Dependências opcionais para PostgreSQL em PRODUÇÃO
+# =========================================================
+# Estas bibliotecas SÓ são necessárias se você for usar
+# PostgreSQL em vez de SQLite. Não instale em ambiente de
+# desenvolvimento local - elas podem falhar em versões
+# muito novas do Python (3.14+) que ainda não têm wheels.
+#
+# Como instalar:
+#   pip install -r requirements.txt              # mínimo (SQLite)
+#   pip install -r requirements-postgres.txt     # adiciona Postgres
+#
+# Se você já instalou o requirements.txt, basta rodar:
+#   pip install psycopg2-binary
+# (em produção, no Render, ele é instalado automaticamente)
+
+psycopg2-binary==2.9.10

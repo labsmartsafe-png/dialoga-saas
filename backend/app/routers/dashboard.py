@@ -1,7 +1,7 @@
 """
 Rotas de dashboard - métricas agregadas.
 """
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -29,7 +29,7 @@ def metrics(
     leads_total = db.query(func.count(Lead.id)).filter(
         Lead.owner_id == current_user.id
     ).scalar() or 0
-    today = datetime.utcnow().date()
+    today = datetime.now(timezone.utc).date()
     week_start = today - timedelta(days=today.weekday())
     leads_today = db.query(func.count(Lead.id)).filter(
         Lead.owner_id == current_user.id,

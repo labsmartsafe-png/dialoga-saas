@@ -3,12 +3,12 @@
   "name": "Loja de Veículos",
   "description": "Atendimento para lojas de carros e motos. Apresenta o estoque, qualifica o cliente e encaminha para o vendedor.",
   "category": "Veículos",
-  "icon": "🚗",
+  "icon": "<img src='img/icons/car.svg' class='emoji-icon' alt='Veículos'>",
   "nodes": [
     {
       "id": "boas_vindas",
       "type": "message",
-      "content": "Olá! 👋 Bem-vindo à *AutoShow Veículos*. 🚗🏍️\n\nSou a Bia, assistente virtual. Posso te ajudar a encontrar o veículo dos seus sonhos!\n\nComo posso te ajudar hoje?",
+      "content": "Olá! 🚗 Bem-vindo à *AutoShow Veículos* 🏍️\n\nSou a Bia, assistente virtual. Posso te ajudar a encontrar o veículo dos seus sonhos!\n\nComo posso te ajudar hoje?",
       "next": "menu_principal"
     },
     {
@@ -61,21 +61,21 @@
     {
       "id": "captura_nome",
       "type": "input",
-      "content": "Excelente! Já temos opções perfeitas para você. 😊\n\nPara enviar a proposta, por favor me diga seu *nome*:",
+      "content": "Excelente! Já temos opções perfeitas para você. \n\nPara enviar a proposta, por favor me diga seu *nome*:",
       "variable": "nome",
       "next": "captura_telefone"
     },
     {
       "id": "captura_telefone",
       "type": "input",
-      "content": "Prazer, {{nome}}! 😊\n\nAgora me passe seu *WhatsApp com DDD* para que um de nossos vendedores entre em contato:",
+      "content": "Prazer, {{nome}}! \n\nAgora me passe seu *WhatsApp com DDD* para que um de nossos vendedores entre em contato:",
       "variable": "telefone",
       "next": "resumo"
     },
     {
       "id": "resumo",
       "type": "message",
-      "content": "Perfeito, {{nome}}! ✅\n\nResumo do seu interesse:\n🚘 Veículo: {{tipo_veiculo}}\n💰 Orçamento: {{orcamento}}\n📱 Contato: {{telefone}}\n\nEm até 30 minutos um vendedor entrará em contato com você!\n\nEnquanto isso, pode nos seguir no Instagram @autoshowveiculos",
+      "content": "Perfeito, {{nome}}! ✅\n\nResumo do seu interesse:\n🚗 Veículo: {{tipo_veiculo}}\n💰 Orçamento: {{orcamento}}\n📱 Contato: {{telefone}}\n\nEm até 30 minutos um vendedor entrará em contato com você!\n\nEnquanto isso, pode nos seguir no Instagram @autoshowveiculos",
       "next": "humano"
     },
     {

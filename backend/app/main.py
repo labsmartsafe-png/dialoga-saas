@@ -1,5 +1,5 @@
 """
-Ponto de entrada da aplicação FastAPI - WhatsFlow SaaS.
+Ponto de entrada da aplicação FastAPI - dIAloga+ SaaS.
 """
 import logging
 from fastapi import FastAPI
@@ -10,6 +10,7 @@ from .config import settings
 from .database import init_db, SessionLocal
 from .services.template_loader import seed_templates
 from .routers import auth, templates, flows, leads, whatsapp, dashboard
+from .json import CustomJSONResponse
 
 # Logging
 logging.basicConfig(
@@ -22,7 +23,7 @@ logger = logging.getLogger("whatsflow")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Executa ao iniciar e ao encerrar a aplicação."""
-    logger.info("Iniciando WhatsFlow SaaS...")
+    logger.info("Iniciando dIAloga+ SaaS...")
     init_db()
     # Popula templates JSON no banco caso estejam vazios
     db = SessionLocal()
@@ -30,18 +31,19 @@ async def lifespan(app: FastAPI):
         seed_templates(db)
     finally:
         db.close()
-    logger.info("WhatsFlow pronto. Ambiente: %s", settings.app_env)
+    logger.info("dIAloga+ pronto. Ambiente: %s", settings.app_env)
     yield
-    logger.info("Encerrando WhatsFlow...")
+    logger.info("Encerrando dIAloga+...")
 
 
 app = FastAPI(
-    title="WhatsFlow SaaS",
+    title="dIAloga+ SaaS",
     description="Plataforma de construção de chatbots de WhatsApp com templates prontos.",
     version="1.0.0",
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc",
+    default_response_class=CustomJSONResponse,
 )
 
 # CORS
@@ -58,7 +60,7 @@ app.add_middleware(
 def root():
     """Endpoint raiz - status da API."""
     return {
-        "app": "WhatsFlow SaaS",
+        "app": "dIAloga+ SaaS",
         "version": "1.0.0",
         "status": "online",
         "env": settings.app_env,

@@ -3,12 +3,12 @@
   "name": "Imobiliária",
   "description": "Atendimento imobiliário para compra, aluguel e venda de imóveis. Filtra preferências e qualifica leads.",
   "category": "Imóveis",
-  "icon": "🏠",
+  "icon": "<img src='img/icons/house.svg' class='emoji-icon' alt='Imóveis'>",
   "nodes": [
     {
       "id": "boas_vindas",
       "type": "message",
-      "content": "Olá! 👋 Bem-vindo à *Imobiliária Casa Nova* 🏠\n\nSou o assistente virtual. Posso te ajudar a encontrar o imóvel ideal ou anunciar o seu!\n\nComo posso ajudar?",
+      "content": "Olá! 🏠 Bem-vindo à *Imobiliária Casa Nova* 🏡\n\nSou o assistente virtual. Posso te ajudar a encontrar o imóvel ideal ou anunciar o seu!\n\nComo posso ajudar?",
       "next": "menu_principal"
     },
     {
@@ -19,7 +19,7 @@
       "options": [
         { "label": "🔑 Comprar imóvel", "value": "comprar", "next": "tipo_imovel" },
         { "label": "📝 Alugar imóvel", "value": "alugar", "next": "tipo_imovel" },
-        { "label": "💼 Anunciar imóvel", "value": "anunciar", "next": "anuncio_dados" },
+        { "label": "📢 Anunciar imóvel", "value": "anunciar", "next": "anuncio_dados" },
         { "label": "❓ Tirar dúvidas", "value": "duvidas", "next": "duvidas_info" }
       ]
     },
@@ -29,10 +29,10 @@
       "content": "Que tipo de imóvel você procura?",
       "variable": "tipo_imovel",
       "options": [
-        { "label": "Apartamento", "value": "apartamento", "next": "quartos" },
-        { "label": "Casa", "value": "casa", "next": "quartos" },
-        { "label": "Sala comercial", "value": "sala", "next": "captura_nome" },
-        { "label": "Terreno", "value": "terreno", "next": "captura_nome" }
+        { "label": "🏢 Apartamento", "value": "apartamento", "next": "quartos" },
+        { "label": "🏠 Casa", "value": "casa", "next": "quartos" },
+        { "label": "🏪 Sala comercial", "value": "sala", "next": "captura_nome" },
+        { "label": "🌳 Terreno", "value": "terreno", "next": "captura_nome" }
       ]
     },
     {
@@ -68,7 +68,7 @@
     {
       "id": "anuncio_dados",
       "type": "message",
-      "content": "💼 *Para anunciar seu imóvel:*\n\nVamos precisar de algumas informações. Um corretor entrará em contato para tirar fotos profissionais e cadastrar seu imóvel gratuitamente.",
+      "content": "📢 *Para anunciar seu imóvel:*\n\nVamos precisar de algumas informações. Um corretor entrará em contato para tirar fotos profissionais e cadastrar seu imóvel gratuitamente.",
       "next": "captura_nome"
     },
     {
@@ -81,7 +81,7 @@
     {
       "id": "captura_telefone",
       "type": "input",
-      "content": "Obrigado, {{nome}}! 😊\n\nAgora me informe seu *WhatsApp com DDD*:",
+      "content": "Obrigado, {{nome}}! \n\nAgora me informe seu *WhatsApp com DDD*:",
       "variable": "telefone",
       "next": "captura_cidade"
     },
@@ -101,7 +101,7 @@
     {
       "id": "end",
       "type": "end",
-      "content": "Obrigado por escolher a Imobiliária Casa Nova! 🏠"
+      "content": "Obrigado por escolher a Imobiliária Casa Nova! 🏡"
     }
   ]
 }

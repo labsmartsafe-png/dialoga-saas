@@ -3,7 +3,7 @@
   "name": "Salão de Beleza",
   "description": "Salões de beleza, barbearias e esmalterias. Agenda horários, mostra serviços e captura clientes.",
   "category": "Beleza",
-  "icon": "💇",
+  "icon": "<img src='img/icons/salon.svg' class='emoji-icon' alt='Salão'>",
   "nodes": [
     {
       "id": "boas_vindas",
@@ -44,13 +44,13 @@
     {
       "id": "info_promocoes",
       "type": "message",
-      "content": "🎁 *Promoções do mês:*\n\n✨ Terça da Beleza: 20% off em todos os serviços\n💅 Quarta de Manicure: combo mão + pé por R$ 70\n👰 Noivas: pacote completo com 30% off\n🎂 Aniversariante do mês: ganhe uma hidratação grátis!\n\n📲 Siga @salaoglamour para mais novidades",
+      "content": "🎁 *Promoções do mês:*\n\n✨ Terça da Beleza: 20% off em todos os serviços\n💅 Quarta de Manicure: combo mão + pé por R$ 70\n👰 Noivas: pacote completo com 30% off\n🎂 Aniversariante do mês: ganhe uma hidratação grátis!\n\n📷 Siga @salaoglamour para mais novidades",
       "next": "menu_principal"
     },
     {
       "id": "info_localizacao",
       "type": "message",
-      "content": "📍 *Nossa localização:*\n\n🏢 Rua Augusta, 1500 - Cerqueira César\nSão Paulo - SP\n\n🕐 Funcionamento:\nSeg a Sex: 9h às 20h\nSábado: 9h às 18h\nDomingo: Fechado\n\n🚗 Estacionamento conveniado!",
+      "content": "📍 *Nossa localização:*\n\n🏢 Rua Augusta, 1500 - Cerqueira César\nSão Paulo - SP\n\n⏰ *Funcionamento:*\nSeg a Sex: 9h às 20h\nSábado: 9h às 18h\nDomingo: Fechado\n\n🚗 Estacionamento conveniado!",
       "next": "menu_principal"
     },
     {
@@ -81,13 +81,13 @@
     {
       "id": "confirmacao",
       "type": "message",
-      "content": "✅ *Agendamento solicitado!*\n\n💇 Serviço: {{servico}}\n🕐 Período: {{periodo}}\n👤 {{nome}}\n📱 {{telefone}}\n\nConfirmaremos o horário exato em até 30 minutos pelo WhatsApp.\n\nAté breve! ✨",
+      "content": "✅ *Agendamento solicitado!*\n\n💇 Serviço: {{servico}}\n⏰ Período: {{periodo}}\n👤 {{nome}}\n📱 {{telefone}}\n\nConfirmaremos o horário exato em até 30 minutos pelo WhatsApp.\n\nAté breve! ✨",
       "next": "end"
     },
     {
       "id": "end",
       "type": "end",
-      "content": "Obrigado por escolher o Salão Glamour! 💇✨"
+      "content": "Obrigado por escolher o Salão Glamour! 💇‍♀️✨"
     }
   ]
 }

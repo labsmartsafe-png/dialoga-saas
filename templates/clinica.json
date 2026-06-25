@@ -3,12 +3,12 @@
   "name": "Clínica Médica / Dentista",
   "description": "Atendimento para clínicas e consultórios odontológicos. Agenda consultas, captura sintomas e envia lembretes.",
   "category": "Saúde",
-  "icon": "🦷",
+  "icon": "<img src='img/icons/clinic.svg' class='emoji-icon' alt='Clínica'>",
   "nodes": [
     {
       "id": "boas_vindas",
       "type": "message",
-      "content": "Olá! 👋 Bem-vindo à *Clínica Sorriso+* 😊\n\nSou a assistente virtual. Posso ajudar com agendamento, dúvidas sobre convênios e informações sobre tratamentos.\n\nComo posso te ajudar?",
+      "content": "Olá! Bem-vindo à *Clínica Sorriso+* 🦷\n\nSou a assistente virtual. Posso ajudar com agendamento, dúvidas sobre convênios e informações sobre tratamentos.\n\nComo posso te ajudar?",
       "next": "menu_principal"
     },
     {
@@ -19,7 +19,7 @@
       "options": [
         { "label": "📅 Agendar consulta", "value": "agendar", "next": "tipo_consulta" },
         { "label": "🦷 Tratamentos", "value": "tratamentos", "next": "lista_tratamentos" },
-        { "label": "💳 Convênios", "value": "convenios", "next": "info_convenios" },
+        { "label": "🏥 Convênios", "value": "convenios", "next": "info_convenios" },
         { "label": "🚨 Emergência", "value": "emergencia", "next": "emergencia" }
       ]
     },
@@ -44,7 +44,7 @@
     {
       "id": "info_convenios",
       "type": "message",
-      "content": "💳 *Convênios aceitos:*\n\n• Amil\n• Bradesco Saúde\n• SulAmérica\n• Unimed\n• Odontoprev\n• Hapvida\n\nAceitamos também particular com parcelamento em até 10x.\n\nPosso ajudar com mais alguma coisa?",
+      "content": "🏥 *Convênios aceitos:*\n\n• Amil\n• Bradesco Saúde\n• SulAmérica\n• Unimed\n• Odontoprev\n• Hapvida\n\nAceitamos também particular com parcelamento em até 10x.\n\nPosso ajudar com mais alguma coisa?",
       "next": "menu_principal"
     },
     {
@@ -63,7 +63,7 @@
     {
       "id": "captura_telefone",
       "type": "input",
-      "content": "Obrigada, {{nome}}! 😊\n\nAgora me informe seu *telefone com DDD*:",
+      "content": "Obrigada, {{nome}}! \n\nAgora me informe seu *telefone com DDD*:",
       "variable": "telefone",
       "next": "captura_data"
     },
@@ -81,7 +81,7 @@
     {
       "id": "confirmacao",
       "type": "message",
-      "content": "✅ *Agendamento solicitado!*\n\n📋 Resumo:\n👤 Paciente: {{nome}}\n📱 Contato: {{telefone}}\n🦷 Tipo: {{tipo_consulta}}\n🕐 Período: {{periodo}}\n\nNossa recepcionadora entrará em contato em até 1 hora para confirmar o horário exato.",
+      "content": "✅ *Agendamento solicitado!*\n\n📋 *Resumo:*\n👤 Paciente: {{nome}}\n📞 Contato: {{telefone}}\n🦷 Tipo: {{tipo_consulta}}\n⏰ Período: {{periodo}}\n\nNossa recepcionadora entrará em contato em até 1 hora para confirmar o horário exato.",
       "next": "end"
     },
     {

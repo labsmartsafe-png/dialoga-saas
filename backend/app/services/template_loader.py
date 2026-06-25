@@ -1,15 +1,17 @@
 """
 Serviço para carregar templates JSON do diretório /templates.
 """
+
 import json
 import logging
 from pathlib import Path
 from typing import List, Dict, Any
+
 from sqlalchemy.orm import Session
 
 from ..models import Template
 
-logger = logging.getLogger("whatsflow.templates")
+logger = logging.getLogger("dialoga.templates")
 
 # Diretórios onde os templates JSON podem estar
 TEMPLATE_DIRS = [
@@ -46,6 +48,7 @@ def load_all_template_files() -> List[Dict[str, Any]]:
 def seed_templates(db: Session) -> int:
     """
     Insere templates no banco se ainda não existirem.
+    Atualiza os existentes caso os arquivos tenham mudado.
     Retorna quantidade de templates inseridos.
     """
     try:
@@ -55,12 +58,15 @@ def seed_templates(db: Session) -> int:
         return 0
 
     inserted = 0
+
     for tpl in files:
         slug = tpl.get("slug")
         if not slug:
             logger.warning("Template sem slug em %s - ignorado", tpl.get("_file"))
             continue
+
         existing = db.query(Template).filter(Template.slug == slug).first()
+
         if existing:
             # Atualiza dados caso o arquivo tenha mudado
             existing.name = tpl.get("name", existing.name)
@@ -69,6 +75,7 @@ def seed_templates(db: Session) -> int:
             existing.icon = tpl.get("icon", existing.icon)
             existing.flow_data = tpl.get("nodes", tpl.get("flow_data", []))
             continue
+
         db.add(
             Template(
                 slug=slug,
@@ -80,7 +87,11 @@ def seed_templates(db: Session) -> int:
             )
         )
         inserted += 1
+
+    # BUGFIX: commit sempre, mesmo se só houver updates (antes estava dentro do if inserted)
+    db.commit()
+
     if inserted:
-        db.commit()
         logger.info("%d templates inseridos no banco", inserted)
+
     return inserted

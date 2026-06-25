@@ -1,225 +1,516 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Leads â€” dIAloga+</title>
+  <title>Leads - dIAloga+</title>
   <link rel="stylesheet" href="css/styles.css">
+  <style>
+    /* Estilos específicos do CRM */
+    .crm-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 20px;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .stat-card .stat-icon {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .stat-card .stat-icon.blue { background: #dbeafe; }
+    .stat-card .stat-icon.yellow { background: #fef3c7; }
+    .stat-card .stat-icon.green { background: #d1fae5; }
+    .stat-card .stat-icon.purple { background: #ede9fe; }
+    .stat-card .stat-info .stat-num { font-size: 24px; font-weight: 800; color: var(--text); }
+    .stat-card .stat-info .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .search-box {
+      position: relative;
+      flex: 1;
+      min-width: 200px;
+    }
+    .search-box input {
+      width: 100%;
+      padding: 10px 14px 10px 40px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 14px;
+    }
+    .search-box::before {
+      content: "🔍";
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+    }
+
+    .lead-table { width: 100%; }
+    .lead-table th { font-size: 12px; }
+    .lead-table td { vertical-align: top; padding: 14px 12px; }
+
+    .lead-name { font-weight: 700; font-size: 14px; color: var(--text); }
+    .lead-contact { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+    .context-tags { display: flex; flex-wrap: wrap; gap: 4px; max-width: 350px; }
+    .ctx-tag {
+      background: #f3f4f6;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .ctx-tag .ctx-key { color: var(--muted); font-weight: 600; }
+
+    .status-select {
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 2px solid transparent;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+    }
+    .status-select.novo { background: #dbeafe; color: #1e40af; }
+    .status-select.qualificado { background: #fef3c7; color: #92400e; }
+    .status-select.convertido { background: #d1fae5; color: #065f46; }
+    .status-select.perdido { background: #fee2e2; color: #991b1b; }
+
+    .lead-date { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+    .lead-actions { display: flex; gap: 6px; }
+    .btn-icon {
+      width: 32px; height: 32px;
+      border: none; border-radius: 8px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      transition: all 0.15s;
+    }
+    .btn-icon.danger { background: #fee2e2; color: #991b1b; }
+    .btn-icon.danger:hover { background: #fecaca; }
+
+    .detail-row td {
+      background: #f9fafb;
+      padding: 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .detail-content {
+      padding: 16px 24px;
+      display: none;
+    }
+    .detail-content.open { display: block; }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .detail-item {
+      background: #fff;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .detail-item .d-key {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .detail-item .d-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    .clickable-row { cursor: pointer; }
+    .clickable-row:hover td { background: #f0f4ff; }
+    .lead-chevron { font-size: 12px; color: var(--muted); transition: transform 0.2s; }
+    .lead-chevron.open { transform: rotate(90deg); }
+
+    .empty-leads {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+    .empty-leads .icon { font-size: 64px; margin-bottom: 16px; }
+
+    @media (max-width: 900px) {
+      .context-tags { max-width: 100%; }
+      .lead-table { font-size: 13px; }
+    }
+  </style>
 </head>
 <body>
 
 <nav class="navbar">
   <div class="brand">
-    <div class="logo">âš¡</div>
-    <span>dIAloga+</span>
+    <img src="img/logo-dialoga.png" alt="dIAloga+">
   </div>
   <nav>
     <a href="dashboard.html">Dashboard</a>
     <a href="builder.html">Fluxos</a>
-    <a href="leads.html" style="color: var(--primary-dark); border-bottom-color: var(--primary);">Leads</a>
+    <a href="leads.html" class="active">Leads</a>
   </nav>
   <div class="user-area" id="user-area"></div>
 </nav>
 
 <main class="container container-lg">
-
   <div class="flex justify-between items-center mb-3">
     <div>
-      <h1 style="font-size: 26px;">Leads</h1>
-      <p class="text-muted">Todos os contatos capturados pelos seus fluxos.</p>
+      <h1 style="font-size: 26px;">Leads (CRM)</h1>
+      <p class="text-muted">Todos os contatos e variáveis capturadas pelos seus fluxos.</p>
     </div>
     <div class="flex gap-1">
-      <button class="btn btn-secondary" id="btn-export">ðŸ“¥ Exportar CSV</button>
+      <button class="btn btn-secondary" id="btn-export">📥 Exportar CSV</button>
+      <a href="builder.html" class="btn btn-primary">+ Novo fluxo</a>
     </div>
   </div>
 
   <div id="alert-area"></div>
 
+  <!-- Cards de resumo -->
+  <div class="crm-stats" id="crm-stats">
+    <div class="stat-card">
+      <div class="stat-icon purple">📊</div>
+      <div class="stat-info">
+        <div class="stat-num" id="stat-total">0</div>
+        <div class="stat-label">Total</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon blue">🆕</div>
+      <div class="stat-info">
+        <div class="stat-num" id="stat-novo">0</div>
+        <div class="stat-label">Novos</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon yellow">⭐</div>
+      <div class="stat-info">
+        <div class="stat-num" id="stat-qualificado">0</div>
+        <div class="stat-label">Qualificados</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green">✅</div>
+      <div class="stat-info">
+        <div class="stat-num" id="stat-convertido">0</div>
+        <div class="stat-label">Convertidos</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Filtros -->
   <div class="filters-bar">
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="Buscar por nome, telefone, interesse...">
+    </div>
     <div class="form-group">
-      <label>Fluxo</label>
       <select class="form-control" id="filter-flow">
-        <option value="">Todos</option>
+        <option value="">Todos os fluxos</option>
       </select>
     </div>
     <div class="form-group">
-      <label>Status</label>
       <select class="form-control" id="filter-status">
-        <option value="">Todos</option>
+        <option value="">Todos status</option>
         <option value="novo">Novo</option>
         <option value="qualificado">Qualificado</option>
         <option value="convertido">Convertido</option>
         <option value="perdido">Perdido</option>
       </select>
     </div>
-    <div class="form-group">
-      <label>De</label>
-      <input class="form-control" type="date" id="filter-from">
-    </div>
-    <div class="form-group">
-      <label>AtÃ©</label>
-      <input class="form-control" type="date" id="filter-to">
-    </div>
     <button class="btn btn-primary" id="btn-filter">Filtrar</button>
     <button class="btn btn-secondary" id="btn-clear">Limpar</button>
   </div>
 
+  <!-- Tabela -->
   <div class="table-wrap">
-    <table class="table">
+    <table class="table lead-table">
       <thead>
         <tr>
-          <th>#</th>
-          <th>Nome</th>
-          <th>Telefone</th>
+          <th style="width: 30px;"></th>
+          <th>Nome / Contato</th>
+          <th>Detalhes Capturados</th>
           <th>Fluxo</th>
-          <th>Etapa</th>
           <th>Status</th>
-          <th>Origem</th>
           <th>Data</th>
-          <th>AÃ§Ãµes</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody id="leads-tbody">
-        <tr><td colspan="9" class="text-center"><div class="spinner"></div></td></tr>
+        <tr><td colspan="7" class="text-center"><div class="spinner"></div></td></tr>
       </tbody>
     </table>
   </div>
 
+  <p class="text-muted text-center mt-2" style="font-size: 12px;" id="lead-count"></p>
 </main>
 
-<script>window.API_BASE = "http://localhost:8000";</script>
+<script>
+  window.API_BASE = "http://localhost:8000";
+</script>
 <script src="js/api.js"></script>
 <script src="js/auth.js"></script>
 <script>
-  (async function () {
-    const alertArea = document.getElementById("alert-area");
-    function showAlert(msg, type = "error") {
-      alertArea.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
-    }
-    function escapeHtml(s) {
-      return String(s || "").replace(/[&<>"']/g, c => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-      }[c]));
-    }
-    function fmt(iso) {
-      if (!iso) return "â€”";
-      try { return new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }); }
-      catch { return iso; }
-    }
+(async function () {
+  const alertArea = document.getElementById("alert-area");
+  let allLeads = [];
+  let flows = [];
+  let flowMap = {};
 
-    const user = await WFAuth.requireAuth();
-    if (!user) return;
-    WFAuth.renderUserChip(document.getElementById("user-area"), user);
+  function showAlert(msg, type) {
+    alertArea.innerHTML = '<div class="alert alert-' + (type || "error") + '">' + msg + '</div>';
+    setTimeout(() => alertArea.innerHTML = "", 5000);
+  }
 
-    let flows = [];
-    try {
-      flows = await WFApi.listFlows();
-      const sel = document.getElementById("filter-flow");
-      flows.forEach(f => {
-        const opt = document.createElement("option");
-        opt.value = f.id;
-        opt.textContent = f.name;
-        sel.appendChild(opt);
-      });
-    } catch (e) { console.error(e); }
-
-    async function load() {
-      const params = new URLSearchParams();
-      const fid = document.getElementById("filter-flow").value;
-      const st = document.getElementById("filter-status").value;
-      const df = document.getElementById("filter-from").value;
-      const dt = document.getElementById("filter-to").value;
-      if (fid) params.set("flow_id", fid);
-      if (st) params.set("status", st);
-      if (df) params.set("date_from", df);
-      if (dt) params.set("date_to", dt);
-      const qs = params.toString() ? "?" + params.toString() : "";
-
-      try {
-        const leads = await WFApi.listLeads(qs);
-        const tbody = document.getElementById("leads-tbody");
-        if (!leads.length) {
-          tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="icon">ðŸŽ¯</div>Nenhum lead encontrado com os filtros atuais.</div></td></tr>`;
-          return;
-        }
-        const flowMap = {};
-        flows.forEach(f => flowMap[f.id] = f.name);
-        tbody.innerHTML = leads.map(l => `
-          <tr>
-            <td>${l.id}</td>
-            <td>${escapeHtml(l.name || "â€”")}</td>
-            <td>${escapeHtml(l.phone || "â€”")}</td>
-            <td>${escapeHtml(flowMap[l.flow_id] || "â€”")}</td>
-            <td>${escapeHtml(l.stage || "â€”")}</td>
-            <td>
-              <select class="form-control" data-status="${l.id}" style="width: 140px; padding: 4px 8px;">
-                ${["novo","qualificado","convertido","perdido"].map(s =>
-                  `<option value="${s}" ${l.status === s ? "selected" : ""}>${s}</option>`).join("")}
-              </select>
-            </td>
-            <td>${escapeHtml(l.source || "â€”")}</td>
-            <td>${fmt(l.created_at)}</td>
-            <td class="actions">
-              <button class="btn btn-danger btn-sm" data-del="${l.id}">Excluir</button>
-            </td>
-          </tr>
-        `).join("");
-
-        // Status change handlers
-        tbody.querySelectorAll("[data-status]").forEach(el => {
-          el.addEventListener("change", async () => {
-            try {
-              await WFApi.updateLead(parseInt(el.dataset.status, 10), { status: el.value });
-              showAlert("Status atualizado!", "success");
-            } catch (e) {
-              showAlert("Erro: " + e.message);
-            }
-          });
-        });
-        // Delete handlers
-        tbody.querySelectorAll("[data-del]").forEach(el => {
-          el.addEventListener("click", async () => {
-            if (!confirm("Excluir este lead?")) return;
-            try {
-              await WFApi.deleteLead(parseInt(el.dataset.del, 10));
-              load();
-            } catch (e) {
-              showAlert("Erro: " + e.message);
-            }
-          });
-        });
-      } catch (e) {
-        showAlert(e.message);
-      }
-    }
-
-    document.getElementById("btn-filter").addEventListener("click", load);
-    document.getElementById("btn-clear").addEventListener("click", () => {
-      ["filter-flow","filter-status","filter-from","filter-to"].forEach(id =>
-        document.getElementById(id).value = "");
-      load();
+  function escapeHtml(s) {
+    return String(s || "").replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
-    document.getElementById("btn-export").addEventListener("click", () => {
-      const fid = document.getElementById("filter-flow").value;
-      const qs = fid ? "?flow_id=" + fid : "";
-      // NecessÃ¡rio token: baixamos via fetch + blob para manter Authorization
-      fetch(WFApi.exportLeadsUrl(qs), {
-        headers: { "Authorization": "Bearer " + WFApi.getToken() }
-      }).then(r => r.blob()).then(blob => {
+  }
+
+  function fmt(iso) {
+    if (!iso) return "-";
+    try {
+      return new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+    } catch { return iso; }
+  }
+
+  // Campos do contexto que NÃO repetem as colunas principais
+  const SKIP_KEYS = ["nome", "name", "telefone", "phone", "email"];
+
+  function getContextTags(context) {
+    if (!context || typeof context !== "object") return [];
+    const tags = [];
+    for (const [key, val] of Object.entries(context)) {
+      if (SKIP_KEYS.includes(key.toLowerCase())) continue;
+      if (val === null || val === undefined || val === "") continue;
+      tags.push({ key, value: String(val) });
+    }
+    return tags;
+  }
+
+  function renderStats(leads) {
+    document.getElementById("stat-total").textContent = leads.length;
+    document.getElementById("stat-novo").textContent = leads.filter(l => l.status === "novo").length;
+    document.getElementById("stat-qualificado").textContent = leads.filter(l => l.status === "qualificado").length;
+    document.getElementById("stat-convertido").textContent = leads.filter(l => l.status === "convertido").length;
+  }
+
+  function renderLeads(leads) {
+    const tbody = document.getElementById("leads-tbody");
+    const countEl = document.getElementById("lead-count");
+
+    renderStats(leads);
+    countEl.textContent = leads.length + " lead(s) encontrado(s)";
+
+    if (!leads.length) {
+      tbody.innerHTML = '<tr><td colspan="7"><div class="empty-leads"><div class="icon">📭</div><h3>Nenhum lead encontrado</h3><p>Faça uma simulação no editor de fluxos para capturar leads.</p><br><a href="builder.html" class="btn btn-primary">Ir para Fluxos</a></div></td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = leads.map(function (l) {
+      const tags = getContextTags(l.context);
+      const initial = (l.name || "?").charAt(0).toUpperCase();
+      const status = l.status || "novo";
+
+      // Tags resumidas (máx 4 inline)
+      const tagsHtml = tags.length
+        ? tags.slice(0, 4).map(t =>
+            '<span class="ctx-tag"><span class="ctx-key">' + escapeHtml(t.key) + ':</span> ' + escapeHtml(t.value) + '</span>'
+          ).join("") + (tags.length > 4 ? '<span class="ctx-tag" style="background:#ede9fe;color:#5b21b6;font-weight:600;">+' + (tags.length - 4) + ' mais</span>' : "")
+        : '<span class="text-muted" style="font-size:12px;">Sem detalhes extras</span>';
+
+      // Detalhes completos (expandível)
+      const detailHtml = tags.length
+        ? '<div class="detail-grid">' + tags.map(t =>
+            '<div class="detail-item"><div class="d-key">' + escapeHtml(t.key) + '</div><div class="d-value">' + escapeHtml(t.value) + '</div></div>'
+          ).join("") + '</div>'
+        : '<p class="text-muted">Nenhuma variável adicional capturada.</p>';
+
+      return '<tr class="clickable-row" data-lead-id="' + l.id + '">' +
+        '<td><span class="lead-chevron" id="chevron-' + l.id + '">▶</span></td>' +
+        '<td>' +
+          '<div style="display:flex;align-items:center;gap:10px;">' +
+            '<div style="width:36px;height:36px;border-radius:50%;background:var(--gradient);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;">' + escapeHtml(initial) + '</div>' +
+            '<div>' +
+              '<div class="lead-name">' + escapeHtml(l.name || "Sem nome") + '</div>' +
+              '<div class="lead-contact">📱 ' + escapeHtml(l.phone || "-") + (l.email ? ' &nbsp;📧 ' + escapeHtml(l.email) : '') + '</div>' +
+            '</div>' +
+          '</div>' +
+        '</td>' +
+        '<td><div class="context-tags">' + tagsHtml + '</div></td>' +
+        '<td><span class="badge">' + escapeHtml(flowMap[l.flow_id] || "-") + '</span></td>' +
+        '<td>' +
+          '<select class="status-select ' + status + '" data-status="' + l.id + '">' +
+            '<option value="novo" ' + (status === "novo" ? "selected" : "") + '>Novo</option>' +
+            '<option value="qualificado" ' + (status === "qualificado" ? "selected" : "") + '>Qualificado</option>' +
+            '<option value="convertido" ' + (status === "convertido" ? "selected" : "") + '>Convertido</option>' +
+            '<option value="perdido" ' + (status === "perdido" ? "selected" : "") + '>Perdido</option>' +
+          '</select>' +
+        '</td>' +
+        '<td><div class="lead-date">' + fmt(l.created_at) + '</div></td>' +
+        '<td><div class="lead-actions">' +
+          '<button class="btn-icon danger" data-del="' + l.id + '" title="Excluir">🗑️</button>' +
+        '</div></td>' +
+      '</tr>' +
+      '<tr class="detail-row" id="detail-row-' + l.id + '" style="display:none;"><td colspan="7"><div class="detail-content">' +
+        '<h4 style="font-size:14px;margin-bottom:12px;color:var(--secondary);">📋 Variáveis Capturadas</h4>' +
+        detailHtml +
+      '</div></td></tr>';
+    }).join("");
+
+    // Toggle detalhes ao clicar na linha
+    tbody.querySelectorAll(".clickable-row").forEach(function (row) {
+      row.addEventListener("click", function (e) {
+        // Não expande se clicou no select de status ou botão de excluir
+        if (e.target.tagName === "SELECT" || e.target.tagName === "OPTION" || e.target.closest("[data-del]")) return;
+        const id = row.dataset.leadId;
+        const detailRow = document.getElementById("detail-row-" + id);
+        const chevron = document.getElementById("chevron-" + id);
+        if (detailRow.style.display === "none") {
+          detailRow.style.display = "table-row";
+          chevron.classList.add("open");
+          chevron.textContent = "▼";
+        } else {
+          detailRow.style.display = "none";
+          chevron.classList.remove("open");
+          chevron.textContent = "▶";
+        }
+      });
+    });
+
+    // Status change
+    tbody.querySelectorAll("[data-status]").forEach(function (sel) {
+      sel.addEventListener("change", async function () {
+        const id = parseInt(sel.dataset.status, 10);
+        const newStatus = sel.value;
+        try {
+          await WFApi.updateLead(id, { status: newStatus });
+          // Atualiza a cor do select
+          sel.className = "status-select " + newStatus;
+          // Recarrega stats
+          const lead = allLeads.find(l => l.id === id);
+          if (lead) lead.status = newStatus;
+          renderStats(filteredLeads());
+          showAlert("Status atualizado para \"" + newStatus + "\"!", "success");
+        } catch (e) {
+          showAlert("Erro ao atualizar: " + e.message);
+        }
+      });
+    });
+
+    // Delete
+    tbody.querySelectorAll("[data-del]").forEach(function (btn) {
+      btn.addEventListener("click", async function (e) {
+        e.stopPropagation();
+        const id = parseInt(btn.dataset.del, 10);
+        if (!confirm("Excluir este lead permanentemente?")) return;
+        try {
+          await WFApi.deleteLead(id);
+          showAlert("Lead excluído!", "success");
+          await loadLeads();
+        } catch (e) { showAlert("Erro: " + e.message); }
+      });
+    });
+  }
+
+  function filteredLeads() {
+    const search = document.getElementById("search-input").value.toLowerCase().trim();
+    const flowFilter = document.getElementById("filter-flow").value;
+    const statusFilter = document.getElementById("filter-status").value;
+
+    return allLeads.filter(function (l) {
+      if (flowFilter && l.flow_id !== parseInt(flowFilter, 10)) return false;
+      if (statusFilter && l.status !== statusFilter) return false;
+      if (search) {
+        const haystack = [
+          l.name, l.phone, l.email,
+          JSON.stringify(l.context || {})
+        ].join(" ").toLowerCase();
+        if (!haystack.includes(search)) return false;
+      }
+      return true;
+    });
+  }
+
+  function applyFilters() {
+    renderLeads(filteredLeads());
+  }
+
+  async function loadLeads() {
+    try {
+      allLeads = await WFApi.listLeads();
+      renderLeads(allLeads);
+    } catch (e) {
+      showAlert("Erro ao carregar leads: " + e.message);
+    }
+  }
+
+  // ===== INIT =====
+  const user = await WFAuth.requireAuth();
+  if (!user) return;
+  WFAuth.renderUserChip(document.getElementById("user-area"), user);
+
+  // Carrega fluxos para o filtro e mapa de nomes
+  try {
+    flows = await WFApi.listFlows();
+    flows.forEach(f => flowMap[f.id] = f.name);
+    const sel = document.getElementById("filter-flow");
+    flows.forEach(f => {
+      const opt = document.createElement("option");
+      opt.value = f.id; opt.textContent = f.name;
+      sel.appendChild(opt);
+    });
+  } catch (e) { console.error(e); }
+
+  await loadLeads();
+
+  // Event listeners
+  document.getElementById("search-input").addEventListener("input", applyFilters);
+  document.getElementById("filter-flow").addEventListener("change", applyFilters);
+  document.getElementById("filter-status").addEventListener("change", applyFilters);
+  document.getElementById("btn-filter").addEventListener("click", applyFilters);
+  document.getElementById("btn-clear").addEventListener("click", function () {
+    document.getElementById("search-input").value = "";
+    document.getElementById("filter-flow").value = "";
+    document.getElementById("filter-status").value = "";
+    applyFilters();
+  });
+
+  document.getElementById("btn-export").addEventListener("click", function () {
+    const fid = document.getElementById("filter-flow").value;
+    const qs = fid ? "?flow_id=" + fid : "";
+    fetch(WFApi.exportLeadsUrl(qs), { headers: { "Authorization": "Bearer " + WFApi.getToken() } })
+      .then(r => r.blob())
+      .then(blob => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
-        a.href = url; a.download = "leads-dIAloga+.csv";
-        a.click(); URL.revokeObjectURL(url);
-      }).catch(err => alert("Erro ao exportar: " + err.message));
-    });
-
-    load();
-  })();
+        a.href = url; a.download = "leads-dialoga.csv"; a.click();
+        URL.revokeObjectURL(url);
+        showAlert("CSV exportado com sucesso!", "success");
+      })
+      .catch(err => showAlert("Erro ao exportar: " + err.message));
+  });
+})();
 </script>
-
 </body>
 </html>
-
-
-

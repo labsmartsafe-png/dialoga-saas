@@ -90,6 +90,9 @@ class FlowNode(BaseModel):
     delay_seconds: Optional[int] = None
     condition: Optional[Dict[str, Any]] = None
     fallback: Optional[str] = None
+    # Campos para canvas visual (Fase 1 da Opção C)
+    position_x: Optional[float] = None  # posição X no canvas (pixels)
+    position_y: Optional[float] = None  # posição Y no canvas (pixels)
 
 
 class FlowCreate(BaseModel):

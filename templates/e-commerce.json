@@ -3,7 +3,7 @@
   "name": "E-commerce",
   "description": "Lojas online de diversos segmentos. Mostra catálogo, processa pedidos e acompanha entregas.",
   "category": "E-commerce",
-  "icon": "🛒",
+  "icon": "<img src='img/icons/shop.svg' class='emoji-icon' alt='E-commerce'>",
   "nodes": [
     {
       "id": "boas_vindas",
@@ -38,13 +38,13 @@
     {
       "id": "info_categoria",
       "type": "message",
-      "content": "🛍️ *{{categoria}} em destaque:*\n\n📱 Smartphones a partir de R$ 1.299\n👕 Camisetas premium R$ 79\n🏠 Decoração R$ 49\n🎧 Fones bluetooth R$ 159\n\n🚚 Frete grátis acima de R$ 199\n💳 Parcelamento em até 12x sem juros\n\nAcesse: shop.com.br/{{categoria}}",
+      "content": "🛍️ *{{categoria}} em destaque:*\n\n📱 Smartphones a partir de R$ 1.299\n👕 Camisetas premium R$ 79\n🏠 Decoração R$ 49\n🎧 Fones bluetooth R$ 159\n\n🚚 Frete grátis acima de R$ 199\n💳 Parcelamento em até 12x sem juros\n\n🔗 Acesse: shop.com.br/{{categoria}}",
       "next": "quer_comprar"
     },
     {
       "id": "info_promocoes",
       "type": "message",
-      "content": "🎁 *Promoções imperdíveis:*\n\n⚡ Black Friday antecipada: até 70% off\n🎯 Compre 2, leve 3 em selecionados\n💰 Cupom WHATS10: 10% off na primeira compra\n🚚 Frete grátis acima de R$ 99\n\n⏰ Válido até domingo ou enquanto durar o estoque!",
+      "content": "🎁 *Promoções imperdíveis:*\n\n⚡ Black Friday antecipada: até 70% off\n🎯 Compre 2, leve 3 em selecionados\n💰 Cupom DIALOGA10: 10% off na primeira compra\n🚚 Frete grátis acima de R$ 99\n\n⏰ Válido até domingo ou enquanto durar o estoque!",
       "next": "quer_comprar"
     },
     {
@@ -56,7 +56,7 @@
     {
       "id": "info_trocas",
       "type": "message",
-      "content": "🔄 *Trocas e devoluções:*\n\n• Prazo de 7 dias após o recebimento\n• Produto deve estar na embalagem original\n• Frete de devolução por nossa conta\n• Reembolso em até 10 dias úteis\n\n📋 Saiba mais em: shop.com.br/trocas",
+      "content": "🔄 *Trocas e devoluções:*\n\n• Prazo de 7 dias após o recebimento\n• Produto deve estar na embalagem original\n• Frete de devolução por nossa conta\n• Reembolso em até 10 dias úteis\n\n📦 Saiba mais em: shop.com.br/trocas",
       "next": "menu_principal"
     },
     {
@@ -69,7 +69,7 @@
     {
       "id": "info_rastreio",
       "type": "message",
-      "content": "📦 Pedido #{{numero_pedido}}\n\n📍 Status: Em trânsito\n🚚 Previsão de entrega: 2 a 4 dias úteis\n🏙️ Origem: São Paulo - SP\n\nVocê receberá atualizações automáticas!\n\nPosso ajudar com mais alguma coisa?",
+      "content": "📦 Pedido #{{numero_pedido}}\n\n📍 Status: Em trânsito\n📅 Previsão de entrega: 2 a 4 dias úteis\n🏙️ Origem: São Paulo - SP\n\nVocê receberá atualizações automáticas!\n\nPosso ajudar com mais alguma coisa?",
       "next": "menu_principal"
     },
     {
@@ -85,7 +85,7 @@
     {
       "id": "despedida",
       "type": "message",
-      "content": "Tudo bem! 😊\n\nNosso cupom *WHATS10* está sempre disponível para você. Salve nosso contato para ofertas exclusivas!\n\nAté a próxima! 🛍️",
+      "content": "Tudo bem! 😊\n\nNosso cupom *DIALOGA10* está sempre disponível para você. Salve nosso contato para ofertas exclusivas!\n\nAté a próxima! 🛍️",
       "next": "end"
     },
     {
@@ -112,7 +112,7 @@
     {
       "id": "confirmacao",
       "type": "message",
-      "content": "✅ *Quase lá!*\n\n👤 {{nome}}\n📱 {{telefone}}\n📧 {{email}}\n🎁 Cupom *WHATS10* aplicado (10% off)\n\nNossa equipe entrará em contato com o link de pagamento exclusivo para você!\n\n🛍️ Boas compras!",
+      "content": "✅ *Quase lá!*\n\n👤 {{nome}}\n📱 {{telefone}}\n📧 {{email}}\n🎁 Cupom *DIALOGA10* aplicado (10% off)\n\nNossa equipe entrará em contato com o link de pagamento exclusivo para você!\n\n🛍️ Boas compras!",
       "next": "end"
     },
     {

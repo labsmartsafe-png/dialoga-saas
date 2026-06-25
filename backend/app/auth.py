@@ -1,7 +1,7 @@
 """
 Autenticação JWT e hashing de senhas.
 """
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -36,7 +36,7 @@ def create_access_token(data: dict, expires_minutes: Optional[int] = None) -> st
     """Cria token JWT assinado."""
     to_encode = data.copy()
     expire_minutes = expires_minutes or settings.jwt_expiration_minutes
-    expire = datetime.utcnow() + timedelta(minutes=expire_minutes)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=expire_minutes)
     to_encode.update({"exp": expire})
     encoded = jwt.encode(
         to_encode, settings.secret_key, algorithm=settings.jwt_algorithm

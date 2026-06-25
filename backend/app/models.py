@@ -3,13 +3,18 @@ Modelos SQLAlchemy do WhatsFlow.
 
 Define as entidades principais: User, Flow, Lead, Template, Conversation, Message.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import (
     Column, String, Integer, Text, DateTime, Boolean, ForeignKey, JSON, Float
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.mutable import MutableDict
 from .database import Base
+
+
+def utcnow():
+    """Retorna datetime atual em UTC com timezone-aware."""
+    return datetime.now(timezone.utc)
 
 
 class User(Base):
@@ -24,8 +29,8 @@ class User(Base):
     phone = Column(String(50), nullable=True)
     plan = Column(String(50), default="basico")  # basico, profissional, enterprise
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
     flows = relationship("Flow", back_populates="owner", cascade="all, delete-orphan")
     leads = relationship("Lead", back_populates="owner", cascade="all, delete-orphan")
@@ -44,7 +49,7 @@ class Template(Base):
     # Estrutura do fluxo (JSON)
     flow_data = Column(JSON, nullable=False)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
 
 
 class Flow(Base):
@@ -61,8 +66,8 @@ class Flow(Base):
     start_node_id = Column(String(100), nullable=True)
     active = Column(Boolean, default=True)
     template_slug = Column(String(100), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
     owner = relationship("User", back_populates="flows")
     leads = relationship("Lead", back_populates="flow")
@@ -87,7 +92,7 @@ class Lead(Base):
     context = Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
     source = Column(String(50), default="simulator")  # simulator | whatsapp
     status = Column(String(50), default="novo")  # novo, qualificado, convertido, perdido
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=utcnow, index=True)
 
     owner = relationship("User", back_populates="leads")
     flow = relationship("Flow", back_populates="leads")
@@ -105,7 +110,7 @@ class Conversation(Base):
     # Estado atual da conversa (id do nó atual + contexto) - MutableDict detecta mutações
     state = Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
     is_active = Column(Boolean, default=True)
-    started_at = Column(DateTime, default=datetime.utcnow)
+    started_at = Column(DateTime, default=utcnow)
     ended_at = Column(DateTime, nullable=True)
 
     flow = relationship("Flow", back_populates="conversations")
@@ -126,6 +131,6 @@ class Message(Base):
     content = Column(Text, nullable=False)
     node_id = Column(String(100), nullable=True)
     message_type = Column(String(50), default="text")
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
 
     conversation = relationship("Conversation", back_populates="messages")

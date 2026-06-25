@@ -8,11 +8,15 @@ Responsável por:
 - Manter contexto da conversa
 - Detectar fim de fluxo e encaminhar para humano
 """
-from datetime import datetime
+import time
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Tuple
 from sqlalchemy.orm import Session
 
 from ..models import Flow, Conversation, Message, Lead
+
+# Limite maximo de delay (em segundos) para evitar travamento
+MAX_DELAY_SECONDS = 30
 
 
 # Tipos válidos de nó
@@ -161,12 +165,29 @@ def _run_until_blocking(db: Session, conv: Conversation, flow: Flow) -> None:
         if ntype == "message":
             text = _render(node.get("content", ""), conv.state.get("context", {}))
             _save_message(db, conv.id, "outbound", "bot", text, current_id)
-            current_id = node.get("next") or current_id
+            # BUGFIX: nao usar 'or current_id' pois causa loop infinito
+            current_id = node.get("next")
             conv.state["current_node"] = current_id
 
         elif ntype == "delay":
-            # Em simulação, ignoramos o tempo real - apenas avançamos
-            current_id = node.get("next") or current_id
+            # BUGFIX: agora o delay espera de verdade!
+            segundos = node.get("delay_seconds", 1) or 1
+            try:
+                segundos = int(segundos)
+            except (ValueError, TypeError):
+                segundos = 1
+            # Limita ao maximo permitido
+            segundos = min(segundos, MAX_DELAY_SECONDS)
+            # Salva uma mensagem de sistema informando o delay
+            _save_message(
+                db, conv.id, "outbound", "system",
+                f"[Aguardando {segundos}s...]", current_id
+            )
+            db.commit()  # Persiste a mensagem imediatamente
+            # Renova a sessao para evitar expiracao durante sleep longo
+            db.expire_all()
+            time.sleep(segundos)
+            current_id = node.get("next")
             conv.state["current_node"] = current_id
 
         elif ntype == "condition":
@@ -181,7 +202,7 @@ def _run_until_blocking(db: Session, conv: Conversation, flow: Flow) -> None:
                 db, conv.id, "outbound", "system",
                 f"[WEBHOOK acionado] {node.get('content','')}", current_id
             )
-            current_id = node.get("next") or current_id
+            current_id = node.get("next")
             conv.state["current_node"] = current_id
 
         elif ntype == "human":
@@ -191,7 +212,7 @@ def _run_until_blocking(db: Session, conv: Conversation, flow: Flow) -> None:
                 current_id,
             )
             conv.is_active = False
-            conv.ended_at = datetime.utcnow()
+            conv.ended_at = datetime.now(timezone.utc)
             _ensure_lead(db, flow, conv.state.get("context", {}))
             return
 
@@ -204,7 +225,7 @@ def _run_until_blocking(db: Session, conv: Conversation, flow: Flow) -> None:
             # Cria/atualiza lead final
             _ensure_lead(db, flow, conv.state.get("context", {}))
             conv.is_active = False
-            conv.ended_at = datetime.utcnow()
+            conv.ended_at = datetime.now(timezone.utc)
             return
 
         elif ntype in ("question", "input"):
@@ -253,7 +274,7 @@ def send_user_message(
     if not node:
         # Conversa sem nó atual - finaliza
         conversation.is_active = False
-        conversation.ended_at = datetime.utcnow()
+        conversation.ended_at = datetime.now(timezone.utc)
         _ensure_lead(db, flow, (conversation.state or {}).get("context", {}))
         db.commit()
         return conversation
@@ -305,7 +326,7 @@ def send_user_message(
         # Sem próximo - finaliza
         conversation.state["current_node"] = None
         conversation.is_active = False
-        conversation.ended_at = datetime.utcnow()
+        conversation.ended_at = datetime.now(timezone.utc)
         _ensure_lead(db, flow, context)
     else:
         conversation.state["current_node"] = next_id

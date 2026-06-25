@@ -1,6 +1,5 @@
 """
-Testes básicos do WhatsFlow.
-
+Testes básicos do dIAloga+.
 Cobre:
 - Health check
 - Registro e login
@@ -9,8 +8,10 @@ Cobre:
 - CRUD de fluxo
 - Simulação completa (verifica se cria lead ao final)
 """
+
 import os
 import sys
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -18,9 +19,10 @@ from fastapi.testclient import TestClient
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "backend"))
 
-# Usa SQLite em memória para testes rápidos
-os.environ["DATABASE_URL"] = "sqlite:///./data/test_whatsflow.db"
+# Usa SQLite para testes
+os.environ["DATABASE_URL"] = "sqlite:///./data/test_dialoga.db"
 os.environ["SECRET_KEY"] = "test-secret-key-test-secret-key-test-secret-key-test-1234"
+os.environ["WHATSAPP_VERIFY_TOKEN"] = "dialoga-verify"
 
 from app.main import app  # noqa: E402
 from app.database import Base, engine  # noqa: E402
@@ -36,7 +38,8 @@ def setup_db():
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
-        seed_templates(db)
+        count = seed_templates(db)
+        print(f"\n[TEST SETUP] {count} templates carregados")
     finally:
         db.close()
 
@@ -50,11 +53,11 @@ def test_health():
 def test_root():
     r = client.get("/")
     assert r.status_code == 200
-    assert r.json()["app"] == "WhatsFlow SaaS"
+    assert "dIAloga" in r.json()["app"]
 
 
 def test_register_login_me():
-    email = f"teste_{os.urandom(3).hex()}@whatsflow.com"
+    email = f"teste_{os.urandom(3).hex()}@dialoga.com"
     r = client.post("/api/auth/register", json={
         "email": email,
         "password": "123456",
@@ -74,11 +77,10 @@ def test_register_login_me():
     r3 = client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
     assert r3.status_code == 200
     assert r3.json()["email"] == email
-    return email
 
 
 def test_register_duplicate_email():
-    email = f"dup_{os.urandom(3).hex()}@whatsflow.com"
+    email = f"dup_{os.urandom(3).hex()}@dialoga.com"
     client.post("/api/auth/register", json={
         "email": email,
         "password": "123456",
@@ -94,7 +96,7 @@ def test_register_duplicate_email():
 
 def test_login_wrong_password():
     r = client.post("/api/auth/login", json={
-        "email": "naoexiste@whatsflow.com",
+        "email": "naoexiste@dialoga.com",
         "password": "errada",
     })
     assert r.status_code == 401
@@ -112,7 +114,7 @@ def test_list_templates():
 
 def test_import_template_and_simulate():
     # Cria usuário único
-    email = f"sim_{os.urandom(3).hex()}@whatsflow.com"
+    email = f"sim_{os.urandom(3).hex()}@dialoga.com"
     r = client.post("/api/auth/register", json={
         "email": email,
         "password": "123456",
@@ -178,14 +180,14 @@ def test_import_template_and_simulate():
 
 
 def test_create_flow_update_delete():
-    email = f"flow_{os.urandom(3).hex()}@whatsflow.com"
+    email = f"flow_{os.urandom(3).hex()}@dialoga.com"
     client.post("/api/auth/register", json={
         "email": email,
         "password": "123456",
         "company_name": "Empresa Flow",
     })
     r = client.post("/api/auth/login", json={"email": email, "password": "123456"})
-    headers = {"Authorization": f"Bearer " + r.json()["access_token"]}
+    headers = {"Authorization": "Bearer " + r.json()["access_token"]}
 
     # Create
     r1 = client.post("/api/flows", headers=headers, json={
@@ -211,14 +213,15 @@ def test_create_flow_update_delete():
 
 
 def test_dashboard_metrics():
-    email = f"dash_{os.urandom(3).hex()}@whatsflow.com"
+    email = f"dash_{os.urandom(3).hex()}@dialoga.com"
     client.post("/api/auth/register", json={
         "email": email,
         "password": "123456",
         "company_name": "Empresa Dash",
     })
     r = client.post("/api/auth/login", json={"email": email, "password": "123456"})
-    headers = {"Authorization": f"Bearer " + r.json()["access_token"]}
+    headers = {"Authorization": "Bearer " + r.json()["access_token"}
+
     r = client.get("/api/dashboard/metrics", headers=headers)
     assert r.status_code == 200
     data = r.json()
@@ -239,7 +242,7 @@ def test_webhook_verify():
     """Webhook deve responder ao challenge do Meta."""
     r = client.get("/webhook/whatsapp", params={
         "hub.mode": "subscribe",
-        "hub.verify_token": "whatsflow-verify",  # valor padrão em .env.example
+        "hub.verify_token": "dialoga-verify",
         "hub.challenge": "1234567890",
     })
     assert r.status_code == 200
