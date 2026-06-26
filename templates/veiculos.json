@@ -3,7 +3,7 @@
   "name": "Loja de Veículos",
   "description": "Atendimento para lojas de carros e motos. Apresenta o estoque, qualifica o cliente e encaminha para o vendedor.",
   "category": "Veículos",
-  "icon": "<img src='img/icons/car.svg' class='emoji-icon' alt='Veículos'>",
+  "icon": "🚗",
   "nodes": [
     {
       "id": "boas_vindas",

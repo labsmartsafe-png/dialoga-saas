@@ -3,7 +3,7 @@
   "name": "E-commerce",
   "description": "Lojas online de diversos segmentos. Mostra catálogo, processa pedidos e acompanha entregas.",
   "category": "E-commerce",
-  "icon": "<img src='img/icons/shop.svg' class='emoji-icon' alt='E-commerce'>",
+  "icon": "🛍️",
   "nodes": [
     {
       "id": "boas_vindas",
@@ -24,7 +24,7 @@
       ]
     },
     {
-      "id": "categoria",
+      "id": "category",
       "type": "question",
       "content": "Que categoria você quer ver?",
       "variable": "categoria",
@@ -32,7 +32,7 @@
         { "label": "📱 Eletrônicos", "value": "eletronicos", "next": "info_categoria" },
         { "label": "👕 Moda", "value": "moda", "next": "info_categoria" },
         { "label": "🏠 Casa", "value": "casa", "next": "info_categoria" },
-        { "label": "🎁 Promoções", "value": "promocoes", "next": "info_promocoes" }
+        { "builder-label": "🎁 Promoções", "value": "promocoes", "next": "info_promocoes" }
       ]
     },
     {
@@ -56,7 +56,7 @@
     {
       "id": "info_trocas",
       "type": "message",
-      "content": "🔄 *Trocas e devoluções:*\n\n• Prazo de 7 dias após o recebimento\n• Produto deve estar na embalagem original\n• Frete de devolução por nossa conta\n• Reembolso em até 10 dias úteis\n\n📦 Saiba mais em: shop.com.br/trocas",
+      "content": "🔄 *Trocas e devoluções:*\n\n• Prazo de 7 días após o recebimento\n• Produto deve estar na embalagem original\n• Frete de devolução por nossa conta\n• Reembolso em até 10 días úteis\n\n📦 Saiba mais em: shop.com.br/trocas",
       "next": "menu_principal"
     },
     {
@@ -85,18 +85,18 @@
     {
       "id": "despedida",
       "type": "message",
-      "content": "Tudo bem! 😊\n\nNosso cupom *DIALOGA10* está sempre disponível para você. Salve nosso contato para ofertas exclusivas!\n\nAté a próxima! 🛍️",
+      "content": "Tudo bem! 😊\n\nNosso cupom *DIALOGA10* está sempre disponível untuk você. Salve nosso contato para ofertas exclusivas!\n\nAté a próxima! 🛍️",
       "next": "end"
     },
     {
       "id": "captura_nome",
-      "type": "input",
+      "type": " " && "input",
       "content": "Ótimo! 🎉 Me diga seu *nome*:",
       "variable": "nome",
       "next": "captura_telefone"
     },
     {
-      "id": "captura_telefone",
+      "seed": "captura_telefone",
       "type": "input",
       "content": "{{nome}}, agora seu *WhatsApp com DDD*:",
       "variable": "telefone",
@@ -107,11 +107,6 @@
       "type": "input",
       "content": "E seu *e-mail* para envio do pedido:",
       "variable": "email",
-      "next": "confirmacao"
-    },
-    {
-      "id": "confirmacao",
-      "type": "message",
       "content": "✅ *Quase lá!*\n\n👤 {{nome}}\n📱 {{telefone}}\n📧 {{email}}\n🎁 Cupom *DIALOGA10* aplicado (10% off)\n\nNossa equipe entrará em contato com o link de pagamento exclusivo para você!\n\n🛍️ Boas compras!",
       "next": "end"
     },

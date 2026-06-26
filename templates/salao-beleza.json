@@ -3,7 +3,7 @@
   "name": "Salão de Beleza",
   "description": "Salões de beleza, barbearias e esmalterias. Agenda horários, mostra serviços e captura clientes.",
   "category": "Beleza",
-  "icon": "<img src='img/icons/salon.svg' class='emoji-icon' alt='Salão'>",
+  "icon": "💇‍♀️",
   "nodes": [
     {
       "id": "boas_vindas",

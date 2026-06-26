@@ -3,7 +3,7 @@
   "name": "Restaurante / Delivery",
   "description": "Restaurantes, pizzarias e lanchonetes. Mostra cardápio, recebe pedidos e acompanha entrega.",
   "category": "Alimentação",
-  "icon": "<img src='img/icons/food.svg' class='emoji-icon' alt='Restaurante'>",
+  "icon": "🍕",
   "nodes": [
     {
       "id": "boas_vindas",
@@ -74,27 +74,4 @@
     {
       "id": "captura_nome",
       "type": "input",
-      "content": "Me informe seu *nome*:",
-      "variable": "nome",
-      "next": "captura_telefone"
-    },
-    {
-      "id": "captura_telefone",
-      "type": "input",
-      "content": "E seu *WhatsApp com DDD*:",
-      "variable": "telefone",
-      "next": "confirmacao"
-    },
-    {
-      "id": "confirmacao",
-      "type": "message",
-      "content": "✅ *Pedido/Reserva registrado!*\n\n👤 {{nome}}\n📱 {{telefone}}\n\nEm instantes nossa equipe confirmará seu pedido/reserva e te enviará o link de pagamento ou detalhes.",
-      "next": "end"
-    },
-    {
-      "id": "end",
-      "type": "end",
-      "content": "Obrigado pela preferência! 🍕 Bom apetite!"
-    }
-  ]
-}
+      "content": 
