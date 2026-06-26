@@ -17,10 +17,26 @@
       "content": "Escolha uma opção:",
       "variable": "interesse",
       "options": [
-        { "label": "📅 Agendar consulta", "value": "agendar", "next": "tipo_consulta" },
-        { "label": "🦷 Tratamentos", "value": "tratamentos", "next": "lista_tratamentos" },
-        { "label": "🏥 Convênios", "value": "convenios", "next": "info_convenios" },
-        { "label": "🚨 Emergência", "value": "emergencia", "next": "emergencia" }
+        {
+          "label": "📅 Agendar consulta",
+          "value": "agendar",
+          "next": "tipo_consulta"
+        },
+        {
+          "label": "🦷 Tratamentos",
+          "value": "tratamentos",
+          "next": "lista_tratamentos"
+        },
+        {
+          "label": "🏥 Convênios",
+          "value": "convenios",
+          "next": "info_convenios"
+        },
+        {
+          "label": "🚨 Emergência",
+          "value": "emergencia",
+          "next": "emergencia"
+        }
       ]
     },
     {
@@ -29,16 +45,32 @@
       "content": "Que tipo de consulta você precisa?",
       "variable": "tipo_consulta",
       "options": [
-        { "label": "Avaliação geral", "value": "avaliacao", "next": "captura_nome" },
-        { "label": "Limpeza", "value": "limpeza", "next": "captura_nome" },
-        { "label": "Clareamento", "value": "clareamento", "interesse": "tratamentos", "next": "captura_nome" },
-        { "label": "Canal", "value": "canal", "next": "captura_nome" }
+        {
+          "label": "Avaliação geral",
+          "value": "avaliacao",
+          "next": "captura_nome"
+        },
+        {
+          "label": "Limpeza",
+          "value": "limpeza",
+          "next": "captura_nome"
+        },
+        {
+          "label": "Clareamento",
+          "value": "clareamento",
+          "next": "captura_nome"
+        },
+        {
+          "label": "Canal",
+          "value": "canal",
+          "next": "captura_nome"
+        }
       ]
     },
     {
       "id": "lista_tratamentos",
       "type": "message",
-      "content": "🦷 *Nossos tratamentos:*\n\n✅ Limpeza e profilaxia\n✅ Clareamento dental\n✅ Implantes\n✅ Ortodontia (aparelhos)\n✅ Endodontia (canal)\n✅ Próteses e facetas\n✅ Urgência 24h\n\nTodos com tecnología de ponta e profissionais especializados.",
+      "content": "🦷 *Nossos tratamentos:*\n\n✅ Limpeza e profilaxia\n✅ Clareamento dental\n✅ Implantes\n✅ Ortodontia (aparelhos)\n✅ Endodontia (canal)\n✅ Próteses e facetas\n✅ Urgência 24h\n\nTodos com tecnologia de ponta e profissionais especializados.",
       "next": "menu_principal"
     },
     {
@@ -70,17 +102,29 @@
     {
       "id": "captura_data",
       "type": "question",
-      "content": "Qual período você prefere pentru a consulta?",
+      "content": "Qual período você prefere para a consulta?",
       "variable": "periodo",
       "options": [
-        { "label": "Manhã", "value": "manha", "next": "confirmacao" },
-        { "label": "Tarde", "value": "tarde", "next": "confirmacao" },
-        { "label": "Noite", "value": "noite", "next": "confirmacao" }
+        {
+          "label": "Manhã",
+          "value": "manha",
+          "next": "confirmacao"
+        },
+        {
+          "label": "Tarde",
+          "value": "tarde",
+          "next": "confirmacao"
+        },
+        {
+          "label": "Noite",
+          "value": "noite",
+          "next": "confirmacao"
+        }
       ]
     },
     {
       "id": "confirmacao",
-      "type": "page",
+      "type": "message",
       "content": "✅ *Agendamento solicitado!*\n\n📋 *Resumo:*\n👤 Paciente: {{nome}}\n📞 Contato: {{telefone}}\n🦷 Tipo: {{tipo_consulta}}\n⏰ Período: {{periodo}}\n\nNossa recepcionista entrará em contato em até 1 hora para confirmar o horário exato.",
       "next": "end"
     },

@@ -17,10 +17,26 @@
       "content": "Escolha uma opção:",
       "variable": "interesse",
       "options": [
-        { "label": "📅 Agendar horário", "value": "agendar", "next": "tipo_servico" },
-        { "label": "💰 Ver serviços", "value": "servicos", "next": "info_servicos" },
-        { "label": "🎁 Promoções", "value": "promocoes", "next": "info_promocoes" },
-        { "label": "📍 Localização", "value": "localizacao", "next": "info_localizacao" }
+        {
+          "label": "📅 Agendar horário",
+          "value": "agendar",
+          "next": "tipo_servico"
+        },
+        {
+          "label": "💰 Ver serviços",
+          "value": "servicos",
+          "next": "info_servicos"
+        },
+        {
+          "label": "🎁 Promoções",
+          "value": "promocoes",
+          "next": "info_promocoes"
+        },
+        {
+          "label": "📍 Localização",
+          "value": "localizacao",
+          "next": "info_localizacao"
+        }
       ]
     },
     {
@@ -29,10 +45,26 @@
       "content": "Qual serviço você quer agendar?",
       "variable": "servico",
       "options": [
-        { "label": "💇 Corte de cabelo", "value": "corte", "next": "captura_data" },
-        { "label": "🎨 Coloração", "value": "coloracao", "next": "captura_data" },
-        { "label": "💅 Manicure/Pedicure", "value": "manicure", "next": "captura_data" },
-        { "label": "✨ Escova progressiva", "value": "progressiva", "next": "captura_data" }
+        {
+          "label": "💇 Corte de cabelo",
+          "value": "corte",
+          "next": "captura_data"
+        },
+        {
+          "label": "🎨 Coloração",
+          "value": "coloracao",
+          "next": "captura_data"
+        },
+        {
+          "label": "💅 Manicure/Pedicure",
+          "value": "manicure",
+          "next": "captura_data"
+        },
+        {
+          "label": "✨ Escova progressiva",
+          "value": "progressiva",
+          "next": "captura_data"
+        }
       ]
     },
     {
@@ -59,9 +91,21 @@
       "content": "Para qual período você quer agendar?",
       "variable": "periodo",
       "options": [
-        { "label": "Manhã", "value": "manha", "next": "captura_nome" },
-        { "label": "Tarde", "value": "tarde", "next": "captura_nome" },
-        { "label": "Noite", "value": "noite", "next": "captura_nome" }
+        {
+          "label": "Manhã",
+          "value": "manha",
+          "next": "captura_nome"
+        },
+        {
+          "label": "Tarde",
+          "value": "tarde",
+          "next": "captura_nome"
+        },
+        {
+          "label": "Noite",
+          "value": "noite",
+          "next": "captura_nome"
+        }
       ]
     },
     {

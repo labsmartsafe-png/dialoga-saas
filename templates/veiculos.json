@@ -17,10 +17,26 @@
       "content": "Escolha uma das opções abaixo:",
       "variable": "interesse",
       "options": [
-        { "label": "🚗 Ver carros", "value": "carro", "next": "tipo_carro" },
-        { "label": "🏍️ Ver motos", "value": "moto", "next": "tipo_moto" },
-        { "label": "💰 Financiamento", "value": "financiamento", "next": "captura_nome" },
-        { "label": "📞 Falar com vendedor", "value": "vendedor", "next": "captura_nome" }
+        {
+          "label": "🚗 Ver carros",
+          "value": "carro",
+          "next": "tipo_carro"
+        },
+        {
+          "label": "🏍️ Ver motos",
+          "value": "moto",
+          "next": "tipo_moto"
+        },
+        {
+          "label": "💰 Financiamento",
+          "value": "financiamento",
+          "next": "captura_nome"
+        },
+        {
+          "label": "📞 Falar com vendedor",
+          "value": "vendedor",
+          "next": "captura_nome"
+        }
       ]
     },
     {
@@ -29,10 +45,26 @@
       "content": "Que tipo de carro você procura?",
       "variable": "tipo_veiculo",
       "options": [
-        { "label": "SUV", "value": "suv", "next": "orcamento" },
-        { "label": "Sedan", "value": "sedan", "next": "orcamento" },
-        { "label": "Hatch", "value": "hatch", "next": "orcamento" },
-        { "label": "Picape", "value": "picape", "next": "orcamento" }
+        {
+          "label": "SUV",
+          "value": "suv",
+          "next": "orcamento"
+        },
+        {
+          "label": "Sedan",
+          "value": "sedan",
+          "next": "orcamento"
+        },
+        {
+          "label": "Hatch",
+          "value": "hatch",
+          "next": "orcamento"
+        },
+        {
+          "label": "Picape",
+          "value": "picape",
+          "next": "orcamento"
+        }
       ]
     },
     {
@@ -41,9 +73,21 @@
       "content": "Que tipo de moto você quer?",
       "variable": "tipo_veiculo",
       "options": [
-        { "label": "Esportiva", "value": "esportiva", "next": "orcamento" },
-        { "label": "Scooter", "value": "scooter", "next": "orcamento" },
-        { "label": "Custom", "value": "custom", "next": "orcamento" }
+        {
+          "label": "Esportiva",
+          "value": "esportiva",
+          "next": "orcamento"
+        },
+        {
+          "label": "Scooter",
+          "value": "scooter",
+          "next": "orcamento"
+        },
+        {
+          "label": "Custom",
+          "value": "custom",
+          "next": "orcamento"
+        }
       ]
     },
     {
@@ -52,10 +96,26 @@
       "content": "Qual é a sua faixa de orçamento?",
       "variable": "orcamento",
       "options": [
-        { "label": "Até R$ 40.000", "value": "ate_40k", "next": "captura_nome" },
-        { "label": "R$ 40.000 - R$ 80.000", "value": "40k_80k", "next": "captura_nome" },
-        { "label": "R$ 80.000 - R$ 150.000", "value": "80k_150k", "next": "captura_nome" },
-        { "label": "Acima de R$ 150.000", "value": "acima_150k", "next": "captura_nome" }
+        {
+          "label": "Até R$ 40.000",
+          "value": "ate_40k",
+          "next": "captura_nome"
+        },
+        {
+          "label": "R$ 40.000 - R$ 80.000",
+          "value": "40k_80k",
+          "next": "captura_nome"
+        },
+        {
+          "label": "R$ 80.000 - R$ 150.000",
+          "value": "80k_150k",
+          "next": "captura_nome"
+        },
+        {
+          "label": "Acima de R$ 150.000",
+          "value": "acima_150k",
+          "next": "captura_nome"
+        }
       ]
     },
     {

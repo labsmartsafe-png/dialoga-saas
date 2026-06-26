@@ -17,10 +17,26 @@
       "content": "Escolha uma opção:",
       "variable": "interesse",
       "options": [
-        { "label": "💪 Conhecer planos", "value": "planos", "next": "info_planos" },
-        { "label": "🤸 Aulas experimentais", "value": "aula_experimental", "next": "tipo_aula" },
-        { "label": "📍 Horário e localização", "value": "localizacao", "next": "info_localizacao" },
-        { "label": "💬 Falar com consultor", "value": "consultor", "next": "captura_nome" }
+        {
+          "label": "💪 Conhecer planos",
+          "value": "planos",
+          "next": "info_planos"
+        },
+        {
+          "label": "🤸 Aulas experimentais",
+          "value": "aula_experimental",
+          "next": "tipo_aula"
+        },
+        {
+          "label": "📍 Horário e localização",
+          "value": "localizacao",
+          "next": "info_localizacao"
+        },
+        {
+          "label": "💬 Falar com consultor",
+          "value": "consultor",
+          "next": "captura_nome"
+        }
       ]
     },
     {
@@ -35,10 +51,26 @@
       "content": "Qual plano te interessou?",
       "variable": "plano",
       "options": [
-        { "label": "Básico - R$ 99", "value": "basico", "next": "captura_nome" },
-        { "label": "Premium - R$ 169", "value": "premium", "next": "captura_nome" },
-        { "label": "VIP - R$ 299", "value": "vip", "next": "captura_nome" },
-        { "label": "Ainda em dúvida", "value": "duvida", "next": "captura_nome" }
+        {
+          "label": "Básico - R$ 99",
+          "value": "basico",
+          "next": "captura_nome"
+        },
+        {
+          "label": "Premium - R$ 169",
+          "value": "premium",
+          "next": "captura_nome"
+        },
+        {
+          "label": "VIP - R$ 299",
+          "value": "vip",
+          "next": "captura_nome"
+        },
+        {
+          "label": "Ainda em dúvida",
+          "value": "duvida",
+          "next": "captura_nome"
+        }
       ]
     },
     {
@@ -47,10 +79,26 @@
       "content": "Que tipo de aula você quer experimentar?",
       "variable": "tipo_aula",
       "options": [
-        { "label": "🏋️ Musculação", "value": "musculacao", "next": "captura_nome" },
-        { "label": "🧘 Pilates", "value": "pilates", "next": "captura_nome" },
-        { "label": "⚡ Crossfit", "value": "crossfit", "next": "captura_nome" },
-        { "label": "💃 Zumba", "value": "zumba", "next": "captura_nome" }
+        {
+          "label": "🏋️ Musculação",
+          "value": "musculacao",
+          "next": "captura_nome"
+        },
+        {
+          "label": "🧘 Pilates",
+          "value": "pilates",
+          "next": "captura_nome"
+        },
+        {
+          "label": "⚡ Crossfit",
+          "value": "crossfit",
+          "next": "captura_nome"
+        },
+        {
+          "label": "💃 Zumba",
+          "value": "zumba",
+          "next": "captura_nome"
+        }
       ]
     },
     {
@@ -75,14 +123,30 @@
     },
     {
       "id": "captura_objetivo",
-      "type": "message",
+      "type": "question",
       "content": "Qual é seu principal objetivo?",
       "variable": "objetivo",
       "options": [
-        { "label": "💪 Ganhar massa", "value": "massa", "next": "confirmacao" },
-        { "label": "🏃 Emagrecer", "value": "emagrecer", "next": "confirmacao" },
-        { "label": "❤️ Saúde e bem-estar", "value": "saude", "next": "confirmacao" },
-        { "label": "🏆 Performance", "value": "performance", "next": "confirmacao" }
+        {
+          "label": "💪 Ganhar massa",
+          "value": "massa",
+          "next": "confirmacao"
+        },
+        {
+          "label": "🏃 Emagrecer",
+          "value": "emagrecer",
+          "next": "confirmacao"
+        },
+        {
+          "label": "❤️ Saúde e bem-estar",
+          "value": "saude",
+          "next": "confirmacao"
+        },
+        {
+          "label": "🏆 Performance",
+          "value": "performance",
+          "next": "confirmacao"
+        }
       ]
     },
     {
