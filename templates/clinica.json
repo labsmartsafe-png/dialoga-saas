@@ -28,7 +28,7 @@
           "next": "lista_tratamentos"
         },
         {
-          "label": "🏥 Convênios",
+          "label": "🏨 Convênios",
           "value": "convenios",
           "next": "info_convenios"
         },
@@ -76,7 +76,7 @@
     {
       "id": "info_convenios",
       "type": "message",
-      "content": "🏥 *Convênios aceitos:*\n\n• Amil\n• Bradesco Saúde\n• SulAmérica\n• Unimed\n• Odontoprev\n• Hapvida\n\nAceitamos também particular com parcelamento em até 10x.\n\nPosso ajudar com mais alguma coisa?",
+      "content": "🏨 *Convênios aceitos:*\n\n• Amil\n• Bradesco Saúde\n• SulAmérica\n• Unimed\n• Odontoprev\n• Hapvida\n\nAceitamos também particular com parcelamento em até 10x.\n\nPosso ajudar com mais alguma coisa?",
       "next": "menu_principal"
     },
     {

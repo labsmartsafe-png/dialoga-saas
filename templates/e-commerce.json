@@ -101,7 +101,7 @@
     {
       "id": "info_rastreio",
       "type": "message",
-      "content": "📦 Pedido #{{numero_pedido}}\n\n📍 Status: Em trânsito\n📅 Previsão de entrega: 2 a 4 dias úteis\n🏙️ Origem: São Paulo - SP\n\nVocê receberá atualizações automáticas!\n\nPosso ajudar com mais alguma coisa?",
+      "content": "📦 Pedido #{{numero_pedido}}\n\n📍 Status: Em trânsito\n📅 Previsão de entrega: 2 a 4 dias úteis\n🏘️ Origem: São Paulo - SP\n\nVocê receberá atualizações automáticas!\n\nPosso ajudar com mais alguma coisa?",
       "next": "menu_principal"
     },
     {

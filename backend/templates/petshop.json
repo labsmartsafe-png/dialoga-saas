@@ -3,7 +3,7 @@
   "name": "Pet Shop / Veterinária",
   "description": "Pet shops, clínicas veterinárias e banho/tosa. Agenda serviços, vende produtos e tira dúvidas.",
   "category": "Pet",
-  "icon": "<img src='img/icons/pet.svg' class='emoji-icon' alt='Pet Shop'>",
+  "icon": "🐾",
   "nodes": [
     {
       "id": "boas_vindas",
@@ -17,10 +17,26 @@
       "content": "Escolha uma opção:",
       "variable": "interesse",
       "options": [
-        { "label": "🛁 Banho e tosa", "value": "banho_tosa", "next": "porte_pet" },
-        { "label": "🏥 Consulta veterinária", "value": "veterinaria", "next": "tipo_consulta" },
-        { "label": "🛒 Produtos", "value": "produtos", "next": "info_produtos" },
-        { "label": "💉 Vacinação", "value": "vacinacao", "next": "captura_pet" }
+        {
+          "label": "🛁 Banho e tosa",
+          "value": "banho_tosa",
+          "next": "porte_pet"
+        },
+        {
+          "label": "🏥 Consulta veterinária",
+          "value": "veterinaria",
+          "next": "tipo_consulta"
+        },
+        {
+          "label": "🛒 Produtos",
+          "value": "produtos",
+          "next": "info_produtos"
+        },
+        {
+          "label": "💉 Vacinação",
+          "value": "vacinacao",
+          "next": "captura_pet"
+        }
       ]
     },
     {
@@ -29,9 +45,21 @@
       "content": "Qual é o porte do seu pet?",
       "variable": "porte_pet",
       "options": [
-        { "label": "Pequeno", "value": "pequeno", "next": "captura_pet" },
-        { "label": "Médio", "value": "medio", "next": "captura_pet" },
-        { "label": "Grande", "value": "grande", "next": "captura_pet" }
+        {
+          "label": "Pequeno",
+          "value": "pequeno",
+          "next": "captura_pet"
+        },
+        {
+          "label": "Médio",
+          "value": "medio",
+          "next": "captura_pet"
+        },
+        {
+          "label": "Grande",
+          "value": "grande",
+          "next": "captura_pet"
+        }
       ]
     },
     {
@@ -40,10 +68,26 @@
       "content": "Que tipo de consulta?",
       "variable": "tipo_consulta",
       "options": [
-        { "label": "Consulta de rotina", "value": "rotina", "next": "captura_pet" },
-        { "label": "Vacinação", "value": "vacinacao", "next": "captura_pet" },
-        { "label": "Exames", "value": "exames", "next": "captura_pet" },
-        { "label": "Emergência", "value": "emergencia", "next": "emergencia" }
+        {
+          "label": "Consulta de rotina",
+          "value": "rotina",
+          "next": "captura_pet"
+        },
+        {
+          "label": "Vacinação",
+          "value": "vacinacao",
+          "next": "captura_pet"
+        },
+        {
+          "label": "Exames",
+          "value": "exames",
+          "next": "captura_pet"
+        },
+        {
+          "label": "Emergência",
+          "value": "emergencia",
+          "next": "emergencia"
+        }
       ]
     },
     {

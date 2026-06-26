@@ -1,6 +1,6 @@
 {
   "slug": "academias",
-  "name": "Academia / Estúdio",
+  "name": "Academia / Estútúdio",
   "description": "Academias, estúdios de pilates, crossfit e personal training. Mostra planos, agenda aulas e captura leads.",
   "category": "Fitness",
   "icon": "🏋️",
@@ -67,7 +67,7 @@
           "next": "captura_nome"
         },
         {
-          "label": "Ainda em dúvida",
+          "label": "Ainda em dúvidas",
           "value": "duvida",
           "next": "captura_nome"
         }
@@ -104,7 +104,7 @@
     {
       "id": "info_localizacao",
       "type": "message",
-      "content": "📍 *Nossa unidade:*\n\n🏢 Av. Paulista, 1000 - Bela Vista\nSão Paulo - SP\nCEP 01310-100\n\n⏰ *Funcionamento:*\nSeg a Sex: 6h às 23h\nSábado: 8h às 18h\nDomingo: 8h às 14h\n\n🚗 Estacionamento gratuito!",
+      "content": "📍 *Nossa unidade:*\n\n🏢 Av. Paulista, 1000 - Bela Vista\nSão Paulo - SP\nCEP 01310-100\n\n⏰ *Funcionamento:*\nSeg a Sex: 6h às 23h\nSábado: 8h às 18h\nDomingo: 8h às 14h\n\n🚗 Estacionamento grátis!",
       "next": "menu_principal"
     },
     {

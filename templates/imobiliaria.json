@@ -46,7 +46,7 @@
       "variable": "tipo_imovel",
       "options": [
         {
-          "label": "🏢 Apartamento",
+          "label": "🏤 Apartamento",
           "value": "apartamento",
           "next": "quartos"
         },
@@ -159,7 +159,7 @@
     {
       "id": "resumo",
       "type": "message",
-      "content": "✅ *Lead capturado!*\n\n👤 Nome: {{nome}}\n📱 Contato: {{telefone}}\n🏘️ Preferência: {{tipo_imovel}}\n🛏️ Quartos: {{quartos}}\n💰 Orçamento: {{orcamento}}\n📍 Localização: {{cidade}}\n\nEm até 2 horas um corretor entrará em contato com opções selecionadas para você!",
+      "content": "✅ *Lead capturado!*\n\n👤 Nome: {{nome}}\n📱 Contato: {{telefone}}\n🏖️ Preferência: {{tipo_imovel}}\n🛏️ Quartos: {{quartos}}\n💰 Orçamento: {{orcamento}}\n📍 Localização: {{cidade}}\n\nEm até 2 horas um corretor entrará em contato com opções selecionadas para você!",
       "next": "end"
     },
     {

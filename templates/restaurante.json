@@ -60,7 +60,7 @@
     {
       "id": "cardapio_info",
       "type": "message",
-      "content": "📋 *Nosso cardápio:*\n\n🍕 *Pizzas Salgadas:*\n• Mussarela R$ 45\n• Calabresa R$ 48\n• Portuguesa R$ 52\n• Quatro Queijos R$ 58\n\n🍫 *Pizzas Doces:*\n• Chocolate R$ 48\n• Banana R$ 46\n\n🥤 *Bebidas:*\n• Coca-Cola 2L R$ 12\n• Suco natural R$ 8\n\n🔗 Ver cardápio completo: link.cardapio.com.br",
+      "content": "📋 *Nosso cardápio:*\n\n🍕 *Pizzas Salgadas:*\n• Mussarela R$ 45\n• Calabresa R$ 48\n• Portuguesa R$ 52\n• Quatro Queijos R$ 58\n\n🍫 *Pizzas Doces:*\n• Chocolate R$ 48\n• Banana R$ 46\n\n🥔 *Bebidas:*\n• Coca-Cola 2L R$ 12\n• Suco natural R$ 8\n\n🔗 Ver cardápio completo: link.cardapio.com.br",
       "next": "tipo_pedido"
     },
     {

@@ -3,7 +3,7 @@
   "name": "Restaurante / Delivery",
   "description": "Restaurantes, pizzarias e lanchonetes. Mostra cardápio, recebe pedidos e acompanha entrega.",
   "category": "Alimentação",
-  "icon": "<img src='img/icons/food.svg' class='emoji-icon' alt='Restaurante'>",
+  "icon": "🍕",
   "nodes": [
     {
       "id": "boas_vindas",
@@ -17,10 +17,26 @@
       "content": "Escolha uma opção:",
       "variable": "interesse",
       "options": [
-        { "label": "🍕 Fazer pedido", "value": "pedido", "next": "tipo_pedido" },
-        { "label": "📋 Ver cardápio", "value": "cardapio", "next": "cardapio_info" },
-        { "label": "🍽️ Reservar mesa", "value": "reserva", "next": "reserva_dados" },
-        { "label": "🕐 Horário", "value": "horario", "next": "horario_info" }
+        {
+          "label": "🍕 Fazer pedido",
+          "value": "pedido",
+          "next": "tipo_pedido"
+        },
+        {
+          "label": "📋 Ver cardápio",
+          "value": "cardapio",
+          "next": "cardapio_info"
+        },
+        {
+          "label": "🍽️ Reservar mesa",
+          "value": "reserva",
+          "next": "reserva_dados"
+        },
+        {
+          "label": "🕐 Horário",
+          "value": "horario",
+          "next": "horario_info"
+        }
       ]
     },
     {
@@ -29,14 +45,22 @@
       "content": "Como você quer receber seu pedido?",
       "variable": "tipo_entrega",
       "options": [
-        { "label": "🛵 Delivery", "value": "delivery", "next": "captura_endereco" },
-        { "label": "🏪 Retirada no local", "value": "retirada", "next": "captura_nome" }
+        {
+          "label": "🛵 Delivery",
+          "value": "delivery",
+          "next": "captura_endereco"
+        },
+        {
+          "label": "🏪 Retirada no local",
+          "value": "retirada",
+          "next": "captura_nome"
+        }
       ]
     },
     {
       "id": "cardapio_info",
       "type": "message",
-      "content": "📋 *Nosso cardápio:*\n\n🍕 *Pizzas Salgadas:*\n• Mussarela R$ 45\n• Calabresa R$ 48\n• Portuguesa R$ 52\n• Quatro Queijos R$ 58\n\n🍫 *Pizzas Doces:*\n• Chocolate R$ 48\n• Banana R$ 46\n\n🥤 *Bebidas:*\n• Coca-Cola 2L R$ 12\n• Suco natural R$ 8\n\n🔗 Ver cardápio completo: link.cardapio.com.br",
+      "content": "📋 *Nosso cardápio:*\n\n🍕 *Pizzas Salgadas:*\n• Mussarela R$ 45\n• Calabresa R$ 48\n• Portuguesa R$ 52\n• Quatro Queijos R$ 58\n\n🍫 *Pizzas Doces:*\n• Chocolate R$ 48\n• Banana R$ 46\n\n🥔 *Bebidas:*\n• Coca-Cola 2L R$ 12\n• Suco natural R$ 8\n\n🔗 Ver cardápio completo: link.cardapio.com.br",
       "next": "tipo_pedido"
     },
     {
@@ -65,10 +89,26 @@
       "content": "Quantas pessoas?",
       "variable": "pessoas",
       "options": [
-        { "label": "2 pessoas", "value": "2", "next": "captura_nome" },
-        { "label": "3-4 pessoas", "value": "3-4", "next": "captura_nome" },
-        { "label": "5-6 pessoas", "value": "5-6", "next": "captura_nome" },
-        { "label": "Mais de 6", "value": "6+", "next": "captura_nome" }
+        {
+          "label": "2 pessoas",
+          "value": "2",
+          "next": "captura_nome"
+        },
+        {
+          "label": "3-4 pessoas",
+          "value": "3-4",
+          "next": "captura_nome"
+        },
+        {
+          "label": "5-6 pessoas",
+          "value": "5-6",
+          "next": "captura_nome"
+        },
+        {
+          "label": "Mais de 6",
+          "value": "6+",
+          "next": "captura_nome"
+        }
       ]
     },
     {

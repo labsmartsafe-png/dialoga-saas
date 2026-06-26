@@ -3,7 +3,7 @@
   "name": "Clínica Médica / Dentista",
   "description": "Atendimento para clínicas e consultórios odontológicos. Agenda consultas, captura sintomas e envia lembretes.",
   "category": "Saúde",
-  "icon": "<img src='img/icons/clinic.svg' class='emoji-icon' alt='Clínica'>",
+  "icon": "🦷",
   "nodes": [
     {
       "id": "boas_vindas",
@@ -17,10 +17,26 @@
       "content": "Escolha uma opção:",
       "variable": "interesse",
       "options": [
-        { "label": "📅 Agendar consulta", "value": "agendar", "next": "tipo_consulta" },
-        { "label": "🦷 Tratamentos", "value": "tratamentos", "next": "lista_tratamentos" },
-        { "label": "🏥 Convênios", "value": "convenios", "next": "info_convenios" },
-        { "label": "🚨 Emergência", "value": "emergencia", "next": "emergencia" }
+        {
+          "label": "📅 Agendar consulta",
+          "value": "agendar",
+          "next": "tipo_consulta"
+        },
+        {
+          "label": "🦷 Tratamentos",
+          "value": "tratamentos",
+          "next": "lista_tratamentos"
+        },
+        {
+          "label": "🏨 Convênios",
+          "value": "convenios",
+          "next": "info_convenios"
+        },
+        {
+          "label": "🚨 Emergência",
+          "value": "emergencia",
+          "next": "emergencia"
+        }
       ]
     },
     {
@@ -29,10 +45,26 @@
       "content": "Que tipo de consulta você precisa?",
       "variable": "tipo_consulta",
       "options": [
-        { "label": "Avaliação geral", "value": "avaliacao", "next": "captura_nome" },
-        { "label": "Limpeza", "value": "limpeza", "next": "captura_nome" },
-        { "label": "Clareamento", "value": "clareamento", "next": "captura_nome" },
-        { "label": "Canal", "value": "canal", "next": "captura_nome" }
+        {
+          "label": "Avaliação geral",
+          "value": "avaliacao",
+          "next": "captura_nome"
+        },
+        {
+          "label": "Limpeza",
+          "value": "limpeza",
+          "next": "captura_nome"
+        },
+        {
+          "label": "Clareamento",
+          "value": "clareamento",
+          "next": "captura_nome"
+        },
+        {
+          "label": "Canal",
+          "value": "canal",
+          "next": "captura_nome"
+        }
       ]
     },
     {
@@ -44,7 +76,7 @@
     {
       "id": "info_convenios",
       "type": "message",
-      "content": "🏥 *Convênios aceitos:*\n\n• Amil\n• Bradesco Saúde\n• SulAmérica\n• Unimed\n• Odontoprev\n• Hapvida\n\nAceitamos também particular com parcelamento em até 10x.\n\nPosso ajudar com mais alguma coisa?",
+      "content": "🏨 *Convênios aceitos:*\n\n• Amil\n• Bradesco Saúde\n• SulAmérica\n• Unimed\n• Odontoprev\n• Hapvida\n\nAceitamos também particular com parcelamento em até 10x.\n\nPosso ajudar com mais alguma coisa?",
       "next": "menu_principal"
     },
     {
@@ -73,15 +105,27 @@
       "content": "Qual período você prefere para a consulta?",
       "variable": "periodo",
       "options": [
-        { "label": "Manhã", "value": "manha", "next": "confirmacao" },
-        { "label": "Tarde", "value": "tarde", "next": "confirmacao" },
-        { "label": "Noite", "value": "noite", "next": "confirmacao" }
+        {
+          "label": "Manhã",
+          "value": "manha",
+          "next": "confirmacao"
+        },
+        {
+          "label": "Tarde",
+          "value": "tarde",
+          "next": "confirmacao"
+        },
+        {
+          "label": "Noite",
+          "value": "noite",
+          "next": "confirmacao"
+        }
       ]
     },
     {
       "id": "confirmacao",
       "type": "message",
-      "content": "✅ *Agendamento solicitado!*\n\n📋 *Resumo:*\n👤 Paciente: {{nome}}\n📞 Contato: {{telefone}}\n🦷 Tipo: {{tipo_consulta}}\n⏰ Período: {{periodo}}\n\nNossa recepcionadora entrará em contato em até 1 hora para confirmar o horário exato.",
+      "content": "✅ *Agendamento solicitado!*\n\n📋 *Resumo:*\n👤 Paciente: {{nome}}\n📞 Contato: {{telefone}}\n🦷 Tipo: {{tipo_consulta}}\n⏰ Período: {{periodo}}\n\nNossa recepcionista entrará em contato em até 1 hora para confirmar o horário exato.",
       "next": "end"
     },
     {
