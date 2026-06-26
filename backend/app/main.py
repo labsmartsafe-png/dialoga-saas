@@ -11,6 +11,7 @@ from .database import init_db, SessionLocal
 from .services.template_loader import seed_templates
 from .routers import auth, templates, flows, leads, whatsapp, dashboard
 from .routers.whatsapp_meta import meta_webhook_router  # NOVO: webhook Meta (modo shadow)
+from .routers.whatsapp_connections import router as whatsapp_connections_router  # NOVO: Fase 3
 from .json import CustomJSONResponse
 
 # Logging
@@ -81,6 +82,7 @@ app.include_router(templates.router, prefix="/api/templates", tags=["Templates"]
 app.include_router(flows.router, prefix="/api/flows", tags=["Fluxos"])
 app.include_router(leads.router, prefix="/api/leads", tags=["Leads"])
 app.include_router(whatsapp.router, prefix="/api/whatsapp", tags=["WhatsApp"])
+app.include_router(whatsapp_connections_router, prefix="/api/whatsapp/connections", tags=["WhatsApp Conexões"])  # NOVO: Fase 3
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
 app.include_router(whatsapp.webhook_router, tags=["Webhook"])          # legado (intacto): /webhook/whatsapp
 app.include_router(meta_webhook_router, tags=["Webhook"])              # NOVO: /webhook/whatsapp/meta

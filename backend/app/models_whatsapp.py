@@ -6,6 +6,9 @@ IMPORTANTE — por que este arquivo é seguro:
 - Só DECLARA tabelas novas -> Base.metadata.create_all() as cria sem tocar nas existentes.
 - Mesmo estilo Column(...) clássico do models.py atual (NÃO usa Mapped[]).
 - PKs Integer autoincrement, para casar com users.id / flows.id / conversations.id.
+- Para que init_db() registre estes modelos, IMPORTE este módulo no final de models.py:
+      from .models_whatsapp import *   # noqa
+  (init_db já faz `from . import models`, então isto basta para o create_all enxergar tudo.)
 
 NADA aqui altera ou dropa coluna existente.
 """
@@ -50,6 +53,8 @@ class WhatsAppConnection(Base):
     phone_number_id = Column(String(100), nullable=True, index=True)  # roteamento multi-tenant
     waba_id = Column(String(100), nullable=True)
     access_token_enc = Column(Text, nullable=True)           # Fernet (texto base64)
+    access_token_last4 = Column(String(8), nullable=True)    # so p/ mascarar na UI (nunca decifra p/ exibir)
+    last_error = Column(Text, nullable=True)                 # ultima falha (ex: token 190) p/ UI
 
     # --- Evolution API (QR) ---
     evolution_instance_name = Column(String(150), nullable=True)

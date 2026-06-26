@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configurações - dIAloga+</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    /* ===== Estilos próprios da tela de Configurações (não dependem do styles.css) ===== */
+    :root{
+      --cfg-bg:#f5f7fb; --cfg-card:#ffffff; --cfg-border:#e6e9f0; --cfg-text:#1a2233;
+      --cfg-muted:#6b7280; --cfg-primary:#4f46e5; --cfg-primary-d:#4338ca;
+      --cfg-input-bg:#ffffff; --cfg-input-border:#d8dde8; --cfg-shadow:0 1px 3px rgba(16,24,40,.06),0 8px 24px rgba(16,24,40,.05);
+      --cfg-ok:#16a34a; --cfg-ok-bg:#ecfdf3; --cfg-err:#dc2626; --cfg-err-bg:#fef2f2;
+      --cfg-chip:#eef2ff; --cfg-chip-text:#4f46e5;
+    }
+    body.dark-mode{
+      --cfg-bg:#0f1420; --cfg-card:#171d2b; --cfg-border:#262e40; --cfg-text:#e6eaf2;
+      --cfg-muted:#9aa3b2; --cfg-primary:#6366f1; --cfg-primary-d:#818cf8;
+      --cfg-input-bg:#1f2636; --cfg-input-border:#323b50; --cfg-shadow:0 1px 3px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+      --cfg-ok:#34d399; --cfg-ok-bg:#0c2a1f; --cfg-err:#f87171; --cfg-err-bg:#2a1414;
+      --cfg-chip:#23304f; --cfg-chip-text:#a5b4fc;
+    }
+    .cfg-wrap{ max-width:1100px; margin:0 auto; padding:24px 20px 60px; color:var(--cfg-text); }
+    .cfg-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:8px; flex-wrap:wrap; }
+    .cfg-head h1{ font-size:26px; margin:0 0 4px; color:var(--cfg-text); }
+    .cfg-sub{ color:var(--cfg-muted); margin:0; font-size:14px; }
+    .cfg-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:20px; }
+    @media (max-width:860px){ .cfg-grid{ grid-template-columns:1fr; } }
+    .cfg-card{ background:var(--cfg-card); border:1px solid var(--cfg-border); border-radius:16px; padding:24px; box-shadow:var(--cfg-shadow); }
+    .cfg-card.full{ grid-column:1 / -1; }
+    .cfg-card h2{ font-size:16px; margin:0 0 4px; display:flex; align-items:center; gap:8px; color:var(--cfg-text); }
+    .cfg-card .hint{ color:var(--cfg-muted); font-size:13px; margin:0 0 18px; line-height:1.5; }
+    .cfg-field{ margin-bottom:14px; }
+    .cfg-field label{ display:block; font-size:13px; font-weight:600; color:var(--cfg-text); margin-bottom:6px; }
+    .cfg-field input, .cfg-field select{
+      width:100%; box-sizing:border-box; padding:11px 13px; border-radius:10px;
+      border:1px solid var(--cfg-input-border); background:var(--cfg-input-bg); color:var(--cfg-text);
+      font-size:14px; outline:none; transition:border-color .15s, box-shadow .15s;
+    }
+    .cfg-field input:focus, .cfg-field select:focus{ border-color:var(--cfg-primary); box-shadow:0 0 0 3px color-mix(in srgb, var(--cfg-primary) 22%, transparent); }
+    .cfg-field small{ display:block; color:var(--cfg-muted); font-size:12px; margin-top:5px; }
+    .cfg-btn{
+      appearance:none; border:0; cursor:pointer; font-size:14px; font-weight:600; border-radius:10px;
+      padding:11px 18px; background:var(--cfg-primary); color:#fff; transition:background .15s, transform .05s;
+    }
+    .cfg-btn:hover{ background:var(--cfg-primary-d); }
+    .cfg-btn:active{ transform:translateY(1px); }
+    .cfg-btn:disabled{ opacity:.6; cursor:not-allowed; }
+    .cfg-btn.ghost{ background:transparent; color:var(--cfg-primary); border:1px solid var(--cfg-input-border); }
+    .cfg-btn.danger{ background:transparent; color:var(--cfg-err); border:1px solid var(--cfg-input-border); padding:7px 12px; font-size:13px; }
+    .cfg-btn.danger:hover{ background:var(--cfg-err-bg); }
+    .cfg-alert{ border-radius:12px; padding:12px 14px; font-size:14px; margin-bottom:16px; border:1px solid transparent; }
+    .cfg-alert.ok{ background:var(--cfg-ok-bg); color:var(--cfg-ok); border-color:color-mix(in srgb, var(--cfg-ok) 30%, transparent); }
+    .cfg-alert.err{ background:var(--cfg-err-bg); color:var(--cfg-err); border-color:color-mix(in srgb, var(--cfg-err) 30%, transparent); }
+    .cfg-table{ width:100%; border-collapse:collapse; font-size:14px; }
+    .cfg-table th{ text-align:left; color:var(--cfg-muted); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.04em; padding:8px 10px; border-bottom:1px solid var(--cfg-border); }
+    .cfg-table td{ padding:12px 10px; border-bottom:1px solid var(--cfg-border); color:var(--cfg-text); }
+    .cfg-table tr:last-child td{ border-bottom:0; }
+    .badge{ display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:700; padding:4px 10px; border-radius:999px; }
+    .badge.ok{ background:var(--cfg-ok-bg); color:var(--cfg-ok); }
+    .badge.err{ background:var(--cfg-err-bg); color:var(--cfg-err); }
+    .badge.idle{ background:var(--cfg-chip); color:var(--cfg-chip-text); }
+    .cfg-empty{ text-align:center; color:var(--cfg-muted); padding:30px 10px; font-size:14px; }
+    .mono{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.5px; }
+    .cfg-toggle{ background:transparent; border:1px solid var(--cfg-input-border); color:var(--cfg-text); border-radius:10px; padding:8px 12px; cursor:pointer; font-size:13px; }
+  </style>
+</head>
+<body>
+<script>
+  if (localStorage.getItem("dialoga-dark-mode") === "1") {
+    document.body.classList.add("dark-mode");
+  }
+</script>
+
+<nav class="navbar">
+  <div class="brand">
+    <img src="img/logo-dialoga.png" alt="dIAloga+">
+  </div>
+  <nav>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="builder.html">Fluxos</a>
+    <a href="leads.html">Leads</a>
+    <a href="configuracoes.html" class="active">Configurações</a>
+  </nav>
+  <div class="user-area" id="user-area"></div>
+</nav>
+
+<main class="cfg-wrap">
+  <div class="cfg-head">
+    <div>
+      <h1>⚙️ Configurações de WhatsApp</h1>
+      <p class="cfg-sub">Conecte seu número via Meta Cloud API e envie uma mensagem de teste.</p>
+    </div>
+    <button class="cfg-toggle" id="btn-theme" type="button">🌓 Tema</button>
+  </div>
+
+  <div id="alert-area"></div>
+
+  <div class="cfg-grid">
+    <!-- Nova conexão -->
+    <div class="cfg-card">
+      <h2>🔗 Conectar via Meta API</h2>
+      <p class="hint">Pegue o <strong>Token de acesso</strong> e o <strong>Phone Number ID</strong> no painel da Meta (Business → WhatsApp → Configuração da API).</p>
+      <form id="conn-form">
+        <div class="cfg-field">
+          <label for="display_name">Nome de exibição (opcional)</label>
+          <input type="text" id="display_name" placeholder="Ex: Atendimento Loja Centro">
+        </div>
+        <div class="cfg-field">
+          <label for="phone_number_id">Phone Number ID *</label>
+          <input type="text" id="phone_number_id" placeholder="Ex: 123456789012345" required>
+        </div>
+        <div class="cfg-field">
+          <label for="access_token">Token de acesso *</label>
+          <input type="password" id="access_token" placeholder="EAAG..." required>
+          <small>O token é criptografado antes de salvar e nunca é exibido de volta.</small>
+        </div>
+        <div class="cfg-field">
+          <label for="waba_id">WABA ID (opcional)</label>
+          <input type="text" id="waba_id" placeholder="Ex: 987654321098765">
+        </div>
+        <div class="cfg-field">
+          <label for="flow_id">Fluxo que responde (opcional)</label>
+          <select id="flow_id"><option value="">— selecione —</option></select>
+        </div>
+        <button class="cfg-btn" type="submit" id="btn-save">Salvar conexão</button>
+      </form>
+    </div>
+
+    <!-- Enviar teste -->
+    <div class="cfg-card">
+      <h2>📤 Enviar mensagem de teste</h2>
+      <p class="hint">Escolha uma conexão e envie um texto. Em modo de teste da Meta, o destino precisa estar na lista de números permitidos, e a 1ª mensagem deve ser dentro da janela de 24h.</p>
+      <form id="test-form">
+        <div class="cfg-field">
+          <label for="test_conn">Conexão</label>
+          <select id="test_conn"></select>
+        </div>
+        <div class="cfg-field">
+          <label for="test_to">Número destino (com DDI)</label>
+          <input type="text" id="test_to" placeholder="5511999999999">
+        </div>
+        <div class="cfg-field">
+          <label for="test_text">Mensagem</label>
+          <input type="text" id="test_text" value="Olá! Mensagem de teste do dIAloga+ 🚀">
+        </div>
+        <button class="cfg-btn" type="submit" id="btn-test">Enviar teste</button>
+      </form>
+    </div>
+
+    <!-- Lista -->
+    <div class="cfg-card full">
+      <h2>📋 Conexões cadastradas</h2>
+      <div id="conn-list"><div class="cfg-empty">Carregando…</div></div>
+    </div>
+  </div>
+</main>
+
+<script>
+  window.API_BASE = "https://dialoga-backend-1slr.onrender.com";
+</script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script>
+(async function () {
+  const alertArea = document.getElementById("alert-area");
+  const user = await WFAuth.requireAuth();
+  if (!user) return;
+  WFAuth.renderUserChip(document.getElementById("user-area"), user);
+
+  // Botão de tema (mesmo padrão localStorage das outras páginas)
+  document.getElementById("btn-theme").addEventListener("click", function(){
+    const on = document.body.classList.toggle("dark-mode");
+    localStorage.setItem("dialoga-dark-mode", on ? "1" : "0");
+  });
+
+  const BASE = window.API_BASE;
+  function authHeaders() {
+    const t = localStorage.getItem("dialoga-token") || localStorage.getItem("token") || "";
+    return { "Content-Type": "application/json", "Authorization": "Bearer " + t };
+  }
+  function showAlert(msg, type) {
+    alertArea.innerHTML = '<div class="cfg-alert ' + (type === "success" ? "ok" : "err") + '">' + escapeHtml(msg) + '</div>';
+    if (type === "success") setTimeout(function(){ alertArea.innerHTML = ""; }, 4000);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  function escapeHtml(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  async function api(path, opts) {
+    const r = await fetch(BASE + path, Object.assign({ headers: authHeaders() }, opts || {}));
+    if (r.status === 204) return null;
+    const data = await r.json().catch(function(){ return {}; });
+    if (!r.ok) throw new Error(data.detail || data.message || ("Erro HTTP " + r.status));
+    return data;
+  }
+
+  async function loadFlows() {
+    try {
+      const flows = await api("/api/flows", { method: "GET" });
+      const sel = document.getElementById("flow_id");
+      (flows || []).forEach(function(f){
+        const o = document.createElement("option");
+        o.value = f.id; o.textContent = f.name; sel.appendChild(o);
+      });
+    } catch (e) { /* opcional */ }
+  }
+
+  async function loadConnections() {
+    const c = document.getElementById("conn-list");
+    const testSel = document.getElementById("test_conn");
+    try {
+      const conns = await api("/api/whatsapp/connections", { method: "GET" });
+      testSel.innerHTML = "";
+      if (!conns || !conns.length) {
+        c.innerHTML = '<div class="cfg-empty">Nenhuma conexão ainda. Conecte um número no formulário acima.</div>';
+        testSel.innerHTML = '<option value="">— nenhuma conexão —</option>';
+        return;
+      }
+      let html = '<table class="cfg-table"><thead><tr><th>Nome</th><th>Número</th><th>Phone Number ID</th><th>Status</th><th>Token</th><th></th></tr></thead><tbody>';
+      conns.forEach(function(cn){
+        let badge;
+        if (cn.status === "connected") badge = '<span class="badge ok">● conectado</span>';
+        else if (cn.status === "error") badge = '<span class="badge err" title="' + escapeHtml(cn.last_error||"") + '">● erro</span>';
+        else badge = '<span class="badge idle">● ' + escapeHtml(cn.status) + '</span>';
+        html += '<tr>' +
+          '<td>' + escapeHtml(cn.display_name || "-") + '</td>' +
+          '<td>' + escapeHtml(cn.phone_number || "-") + '</td>' +
+          '<td class="mono">' + escapeHtml(cn.phone_number_id || "-") + '</td>' +
+          '<td>' + badge + '</td>' +
+          '<td class="mono">' + (cn.access_token_last4 ? "••••" + escapeHtml(cn.access_token_last4) : "-") + '</td>' +
+          '<td style="text-align:right;"><button class="cfg-btn danger" data-del="' + cn.id + '">Excluir</button></td>' +
+          '</tr>';
+        const o = document.createElement("option");
+        o.value = cn.id;
+        o.textContent = (cn.display_name || cn.phone_number || ("Conexão #" + cn.id));
+        testSel.appendChild(o);
+      });
+      html += '</tbody></table>';
+      c.innerHTML = html;
+
+      c.querySelectorAll("[data-del]").forEach(function(btn){
+        btn.addEventListener("click", async function(){
+          if (!confirm("Excluir esta conexão?")) return;
+          try {
+            await api("/api/whatsapp/connections/" + btn.getAttribute("data-del"), { method: "DELETE" });
+            showAlert("Conexão excluída.", "success");
+            loadConnections();
+          } catch (e) { showAlert(e.message); }
+        });
+      });
+    } catch (e) {
+      c.innerHTML = '<div class="cfg-alert err">' + escapeHtml(e.message) + '</div>';
+    }
+  }
+
+  document.getElementById("conn-form").addEventListener("submit", async function(ev){
+    ev.preventDefault();
+    const btn = document.getElementById("btn-save");
+    btn.disabled = true; btn.textContent = "Salvando...";
+    try {
+      const body = {
+        provider: "meta",
+        display_name: document.getElementById("display_name").value || null,
+        phone_number_id: document.getElementById("phone_number_id").value.trim(),
+        access_token: document.getElementById("access_token").value.trim(),
+        waba_id: document.getElementById("waba_id").value || null,
+        flow_id: document.getElementById("flow_id").value ? Number(document.getElementById("flow_id").value) : null
+      };
+      const res = await api("/api/whatsapp/connections", { method: "POST", body: JSON.stringify(body) });
+      if (res.status === "connected") showAlert("Conexão salva e validada com sucesso! ✅", "success");
+      else showAlert("Conexão salva, mas a validação falhou: " + (res.last_error || "verifique o token."), "error");
+      document.getElementById("access_token").value = "";
+      loadConnections();
+    } catch (e) {
+      showAlert(e.message);
+    } finally {
+      btn.disabled = false; btn.textContent = "Salvar conexão";
+    }
+  });
+
+  document.getElementById("test-form").addEventListener("submit", async function(ev){
+    ev.preventDefault();
+    const connId = document.getElementById("test_conn").value;
+    if (!connId) { showAlert("Cadastre/escolha uma conexão primeiro."); return; }
+    const btn = document.getElementById("btn-test");
+    btn.disabled = true; btn.textContent = "Enviando...";
+    try {
+      const body = { to: document.getElementById("test_to").value.trim(), text: document.getElementById("test_text").value };
+      const res = await api("/api/whatsapp/connections/" + connId + "/send-test", { method: "POST", body: JSON.stringify(body) });
+      showAlert("Mensagem enviada! ID: " + (res.provider_message_id || "ok"), "success");
+    } catch (e) {
+      showAlert(e.message);
+    } finally {
+      btn.disabled = false; btn.textContent = "Enviar teste";
+    }
+  });
+
+  await loadFlows();
+  await loadConnections();
+})();
+</script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a11f163bfbdbcaf8',t:'MTc4MjUwNzA1Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

@@ -1,0 +1,171 @@
+"""
+CRUD de conexoes WhatsApp + envio de mensagem de teste (Fase 3).
+
+Montado em main.py com prefixo /api/whatsapp/connections.
+Segue o padrao do projeto: Depends(get_db) + Depends(get_current_user) (retorna User),
+filtros por owner_id, respostas com model_validate / from_attributes.
+
+Seguranca:
+- Token e' CRIPTOGRAFADO (Fernet) antes de salvar; nunca retornado nas respostas.
+- Toda query filtra por owner_id == current_user.id (anti-IDOR); 404 quando nao e' do dono.
+"""
+import logging
+
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from ..database import get_db
+from ..models import User, Flow
+from ..models_whatsapp import WhatsAppConnection
+from ..schemas_whatsapp import (
+    WhatsAppConnectionCreate, WhatsAppConnectionOut, WhatsAppSendTestRequest,
+)
+from ..auth import get_current_user
+from ..crypto import encrypt_secret
+from ..services.whatsapp_meta_service import (
+    send_text_via_connection, validate_connection_token,
+)
+
+logger = logging.getLogger("whatsflow.whatsapp.connections")
+
+router = APIRouter()
+
+
+def _get_owned_connection(db: Session, conn_id: int, user: User) -> WhatsAppConnection:
+    conn = (
+        db.query(WhatsAppConnection)
+        .filter(WhatsAppConnection.id == conn_id,
+                WhatsAppConnection.owner_id == user.id)
+        .first()
+    )
+    if not conn:
+        raise HTTPException(404, "Conexao nao encontrada.")
+    return conn
+
+
+@router.get("", response_model=list[WhatsAppConnectionOut])
+def list_connections(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Lista as conexoes WhatsApp do usuario (sem expor tokens)."""
+    conns = (
+        db.query(WhatsAppConnection)
+        .filter(WhatsAppConnection.owner_id == current_user.id)
+        .order_by(WhatsAppConnection.created_at.desc())
+        .all()
+    )
+    return [WhatsAppConnectionOut.model_validate(c) for c in conns]
+
+
+@router.post("", response_model=WhatsAppConnectionOut)
+def create_connection(
+    payload: WhatsAppConnectionCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Cria/atualiza a conexao Meta do usuario para um phone_number_id.
+    - Valida o token contra a Graph API (feedback imediato).
+    - Criptografa o token antes de salvar.
+    - phone_number_id e' unico por provider (UNIQUE no banco).
+    """
+    # valida flow se enviado
+    if payload.flow_id is not None:
+        flow = (
+            db.query(Flow)
+            .filter(Flow.id == payload.flow_id, Flow.owner_id == current_user.id)
+            .first()
+        )
+        if not flow:
+            raise HTTPException(404, "Fluxo nao encontrado.")
+
+    # impede roubo de numero ja' usado por OUTRO usuario
+    clash = (
+        db.query(WhatsAppConnection)
+        .filter(WhatsAppConnection.provider == "meta",
+                WhatsAppConnection.phone_number_id == payload.phone_number_id,
+                WhatsAppConnection.owner_id != current_user.id)
+        .first()
+    )
+    if clash:
+        raise HTTPException(409, "Este phone_number_id ja' esta vinculado a outra conta.")
+
+    # valida credenciais na Meta (nao bloqueia salvar, mas informa)
+    validation = validate_connection_token(payload.access_token, payload.phone_number_id)
+
+    # upsert: se ja' existe uma conexao deste usuario para este phone_number_id, atualiza
+    conn = (
+        db.query(WhatsAppConnection)
+        .filter(WhatsAppConnection.provider == "meta",
+                WhatsAppConnection.phone_number_id == payload.phone_number_id,
+                WhatsAppConnection.owner_id == current_user.id)
+        .first()
+    )
+    if conn is None:
+        conn = WhatsAppConnection(owner_id=current_user.id, provider="meta",
+                                  phone_number_id=payload.phone_number_id)
+        db.add(conn)
+
+    conn.display_name = payload.display_name
+    conn.waba_id = payload.waba_id
+    conn.flow_id = payload.flow_id
+    conn.access_token_enc = encrypt_secret(payload.access_token)
+    conn.access_token_last4 = payload.access_token[-4:]
+
+    if validation.get("ok"):
+        conn.status = "connected"
+        conn.phone_number = validation.get("display_phone_number") or conn.phone_number
+        if not conn.display_name:
+            conn.display_name = validation.get("verified_name")
+        conn.last_error = None
+    else:
+        conn.status = "error"
+        conn.last_error = validation.get("hint") or validation.get("error") or "Falha na validacao do token."
+
+    db.commit()
+    db.refresh(conn)
+    return WhatsAppConnectionOut.model_validate(conn)
+
+
+@router.delete("/{conn_id}", status_code=204)
+def delete_connection(
+    conn_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Remove uma conexao do usuario."""
+    conn = _get_owned_connection(db, conn_id, current_user)
+    db.delete(conn)
+    db.commit()
+    return
+
+
+@router.post("/{conn_id}/send-test")
+def send_test(
+    conn_id: int,
+    payload: WhatsAppSendTestRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Envia uma mensagem de teste usando a conexao.
+    Atualiza last_error/status conforme o resultado (ex.: token invalido -> status=error).
+    """
+    conn = _get_owned_connection(db, conn_id, current_user)
+    result = send_text_via_connection(conn, payload.to, payload.text)
+
+    if result.get("ok"):
+        if conn.status != "connected":
+            conn.status = "connected"
+        conn.last_error = None
+        db.commit()
+        return {"ok": True, "provider_message_id": result.get("provider_message_id")}
+
+    # falha: registra motivo amigavel
+    msg = result.get("hint") or result.get("error") or "Falha desconhecida."
+    if result.get("error_code") == 190:
+        conn.status = "error"
+    conn.last_error = msg
+    db.commit()
+    raise HTTPException(502, msg)
