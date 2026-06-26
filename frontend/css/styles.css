@@ -529,3 +529,64 @@ body.dark-mode #connections-group {
 svg.canvas-connection {
   overflow: visible !important;
 }
+/* ============ DARK MODE ============ */
+body.dark-mode {
+  background: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+body.dark-mode .navbar {
+  background: #1e293b !important;
+  border-bottom-color: #334155 !important;
+}
+body.dark-mode .navbar .brand { color: #f1f5f9 !important; }
+body.dark-mode .navbar nav a { color: #cbd5e1 !important; }
+body.dark-mode .navbar nav a:hover,
+body.dark-mode .navbar nav a.active { color: #06b6d4 !important; border-bottom-color: #06b6d4 !important; }
+
+body.dark-mode .container-lg { background: transparent !important; }
+
+body.dark-mode .card,
+body.dark-mode .metric-card {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+body.dark-mode .card-title { color: #e2e8f0 !important; }
+body.dark-mode .metric-card .label { color: #94a3b8 !important; }
+body.dark-mode .metric-card .value { color: #06b6d4 !important; }
+
+body.dark-mode .text-muted { color: #94a3b8 !important; }
+
+body.dark-mode .table-wrap { background: #1e293b !important; border-color: #334155 !important; }
+body.dark-mode .table { background: #1e293b !important; }
+body.dark-mode .table th { background: #0f172a !important; color: #94a3b8 !important; }
+body.dark-mode .table td { color: #e2e8f0 !important; border-color: #334155 !important; }
+body.dark-mode .table tr:hover td { background: #0f172a !important; }
+
+body.dark-mode .btn-secondary {
+  background: #334155 !important;
+  border-color: #475569 !important;
+  color: #e2e8f0 !important;
+}
+body.dark-mode .btn-secondary:hover { background: #475569 !important; }
+
+body.dark-mode .filters-bar {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+body.dark-mode .form-control {
+  background: #0f172a !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+body.dark-mode .form-control:focus {
+  border-color: #06b6d4 !important;
+  box-shadow: 0 0 0 3px rgba(6,182,212,0.2);
+}
+
+body.dark-mode .stat-card {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+body.dark-mode .ctx-tag { background: #334155 !important; color: #e2e8f0 !important; }
+
+body.dark-mode .bar-chart .bar { opacity: 0.9; }

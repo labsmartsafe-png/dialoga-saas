@@ -610,12 +610,12 @@
   function toggleDarkMode() {
     document.body.classList.toggle("dark-mode");
     const enabled = document.body.classList.contains("dark-mode");
-    localStorage.setItem("dialoog-dark-mode", enabled ? "1" : "0");
+    localStorage.setItem("dialoga-dark-mode", enabled ? "1" : "0"); 
     showAlert(enabled ? "Modo escuro ativado" : "Modo claro ativado", "info");
   }
 
   function initDarkMode() {
-    if (localStorage.getItem("dialoog-dark-mode") === "1") {
+    if (localStorage.getItem("dialoga-dark-mode") === "1") {
       document.body.classList.add("dark-mode");
     }
   }

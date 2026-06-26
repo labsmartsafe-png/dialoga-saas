@@ -160,6 +160,12 @@
 </head>
 <body>
 
+<script>
+  if (localStorage.getItem("dialoga-dark-mode") === "1") {
+    document.body.classList.add("dark-mode");
+  }
+</script>
+
 <nav class="navbar">
   <div class="brand">
     <img src="img/logo-dialoga.png" alt="dIAloga+">
