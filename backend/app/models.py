@@ -1,6 +1,5 @@
 """
 Modelos SQLAlchemy do WhatsFlow.
-
 Define as entidades principais: User, Flow, Lead, Template, Conversation, Message.
 """
 from datetime import datetime, timezone
@@ -34,6 +33,10 @@ class User(Base):
 
     flows = relationship("Flow", back_populates="owner", cascade="all, delete-orphan")
     leads = relationship("Lead", back_populates="owner", cascade="all, delete-orphan")
+    # WhatsApp (relationship em sentido unico; nao altera schema de users)
+    whatsapp_connections = relationship(
+        "WhatsAppConnection", back_populates="owner", cascade="all, delete-orphan"
+    )
 
 
 class Template(Base):
@@ -134,3 +137,13 @@ class Message(Base):
     created_at = Column(DateTime, default=utcnow)
 
     conversation = relationship("Conversation", back_populates="messages")
+
+
+# --- WhatsApp real + billing (tabelas NOVAS, aditivas) ---
+# Importar aqui garante que Base.metadata.create_all() (em init_db) crie as tabelas novas.
+from .models_whatsapp import (  # noqa: E402,F401
+    WhatsAppConnection,
+    WhatsAppInboundEvent,
+    WhatsAppOutboundMessage,
+    WhatsAppContactState,
+)

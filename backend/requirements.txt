@@ -28,3 +28,14 @@ shortuuid==1.0.13
 # Testes
 pytest==8.3.3
 httpx==0.27.2
+
+# =========================================================
+# NOVO — WhatsApp real + planos
+# =========================================================
+# Criptografia de tokens em repouso (Fernet). Pode ja vir via python-jose[cryptography],
+# mas fixamos explicitamente para garantir.
+cryptography==43.0.3
+# Fila assincrona duravel (usada a partir da Fase 2; nao carregada em runtime na Fase 0/1)
+arq==0.26.1
+redis==5.2.0
+# (httpx ja esta declarado acima na secao de Testes; nao duplicar)

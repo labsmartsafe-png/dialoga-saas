@@ -1,4 +1,4 @@
-﻿from typing import List
+from typing import List
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -12,12 +12,45 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000,http://localhost:8000,http://localhost:5500,http://127.0.0.1:5500,http://127.0.0.1:8000"
     host: str = "0.0.0.0"
     port: int = 8000
+
     whatsapp_api_url: str = "https://graph.facebook.com/v18.0"
     whatsapp_token: str = ""
     whatsapp_phone_id: str = ""
     whatsapp_verify_token: str = "dialoga-verify"
+
     max_upload_mb: int = 10
     rate_limit_per_minute: int = 60
+
+    # =========================================================
+    # NOVO — WhatsApp real + planos (Fase 0+). Todos com default seguro.
+    # Como model_config tem extra="ignore" e todos tem default, o app sobe
+    # sem nenhuma env nova; com as flags em False, o comportamento e' inerte.
+    # =========================================================
+
+    # --- Meta Cloud API ---
+    whatsapp_meta_enabled: bool = False          # feature flag: OFF em producao ate validar
+    meta_app_secret: str = ""                    # App Secret p/ validar X-Hub-Signature-256
+    meta_graph_version: str = "v23.0"            # versao do Graph p/ ENVIO (webhook independe disso)
+
+    # --- Criptografia de tokens (Fernet) ---
+    wa_fernet_keys: str = ""                     # 1+ chaves Fernet separadas por virgula
+
+    # --- Fila assincrona (arq + Redis) ---
+    redis_url: str = "redis://localhost:6379/0"
+    worker_enabled: bool = False                 # flag p/ habilitar processamento de fila
+
+    # --- Evolution API (QR) ---
+    evolution_enabled: bool = False
+    evolution_base_url: str = ""
+    evolution_global_api_key: str = ""
+
+    # --- Billing ---
+    billing_enabled: bool = False
+    billing_provider: str = "asaas"              # asaas | stripe
+    asaas_api_key: str = ""
+    asaas_webhook_token: str = ""
+    stripe_secret_key: str = ""
+    stripe_webhook_secret: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env",
