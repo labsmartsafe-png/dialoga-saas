@@ -14,13 +14,29 @@
     {
       "id": "menu_principal",
       "type": "question",
-      "content": "Escolha uma opción:",
+      "content": "Escolha uma opção:",
       "variable": "interesse",
       "options": [
-        { "label": "🔑 Comprar imóvel", "value": "comprar", "next": "tipo_imovel" },
-        { "label": "📝 Alugar imóvel", "value": "alugar", "next": "tipo_imovel" },
-        { "label": "📢 Anunciar imóvel", "value": "anunciar", "next": "anuncio_dados" },
-        { "label": "❓ Tirar dúvidas", "value": "duvidas", "next": "duvidas_info" }
+        {
+          "label": "🔑 Comprar imóvel",
+          "value": "comprar",
+          "next": "tipo_imovel"
+        },
+        {
+          "label": "📝 Alugar imóvel",
+          "value": "alugar",
+          "next": "tipo_imovel"
+        },
+        {
+          "label": "📢 Anunciar imóvel",
+          "value": "anunciar",
+          "next": "anuncio_dados"
+        },
+        {
+          "label": "❓ Tirar dúvidas",
+          "value": "duvidas",
+          "next": "duvidas_info"
+        }
       ]
     },
     {
@@ -29,10 +45,26 @@
       "content": "Que tipo de imóvel você procura?",
       "variable": "tipo_imovel",
       "options": [
-        { "label": "🏢 Apartamento", "value": "apartamento", "next": "quartos" },
-        { "label": "🏠 Casa", "value": "casa", "next": "quartos" },
-        { "label": "🏪 Sala comercial", "value": "sala", "next": "captura_nome" },
-        { "label": "🌳 Terreno", "value": "terreno", "next": "captura_nome" }
+        {
+          "label": "🏢 Apartamento",
+          "value": "apartamento",
+          "next": "quartos"
+        },
+        {
+          "label": "🏠 Casa",
+          "value": "casa",
+          "next": "quartos"
+        },
+        {
+          "label": "🏪 Sala comercial",
+          "value": "sala",
+          "next": "captura_nome"
+        },
+        {
+          "label": "🌳 Terreno",
+          "value": "terreno",
+          "next": "captura_nome"
+        }
       ]
     },
     {
@@ -41,6 +73,99 @@
       "content": "Quantos quartos você precisa?",
       "variable": "quartos",
       "options": [
-        { "label": "1 quarto", "value": "1", "next": "orcamento" },
-        { "label": "2 quartos", "value": "2", "next": "orcamento" },
-        { "label": "3 quartos", "v
+        {
+          "label": "1 quarto",
+          "value": "1",
+          "next": "orcamento"
+        },
+        {
+          "label": "2 quartos",
+          "value": "2",
+          "next": "orcamento"
+        },
+        {
+          "label": "3 quartos",
+          "value": "3",
+          "next": "orcamento"
+        },
+        {
+          "label": "4+ quartos",
+          "value": "4+",
+          "next": "orcamento"
+        }
+      ]
+    },
+    {
+      "id": "orcamento",
+      "type": "question",
+      "content": "Qual é a sua faixa de valor?",
+      "variable": "orcamento",
+      "options": [
+        {
+          "label": "Até R$ 1.500/mês ou R$ 200k",
+          "value": "baixo",
+          "next": "captura_nome"
+        },
+        {
+          "label": "R$ 1.500 - 3.000/mês ou R$ 200-500k",
+          "value": "medio",
+          "next": "captura_nome"
+        },
+        {
+          "label": "R$ 3.000 - 6.000/mês ou R$ 500k-1M",
+          "value": "alto",
+          "next": "captura_nome"
+        },
+        {
+          "label": "Acima disso",
+          "value": "premium",
+          "next": "captura_nome"
+        }
+      ]
+    },
+    {
+      "id": "duvidas_info",
+      "type": "message",
+      "content": "❓ *Como funciona:*\n\n• Trabalhamos com compra, venda e aluguel\n• Mais de 5.000 imóveis cadastrados\n• Equipe de corretores credenciados (CRECI)\n• Visitas agendadas em até 24h\n\nPosso continuar te ajudando?",
+      "next": "menu_principal"
+    },
+    {
+      "id": "anuncio_dados",
+      "type": "message",
+      "content": "📢 *Para anunciar seu imóvel:*\n\nVamos precisar de algumas informações. Um corretor entrará em contato para tirar fotos profissionais e cadastrar seu imóvel gratuitamente.",
+      "next": "captura_nome"
+    },
+    {
+      "id": "captura_nome",
+      "type": "input",
+      "content": "Para enviar opções personalizadas, me diga seu *nome*:",
+      "variable": "nome",
+      "next": "captura_telefone"
+    },
+    {
+      "id": "captura_telefone",
+      "type": "input",
+      "content": "Obrigado, {{nome}}! \n\nAgora me informe seu *WhatsApp com DDD*:",
+      "variable": "telefone",
+      "next": "captura_cidade"
+    },
+    {
+      "id": "captura_cidade",
+      "type": "input",
+      "content": "Em qual *cidade e bairro* você prefere? (Ex: São Paulo - Vila Mariana)",
+      "variable": "cidade",
+      "next": "resumo"
+    },
+    {
+      "id": "resumo",
+      "type": "message",
+      "content": "✅ *Lead capturado!*\n\n👤 Nome: {{nome}}\n📱 Contato: {{telefone}}\n🏘️ Preferência: {{tipo_imovel}}\n🛏️ Quartos: {{quartos}}\n💰 Orçamento: {{orcamento}}\n📍 Localização: {{cidade}}\n\nEm até 2 horas um corretor entrará em contato com opções selecionadas para você!",
+      "next": "end"
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "content": "Obrigado por escolher a Imobiliária Casa Nova! 🏡"
+    }
+  ]
+}

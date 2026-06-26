@@ -17,10 +17,26 @@
       "content": "Escolha uma opção:",
       "variable": "interesse",
       "options": [
-        { "label": "🍕 Fazer pedido", "value": "pedido", "next": "tipo_pedido" },
-        { "label": "📋 Ver cardápio", "value": "cardapio", "next": "cardapio_info" },
-        { "label": "🍽️ Reservar mesa", "value": "reserva", "next": "reserva_dados" },
-        { "label": "🕐 Horário", "value": "horario", "next": "horario_info" }
+        {
+          "label": "🍕 Fazer pedido",
+          "value": "pedido",
+          "next": "tipo_pedido"
+        },
+        {
+          "label": "📋 Ver cardápio",
+          "value": "cardapio",
+          "next": "cardapio_info"
+        },
+        {
+          "label": "🍽️ Reservar mesa",
+          "value": "reserva",
+          "next": "reserva_dados"
+        },
+        {
+          "label": "🕐 Horário",
+          "value": "horario",
+          "next": "horario_info"
+        }
       ]
     },
     {
@@ -29,8 +45,16 @@
       "content": "Como você quer receber seu pedido?",
       "variable": "tipo_entrega",
       "options": [
-        { "label": "🛵 Delivery", "value": "delivery", "next": "captura_endereco" },
-        { "label": "🏪 Retirada no local", "value": "retirada", "next": "captura_nome" }
+        {
+          "label": "🛵 Delivery",
+          "value": "delivery",
+          "next": "captura_endereco"
+        },
+        {
+          "label": "🏪 Retirada no local",
+          "value": "retirada",
+          "next": "captura_nome"
+        }
       ]
     },
     {
@@ -65,13 +89,52 @@
       "content": "Quantas pessoas?",
       "variable": "pessoas",
       "options": [
-        { "label": "2 pessoas", "value": "2", "next": "captura_nome" },
-        { "label": "3-4 pessoas", "value": "3-4", "next": "captura_nome" },
-        { "label": "5-6 pessoas", "value": "5-6", "next": "captura_nome" },
-        { "label": "Mais de 6", "value": "6+", "next": "captura_nome" }
+        {
+          "label": "2 pessoas",
+          "value": "2",
+          "next": "captura_nome"
+        },
+        {
+          "label": "3-4 pessoas",
+          "value": "3-4",
+          "next": "captura_nome"
+        },
+        {
+          "label": "5-6 pessoas",
+          "value": "5-6",
+          "next": "captura_nome"
+        },
+        {
+          "label": "Mais de 6",
+          "value": "6+",
+          "next": "captura_nome"
+        }
       ]
     },
     {
       "id": "captura_nome",
       "type": "input",
-      "content": 
+      "content": "Me informe seu *nome*:",
+      "variable": "nome",
+      "next": "captura_telefone"
+    },
+    {
+      "id": "captura_telefone",
+      "type": "input",
+      "content": "E seu *WhatsApp com DDD*:",
+      "variable": "telefone",
+      "next": "confirmacao"
+    },
+    {
+      "id": "confirmacao",
+      "type": "message",
+      "content": "✅ *Pedido/Reserva registrado!*\n\n👤 {{nome}}\n📱 {{telefone}}\n\nEm instantes nossa equipe confirmará seu pedido/reserva e te enviará o link de pagamento ou detalhes.",
+      "next": "end"
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "content": "Obrigado pela preferência! 🍕 Bom apetite!"
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 {
   "slug": "petshop",
   "name": "Pet Shop / Veterinária",
-  "description": "Pet shops, clínicas veterinárias e banho/tosa. Agenda serviços, vende produtos és tira dúvidas.",
+  "description": "Pet shops, clínicas veterinárias e banho/tosa. Agenda serviços, vende produtos e tira dúvidas.",
   "category": "Pet",
   "icon": "🐾",
   "nodes": [
@@ -17,10 +17,26 @@
       "content": "Escolha uma opção:",
       "variable": "interesse",
       "options": [
-        { "label": "🛁 Banho e tosa", "value": "banho_tosa", "next": "porte_pet" },
-        { "label": "🏥 Consulta veterinária", "value": "veterinaria", "next": "tipo_consulta" },
-        { "label": "🛒 Produtos", "value": "produtos", "next": "info_produtos" },
-        { "label": "💉 Vacinação", "value": "vacinacao", "next": "captura_pet" }
+        {
+          "label": "🛁 Banho e tosa",
+          "value": "banho_tosa",
+          "next": "porte_pet"
+        },
+        {
+          "label": "🏥 Consulta veterinária",
+          "value": "veterinaria",
+          "next": "tipo_consulta"
+        },
+        {
+          "label": "🛒 Produtos",
+          "value": "produtos",
+          "next": "info_produtos"
+        },
+        {
+          "label": "💉 Vacinação",
+          "value": "vacinacao",
+          "next": "captura_pet"
+        }
       ]
     },
     {
@@ -29,17 +45,94 @@
       "content": "Qual é o porte do seu pet?",
       "variable": "porte_pet",
       "options": [
-        { "label": "Pequeno", "value": "pequeno", "next": "captura_pet" },
-        { "label": "Médio", "value": "merdio", "next": "captura_pet" },
-        { "label": "Grande", "cor-de": "grande", "next": "captura_pet" }
+        {
+          "label": "Pequeno",
+          "value": "pequeno",
+          "next": "captura_pet"
+        },
+        {
+          "label": "Médio",
+          "value": "medio",
+          "next": "captura_pet"
+        },
+        {
+          "label": "Grande",
+          "value": "grande",
+          "next": "captura_pet"
+        }
       ]
     },
     {
-      "id": "type_consulta",
+      "id": "tipo_consulta",
       "type": "question",
       "content": "Que tipo de consulta?",
       "variable": "tipo_consulta",
       "options": [
-        { "label": "Consulta de rotina", "value": "rotina", "next": "captura_pet" },
-        { "label": "Vacinação", "value": "vacinacao", "next": "captura решений" },
-        { "label": "Exames", "value": "exames", "next": "c
+        {
+          "label": "Consulta de rotina",
+          "value": "rotina",
+          "next": "captura_pet"
+        },
+        {
+          "label": "Vacinação",
+          "value": "vacinacao",
+          "next": "captura_pet"
+        },
+        {
+          "label": "Exames",
+          "value": "exames",
+          "next": "captura_pet"
+        },
+        {
+          "label": "Emergência",
+          "value": "emergencia",
+          "next": "emergencia"
+        }
+      ]
+    },
+    {
+      "id": "info_produtos",
+      "type": "message",
+      "content": "🛒 *Nossos produtos:*\n\n🍖 *Ração:*\n• Premium (15kg) - R$ 180\n• Standard (15kg) - R$ 120\n\n🦴 *Petiscos:*\n• Ossinhos naturais - R$ 25\n• Biscoitos variados - R$ 18\n\n🧴 *Higiene:*\n• Shampoo - R$ 35\n• Tapete higiênico - R$ 65\n\n🎾 *Brinquedos e acessórios*\n\n🛵 Entrega em domicílio!",
+      "next": "menu_principal"
+    },
+    {
+      "id": "emergencia",
+      "type": "message",
+      "content": "🚨 *EMERGÊNCIA VETERINÁRIA 24H*\n\n📞 Ligue agora: (11) 99999-9999\n\nEstamos prontos para atender seu pet a qualquer hora!",
+      "next": "captura_pet"
+    },
+    {
+      "id": "captura_pet",
+      "type": "input",
+      "content": "Qual é o *nome do seu pet*? 🐾",
+      "variable": "nome_pet",
+      "next": "captura_nome"
+    },
+    {
+      "id": "captura_nome",
+      "type": "input",
+      "content": "Que fofo(a)! 🥰\n\nAgora me diga seu *nome*:",
+      "variable": "nome",
+      "next": "captura_telefone"
+    },
+    {
+      "id": "captura_telefone",
+      "type": "input",
+      "content": "E seu *WhatsApp com DDD*:",
+      "variable": "telefone",
+      "next": "confirmacao"
+    },
+    {
+      "id": "confirmacao",
+      "type": "message",
+      "content": "✅ *Agendamento confirmado!*\n\n🐾 Pet: {{nome_pet}}\n👤 Tutor: {{nome}}\n📱 Contato: {{telefone}}\n\nEm até 1 hora entraremos em contato para confirmar data e horário do serviço.\n\nAté logo! 🐾❤️",
+      "next": "end"
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "content": "Cuide do seu pet com muito amor! 🐾❤️"
+    }
+  ]
+}
