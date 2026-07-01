@@ -147,3 +147,10 @@ from .models_whatsapp import (  # noqa: E402,F401
     WhatsAppOutboundMessage,
     WhatsAppContactState,
 )
+
+# --- IA + RAG (Fase A) — tabelas NOVAS, aditivas ---
+from .models_rag import (  # noqa: E402,F401
+    KnowledgeBase,
+    KnowledgeChunk,
+    AISettings,
+)

@@ -44,6 +44,11 @@ class Settings(BaseSettings):
     evolution_base_url: str = ""
     evolution_global_api_key: str = ""
 
+    # --- IA / Gemini (Fase A) ---
+    gemini_api_key: str = ""                     # Google AI Studio API key
+    gemini_chat_model: str = "gemini-2.0-flash"  # modelo de chat (rapido e barato)
+    ai_enabled: bool = False                     # feature flag global da IA
+
     # --- Billing ---
     billing_enabled: bool = False
     billing_provider: str = "asaas"              # asaas | stripe

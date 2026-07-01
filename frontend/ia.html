@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inteligência Artificial - dIAloga+</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    :root{
+      --cfg-bg:#f5f7fb; --cfg-card:#ffffff; --cfg-border:#e6e9f0; --cfg-text:#1a2233;
+      --cfg-muted:#6b7280; --cfg-primary:#4f46e5; --cfg-primary-d:#4338ca;
+      --cfg-input-bg:#ffffff; --cfg-input-border:#d8dde8;
+      --cfg-shadow:0 1px 3px rgba(16,24,40,.06),0 8px 24px rgba(16,24,40,.05);
+      --cfg-ok:#16a34a; --cfg-ok-bg:#ecfdf3; --cfg-err:#dc2626; --cfg-err-bg:#fef2f2;
+      --bot-bg:#eef2ff; --bot-text:#1e293b; --user-bg:#4f46e5; --user-text:#ffffff;
+    }
+    body.dark-mode{
+      --cfg-bg:#0f1420; --cfg-card:#171d2b; --cfg-border:#262e40; --cfg-text:#e6eaf2;
+      --cfg-muted:#9aa3b2; --cfg-primary:#6366f1; --cfg-primary-d:#818cf8;
+      --cfg-input-bg:#1f2636; --cfg-input-border:#323b50;
+      --cfg-shadow:0 1px 3px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+      --cfg-ok:#34d399; --cfg-ok-bg:#0c2a1f; --cfg-err:#f87171; --cfg-err-bg:#2a1414;
+      --bot-bg:#232b3e; --bot-text:#e6eaf2; --user-bg:#6366f1; --user-text:#ffffff;
+    }
+    .cfg-wrap{ max-width:1100px; margin:0 auto; padding:24px 20px 60px; color:var(--cfg-text); }
+    .cfg-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:8px; flex-wrap:wrap; }
+    .cfg-head h1{ font-size:26px; margin:0 0 4px; }
+    .cfg-sub{ color:var(--cfg-muted); margin:0; font-size:14px; }
+    .cfg-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:20px; }
+    @media (max-width:860px){ .cfg-grid{ grid-template-columns:1fr; } }
+    .cfg-card{ background:var(--cfg-card); border:1px solid var(--cfg-border); border-radius:16px; padding:24px; box-shadow:var(--cfg-shadow); }
+    .cfg-card.full{ grid-column:1 / -1; }
+    .cfg-card h2{ font-size:16px; margin:0 0 4px; display:flex; align-items:center; gap:8px; }
+    .cfg-card .hint{ color:var(--cfg-muted); font-size:13px; margin:0 0 16px; line-height:1.5; }
+    .cfg-field{ margin-bottom:14px; }
+    .cfg-field label{ display:block; font-size:13px; font-weight:600; margin-bottom:6px; }
+    .cfg-field input, .cfg-field select, .cfg-field textarea{
+      width:100%; box-sizing:border-box; padding:11px 13px; border-radius:10px;
+      border:1px solid var(--cfg-input-border); background:var(--cfg-input-bg); color:var(--cfg-text);
+      font-size:14px; outline:none; font-family:inherit;
+    }
+    .cfg-field textarea{ min-height:120px; resize:vertical; }
+    .cfg-btn{ appearance:none; border:0; cursor:pointer; font-size:14px; font-weight:600; border-radius:10px; padding:11px 18px; background:var(--cfg-primary); color:#fff; }
+    .cfg-btn:hover{ background:var(--cfg-primary-d); }
+    .cfg-btn:disabled{ opacity:.6; cursor:not-allowed; }
+    .cfg-btn.sm{ padding:7px 12px; font-size:13px; }
+    .cfg-btn.ghost{ background:transparent; color:var(--cfg-primary); border:1px solid var(--cfg-input-border); }
+    .cfg-alert{ border-radius:12px; padding:12px 14px; font-size:14px; margin-bottom:16px; border:1px solid transparent; }
+    .cfg-alert.ok{ background:var(--cfg-ok-bg); color:var(--cfg-ok); border-color:color-mix(in srgb, var(--cfg-ok) 30%, transparent); }
+    .cfg-alert.err{ background:var(--cfg-err-bg); color:var(--cfg-err); border-color:color-mix(in srgb, var(--cfg-err) 30%, transparent); }
+    .kb-item{ display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border:1px solid var(--cfg-border); border-radius:10px; margin-bottom:8px; cursor:pointer; }
+    .kb-item.active{ border-color:var(--cfg-primary); background:var(--bot-bg); }
+    .kb-item .name{ font-weight:600; font-size:14px; }
+    .kb-item .meta{ font-size:12px; color:var(--cfg-muted); }
+    .chat{ border:1px solid var(--cfg-border); border-radius:12px; padding:16px; min-height:220px; max-height:380px; overflow-y:auto; background:var(--cfg-input-bg); margin-bottom:12px; }
+    .msg{ margin-bottom:10px; display:flex; }
+    .msg.user{ justify-content:flex-end; }
+    .bubble{ max-width:78%; padding:10px 14px; border-radius:14px; font-size:14px; line-height:1.45; }
+    .msg.bot .bubble{ background:var(--bot-bg); color:var(--bot-text); border-bottom-left-radius:4px; }
+    .msg.user .bubble{ background:var(--user-bg); color:var(--user-text); border-bottom-right-radius:4px; }
+    .chat-input{ display:flex; gap:8px; }
+    .chat-input input{ flex:1; }
+    .empty{ text-align:center; color:var(--cfg-muted); padding:24px 10px; font-size:14px; }
+    .tag{ font-size:11px; padding:2px 8px; border-radius:999px; background:var(--bot-bg); color:var(--cfg-primary); margin-left:6px; }
+    .cfg-toggle{ background:transparent; border:1px solid var(--cfg-input-border); color:var(--cfg-text); border-radius:10px; padding:8px 12px; cursor:pointer; font-size:13px; }
+  </style>
+</head>
+<body>
+<script>
+  if (localStorage.getItem("dialoga-dark-mode") === "1") document.body.classList.add("dark-mode");
+</script>
+
+<nav class="navbar">
+  <div class="brand"><img src="img/logo-dialoga.png" alt="dIAloga+"></div>
+  <nav>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="builder.html">Fluxos</a>
+    <a href="leads.html">Leads</a>
+    <a href="ia.html" class="active">IA</a>
+    <a href="configuracoes.html">Configurações</a>
+  </nav>
+  <div class="user-area" id="user-area"></div>
+</nav>
+
+<main class="cfg-wrap">
+  <div class="cfg-head">
+    <div>
+      <h1>🧠 Inteligência Artificial</h1>
+      <p class="cfg-sub">Ensine a IA com o conteúdo do seu negócio e teste as respostas aqui mesmo.</p>
+    </div>
+    <button class="cfg-toggle" id="btn-theme" type="button">🌓 Tema</button>
+  </div>
+
+  <div id="alert-area"></div>
+
+  <div class="cfg-grid">
+    <!-- Coluna esquerda: bases + conteúdo -->
+    <div class="cfg-card">
+      <h2>📚 Bases de conhecimento</h2>
+      <p class="hint">Uma "base" guarda o que a IA sabe (preços, horários, FAQ). Crie uma e adicione conteúdo.</p>
+
+      <div class="cfg-field" style="display:flex; gap:8px;">
+        <input type="text" id="kb-name" placeholder="Nome da base (ex: Salão Centro)">
+        <button class="cfg-btn sm" id="btn-create-kb" type="button">+ Criar</button>
+      </div>
+
+      <div id="kb-list"><div class="empty">Nenhuma base ainda.</div></div>
+
+      <hr style="border:none; border-top:1px solid var(--cfg-border); margin:18px 0;">
+
+      <h2>✍️ Adicionar conteúdo à base selecionada</h2>
+      <p class="hint">Cole aqui as informações do negócio. A IA vai aprender com esse texto.</p>
+      <div class="cfg-field">
+        <textarea id="kb-text" placeholder="Ex: Corte de cabelo custa R$ 50. Atendemos de segunda a sexta, das 9h às 18h. Ficamos na Rua das Flores, 100. Aceitamos Pix e cartão."></textarea>
+      </div>
+      <button class="cfg-btn" id="btn-index" type="button" disabled>Ensinar a IA (indexar)</button>
+      <div id="index-status" class="hint" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- Coluna direita: chat de teste -->
+    <div class="cfg-card">
+      <h2>💬 Testar a IA <span class="tag" id="active-kb-tag">nenhuma base</span></h2>
+      <p class="hint">Faça perguntas como um cliente faria. A IA responde só com base no conteúdo que você ensinou.</p>
+      <div class="chat" id="chat"><div class="empty">Selecione uma base, adicione conteúdo e comece a conversar.</div></div>
+      <form class="chat-input" id="chat-form">
+        <input type="text" id="chat-q" placeholder="Ex: quanto custa o corte?" autocomplete="off">
+        <button class="cfg-btn" type="submit" id="btn-ask" disabled>Enviar</button>
+      </form>
+    </div>
+
+    <!-- Configuração da IA -->
+    <div class="cfg-card full">
+      <h2>⚙️ Comportamento da IA</h2>
+      <p class="hint">Defina a personalidade e as regras. A IA usa isso ao responder.</p>
+      <div class="cfg-grid" style="margin-top:0;">
+        <div>
+          <div class="cfg-field">
+            <label for="ai-persona">Persona (quem a IA é)</label>
+            <input type="text" id="ai-persona" placeholder="Ex: Você é a recepcionista da Clínica Bella Estética.">
+          </div>
+          <div class="cfg-field">
+            <label for="ai-tone">Tom de voz</label>
+            <select id="ai-tone">
+              <option value="cordial">Cordial</option>
+              <option value="formal">Formal</option>
+              <option value="descontraido">Descontraído</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <div class="cfg-field">
+            <label for="ai-fallback">Mensagem quando a IA não souber</label>
+            <input type="text" id="ai-fallback" placeholder="Vou te transferir para um atendente. Um momento!">
+          </div>
+          <div class="cfg-field">
+            <label for="ai-limit">Limite de respostas de IA por mês</label>
+            <input type="number" id="ai-limit" value="1000" min="0">
+          </div>
+        </div>
+      </div>
+      <button class="cfg-btn" id="btn-save-ai" type="button">Salvar comportamento</button>
+    </div>
+  </div>
+</main>
+
+<script>
+  window.API_BASE = "https://dialoga-backend-1slr.onrender.com";
+</script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script>
+(async function () {
+  const alertArea = document.getElementById("alert-area");
+  const user = await WFAuth.requireAuth();
+  if (!user) return;
+  WFAuth.renderUserChip(document.getElementById("user-area"), user);
+
+  const BASE = window.API_BASE;
+  let activeKb = null;
+
+  document.getElementById("btn-theme").addEventListener("click", function(){
+    const on = document.body.classList.toggle("dark-mode");
+    localStorage.setItem("dialoga-dark-mode", on ? "1" : "0");
+  });
+
+  function authHeaders() {
+    const t = localStorage.getItem("dialoga-token") || localStorage.getItem("token") || "";
+    return { "Content-Type": "application/json", "Authorization": "Bearer " + t };
+  }
+  function showAlert(msg, type) {
+    alertArea.innerHTML = '<div class="cfg-alert ' + (type === "success" ? "ok" : "err") + '">' + esc(msg) + '</div>';
+    if (type === "success") setTimeout(function(){ alertArea.innerHTML = ""; }, 4000);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+  async function api(path, opts) {
+    const r = await fetch(BASE + path, Object.assign({ headers: authHeaders() }, opts || {}));
+    if (r.status === 204) return null;
+    const data = await r.json().catch(function(){ return {}; });
+    if (!r.ok) throw new Error(data.detail || data.message || ("Erro HTTP " + r.status));
+    return data;
+  }
+
+  // ---------- Bases ----------
+  async function loadKbs() {
+    const c = document.getElementById("kb-list");
+    try {
+      const kbs = await api("/api/ai/knowledge-bases", { method: "GET" });
+      if (!kbs || !kbs.length) { c.innerHTML = '<div class="empty">Nenhuma base ainda. Crie uma acima.</div>'; return; }
+      c.innerHTML = "";
+      kbs.forEach(function(kb){
+        const div = document.createElement("div");
+        div.className = "kb-item" + (activeKb && activeKb.id === kb.id ? " active" : "");
+        div.innerHTML = '<div><div class="name">' + esc(kb.name) + '</div><div class="meta">#' + kb.id + '</div></div>' +
+                        '<button class="cfg-btn ghost sm" data-del="' + kb.id + '">Excluir</button>';
+        div.addEventListener("click", function(ev){
+          if (ev.target.hasAttribute("data-del")) return;
+          selectKb(kb);
+        });
+        c.appendChild(div);
+      });
+      c.querySelectorAll("[data-del]").forEach(function(btn){
+        btn.addEventListener("click", async function(ev){
+          ev.stopPropagation();
+          if (!confirm("Excluir esta base?")) return;
+          try { await api("/api/ai/knowledge-bases/" + btn.getAttribute("data-del"), { method: "DELETE" });
+                if (activeKb && String(activeKb.id) === btn.getAttribute("data-del")) selectKb(null);
+                showAlert("Base excluída.", "success"); loadKbs(); }
+          catch(e){ showAlert(e.message); }
+        });
+      });
+    } catch (e) { c.innerHTML = '<div class="cfg-alert err">' + esc(e.message) + '</div>'; }
+  }
+
+  function selectKb(kb) {
+    activeKb = kb;
+    document.getElementById("btn-index").disabled = !kb;
+    document.getElementById("btn-ask").disabled = !kb;
+    document.getElementById("active-kb-tag").textContent = kb ? kb.name : "nenhuma base";
+    document.getElementById("chat").innerHTML = kb
+      ? '<div class="empty">Base "' + esc(kb.name) + '" selecionada. Faça uma pergunta!</div>'
+      : '<div class="empty">Selecione uma base para conversar.</div>';
+    loadKbs();
+  }
+
+  document.getElementById("btn-create-kb").addEventListener("click", async function(){
+    const name = document.getElementById("kb-name").value.trim();
+    if (!name) { showAlert("Dê um nome para a base."); return; }
+    try {
+      const kb = await api("/api/ai/knowledge-bases", { method: "POST", body: JSON.stringify({ name: name }) });
+      document.getElementById("kb-name").value = "";
+      showAlert("Base criada!", "success");
+      await loadKbs(); selectKb(kb);
+    } catch (e) { showAlert(e.message); }
+  });
+
+  // ---------- Indexar conteúdo ----------
+  document.getElementById("btn-index").addEventListener("click", async function(){
+    if (!activeKb) return;
+    const text = document.getElementById("kb-text").value.trim();
+    if (!text) { showAlert("Cole algum conteúdo para ensinar a IA."); return; }
+    const btn = this, status = document.getElementById("index-status");
+    btn.disabled = true; btn.textContent = "Ensinando... (isso chama a IA, aguarde)";
+    status.textContent = "";
+    try {
+      const res = await api("/api/ai/knowledge-bases/" + activeKb.id + "/index",
+        { method: "POST", body: JSON.stringify({ text: text, source: "manual" }) });
+      status.innerHTML = '✅ Conteúdo aprendido! ' + res.chunks_created + ' trecho(s) adicionado(s), total ' + res.chunks_total + '.';
+      document.getElementById("kb-text").value = "";
+    } catch (e) { status.innerHTML = '❌ ' + esc(e.message); }
+    finally { btn.disabled = false; btn.textContent = "Ensinar a IA (indexar)"; }
+  });
+
+  // ---------- Chat de teste ----------
+  function addBubble(text, who) {
+    const chat = document.getElementById("chat");
+    if (chat.querySelector(".empty")) chat.innerHTML = "";
+    const div = document.createElement("div");
+    div.className = "msg " + who;
+    div.innerHTML = '<div class="bubble">' + esc(text) + '</div>';
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+    return div;
+  }
+
+  document.getElementById("chat-form").addEventListener("submit", async function(ev){
+    ev.preventDefault();
+    if (!activeKb) { showAlert("Selecione uma base primeiro."); return; }
+    const input = document.getElementById("chat-q");
+    const q = input.value.trim();
+    if (!q) return;
+    addBubble(q, "user");
+    input.value = "";
+    const thinking = addBubble("...", "bot");
+    try {
+      const res = await api("/api/ai/ask", { method: "POST",
+        body: JSON.stringify({ knowledge_base_id: activeKb.id, question: q }) });
+      thinking.querySelector(".bubble").textContent = res.answer + (res.transferred ? " 🙋 (transferindo p/ humano)" : "");
+    } catch (e) {
+      thinking.querySelector(".bubble").textContent = "⚠️ " + e.message;
+    }
+  });
+
+  // ---------- Config da IA ----------
+  async function loadAiSettings() {
+    try {
+      const s = await api("/api/ai/settings", { method: "GET" });
+      document.getElementById("ai-persona").value = s.persona || "";
+      document.getElementById("ai-tone").value = s.tone || "cordial";
+      document.getElementById("ai-fallback").value = s.fallback_message || "";
+      document.getElementById("ai-limit").value = s.monthly_ai_limit != null ? s.monthly_ai_limit : 1000;
+    } catch (e) { /* silencioso */ }
+  }
+  document.getElementById("btn-save-ai").addEventListener("click", async function(){
+    try {
+      await api("/api/ai/settings", { method: "PUT", body: JSON.stringify({
+        persona: document.getElementById("ai-persona").value || null,
+        tone: document.getElementById("ai-tone").value,
+        fallback_message: document.getElementById("ai-fallback").value || null,
+        monthly_ai_limit: Number(document.getElementById("ai-limit").value) || 0
+      }) });
+      showAlert("Comportamento salvo!", "success");
+    } catch (e) { showAlert(e.message); }
+  });
+
+  await loadKbs();
+  await loadAiSettings();
+})();
+</script>
+</body>
+</html>
