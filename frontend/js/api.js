@@ -59,5 +59,20 @@
     deleteLead: function (id) { return request("/api/leads/" + id, { method: "DELETE" }); },
     exportLeadsUrl: function (qs) { return API_BASE + "/api/leads/export/csv" + (qs || ""); },
     metrics: function () { return request("/api/dashboard/metrics"); },
+
+    // ---- WhatsApp Conexões (Fase 3) ----
+    listConnections: function () { return request("/api/whatsapp/connections"); },
+    createConnection: function (b) { return request("/api/whatsapp/connections", { method: "POST", body: b }); },
+    deleteConnection: function (id) { return request("/api/whatsapp/connections/" + id, { method: "DELETE" }); },
+    sendTestMessage: function (id, b) { return request("/api/whatsapp/connections/" + id + "/send-test", { method: "POST", body: b }); },
+
+    // ---- IA + RAG (Fase A) ----
+    listKnowledgeBases: function () { return request("/api/ai/knowledge-bases"); },
+    createKnowledgeBase: function (b) { return request("/api/ai/knowledge-bases", { method: "POST", body: b }); },
+    deleteKnowledgeBase: function (id) { return request("/api/ai/knowledge-bases/" + id, { method: "DELETE" }); },
+    indexKnowledge: function (id, b) { return request("/api/ai/knowledge-bases/" + id + "/index", { method: "POST", body: b }); },
+    getAiSettings: function () { return request("/api/ai/settings"); },
+    updateAiSettings: function (b) { return request("/api/ai/settings", { method: "PUT", body: b }); },
+    aiAsk: function (b) { return request("/api/ai/ask", { method: "POST", body: b }); },
   };
 })(window);

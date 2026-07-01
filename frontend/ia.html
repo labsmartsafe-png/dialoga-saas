@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Inteligência Artificial - dIAloga+</title>
   <link rel="stylesheet" href="css/styles.css">
-  <style>
+  <script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=XxKuKsRn9b9kNpFBJ8u0Ybr4LZxss398KGAOsQ98AfTy7Ctm52obx-M8r7YFJgovaLjtfQxKLmJziJV2VTTVg3LVq0WbLNZ9Fy_5IICOpORSKFrxfSedTeliklyH2K8GIEkLDCozppXrNS-wFkpNwg" charset="UTF-8"></script><style>
     :root{
       --cfg-bg:#f5f7fb; --cfg-card:#ffffff; --cfg-border:#e6e9f0; --cfg-text:#1a2233;
       --cfg-muted:#6b7280; --cfg-primary:#4f46e5; --cfg-primary-d:#4338ca;
@@ -183,29 +183,18 @@
     localStorage.setItem("dialoga-dark-mode", on ? "1" : "0");
   });
 
-  function authHeaders() {
-    const t = localStorage.getItem("dialoga-token") || localStorage.getItem("token") || "";
-    return { "Content-Type": "application/json", "Authorization": "Bearer " + t };
-  }
   function showAlert(msg, type) {
     alertArea.innerHTML = '<div class="cfg-alert ' + (type === "success" ? "ok" : "err") + '">' + esc(msg) + '</div>';
     if (type === "success") setTimeout(function(){ alertArea.innerHTML = ""; }, 4000);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
-  async function api(path, opts) {
-    const r = await fetch(BASE + path, Object.assign({ headers: authHeaders() }, opts || {}));
-    if (r.status === 204) return null;
-    const data = await r.json().catch(function(){ return {}; });
-    if (!r.ok) throw new Error(data.detail || data.message || ("Erro HTTP " + r.status));
-    return data;
-  }
 
   // ---------- Bases ----------
   async function loadKbs() {
     const c = document.getElementById("kb-list");
     try {
-      const kbs = await api("/api/ai/knowledge-bases", { method: "GET" });
+      const kbs = await WFApi.listKnowledgeBases();
       if (!kbs || !kbs.length) { c.innerHTML = '<div class="empty">Nenhuma base ainda. Crie uma acima.</div>'; return; }
       c.innerHTML = "";
       kbs.forEach(function(kb){
@@ -223,7 +212,7 @@
         btn.addEventListener("click", async function(ev){
           ev.stopPropagation();
           if (!confirm("Excluir esta base?")) return;
-          try { await api("/api/ai/knowledge-bases/" + btn.getAttribute("data-del"), { method: "DELETE" });
+          try { await WFApi.deleteKnowledgeBase(btn.getAttribute("data-del"));
                 if (activeKb && String(activeKb.id) === btn.getAttribute("data-del")) selectKb(null);
                 showAlert("Base excluída.", "success"); loadKbs(); }
           catch(e){ showAlert(e.message); }
@@ -247,7 +236,7 @@
     const name = document.getElementById("kb-name").value.trim();
     if (!name) { showAlert("Dê um nome para a base."); return; }
     try {
-      const kb = await api("/api/ai/knowledge-bases", { method: "POST", body: JSON.stringify({ name: name }) });
+      const kb = await WFApi.createKnowledgeBase({ name: name });
       document.getElementById("kb-name").value = "";
       showAlert("Base criada!", "success");
       await loadKbs(); selectKb(kb);
@@ -263,8 +252,7 @@
     btn.disabled = true; btn.textContent = "Ensinando... (isso chama a IA, aguarde)";
     status.textContent = "";
     try {
-      const res = await api("/api/ai/knowledge-bases/" + activeKb.id + "/index",
-        { method: "POST", body: JSON.stringify({ text: text, source: "manual" }) });
+      const res = await WFApi.indexKnowledge(activeKb.id, { text: text, source: "manual" });
       status.innerHTML = '✅ Conteúdo aprendido! ' + res.chunks_created + ' trecho(s) adicionado(s), total ' + res.chunks_total + '.';
       document.getElementById("kb-text").value = "";
     } catch (e) { status.innerHTML = '❌ ' + esc(e.message); }
@@ -293,8 +281,7 @@
     input.value = "";
     const thinking = addBubble("...", "bot");
     try {
-      const res = await api("/api/ai/ask", { method: "POST",
-        body: JSON.stringify({ knowledge_base_id: activeKb.id, question: q }) });
+      const res = await WFApi.aiAsk({ knowledge_base_id: activeKb.id, question: q });
       thinking.querySelector(".bubble").textContent = res.answer + (res.transferred ? " 🙋 (transferindo p/ humano)" : "");
     } catch (e) {
       thinking.querySelector(".bubble").textContent = "⚠️ " + e.message;
@@ -304,7 +291,7 @@
   // ---------- Config da IA ----------
   async function loadAiSettings() {
     try {
-      const s = await api("/api/ai/settings", { method: "GET" });
+      const s = await WFApi.getAiSettings();
       document.getElementById("ai-persona").value = s.persona || "";
       document.getElementById("ai-tone").value = s.tone || "cordial";
       document.getElementById("ai-fallback").value = s.fallback_message || "";
@@ -313,12 +300,12 @@
   }
   document.getElementById("btn-save-ai").addEventListener("click", async function(){
     try {
-      await api("/api/ai/settings", { method: "PUT", body: JSON.stringify({
+      await WFApi.updateAiSettings({
         persona: document.getElementById("ai-persona").value || null,
         tone: document.getElementById("ai-tone").value,
         fallback_message: document.getElementById("ai-fallback").value || null,
         monthly_ai_limit: Number(document.getElementById("ai-limit").value) || 0
-      }) });
+      });
       showAlert("Comportamento salvo!", "success");
     } catch (e) { showAlert(e.message); }
   });
@@ -327,5 +314,6 @@
   await loadAiSettings();
 })();
 </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1481861bbc69e06',t:'MTc4MjkzNzA1Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>

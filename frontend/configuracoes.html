@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Configurações - dIAloga+</title>
   <link rel="stylesheet" href="css/styles.css">
-  <style>
+  <script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=sEu8oyNDFs65qNL7P9mZZmAKL-aSCR_Vb-Wp51YCSiyBp2vYanFIpOKgkOHNqIHSSyKawjh8EKgPiuf89nBTSytAso2RmN11VdwrnHCyKXQBYKLn-HlHjyWtvYGOF3A-i9XVRQwFUwOXqnoIEEmJew" charset="UTF-8"></script><style>
     /* ===== Estilos próprios da tela de Configurações (não dependem do styles.css) ===== */
     :root{
       --cfg-bg:#f5f7fb; --cfg-card:#ffffff; --cfg-border:#e6e9f0; --cfg-text:#1a2233;
@@ -81,7 +81,7 @@
     <a href="dashboard.html">Dashboard</a>
     <a href="builder.html">Fluxos</a>
     <a href="leads.html">Leads</a>
-    <a href="ia.html">IA</a> 	
+    <a href="ia.html">IA</a>
     <a href="configuracoes.html" class="active">Configurações</a>
   </nav>
   <div class="user-area" id="user-area"></div>
@@ -176,11 +176,6 @@
     localStorage.setItem("dialoga-dark-mode", on ? "1" : "0");
   });
 
-  const BASE = window.API_BASE;
-  function authHeaders() {
-    const t = localStorage.getItem("dialoga-token") || localStorage.getItem("token") || "";
-    return { "Content-Type": "application/json", "Authorization": "Bearer " + t };
-  }
   function showAlert(msg, type) {
     alertArea.innerHTML = '<div class="cfg-alert ' + (type === "success" ? "ok" : "err") + '">' + escapeHtml(msg) + '</div>';
     if (type === "success") setTimeout(function(){ alertArea.innerHTML = ""; }, 4000);
@@ -191,17 +186,10 @@
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   }
-  async function api(path, opts) {
-    const r = await fetch(BASE + path, Object.assign({ headers: authHeaders() }, opts || {}));
-    if (r.status === 204) return null;
-    const data = await r.json().catch(function(){ return {}; });
-    if (!r.ok) throw new Error(data.detail || data.message || ("Erro HTTP " + r.status));
-    return data;
-  }
 
   async function loadFlows() {
     try {
-      const flows = await api("/api/flows", { method: "GET" });
+      const flows = await WFApi.listFlows();
       const sel = document.getElementById("flow_id");
       (flows || []).forEach(function(f){
         const o = document.createElement("option");
@@ -214,7 +202,7 @@
     const c = document.getElementById("conn-list");
     const testSel = document.getElementById("test_conn");
     try {
-      const conns = await api("/api/whatsapp/connections", { method: "GET" });
+      const conns = await WFApi.listConnections();
       testSel.innerHTML = "";
       if (!conns || !conns.length) {
         c.innerHTML = '<div class="cfg-empty">Nenhuma conexão ainda. Conecte um número no formulário acima.</div>';
@@ -247,7 +235,7 @@
         btn.addEventListener("click", async function(){
           if (!confirm("Excluir esta conexão?")) return;
           try {
-            await api("/api/whatsapp/connections/" + btn.getAttribute("data-del"), { method: "DELETE" });
+            await WFApi.deleteConnection(btn.getAttribute("data-del"));
             showAlert("Conexão excluída.", "success");
             loadConnections();
           } catch (e) { showAlert(e.message); }
@@ -271,7 +259,7 @@
         waba_id: document.getElementById("waba_id").value || null,
         flow_id: document.getElementById("flow_id").value ? Number(document.getElementById("flow_id").value) : null
       };
-      const res = await api("/api/whatsapp/connections", { method: "POST", body: JSON.stringify(body) });
+      const res = await WFApi.createConnection(body);
       if (res.status === "connected") showAlert("Conexão salva e validada com sucesso! ✅", "success");
       else showAlert("Conexão salva, mas a validação falhou: " + (res.last_error || "verifique o token."), "error");
       document.getElementById("access_token").value = "";
@@ -291,7 +279,7 @@
     btn.disabled = true; btn.textContent = "Enviando...";
     try {
       const body = { to: document.getElementById("test_to").value.trim(), text: document.getElementById("test_text").value };
-      const res = await api("/api/whatsapp/connections/" + connId + "/send-test", { method: "POST", body: JSON.stringify(body) });
+      const res = await WFApi.sendTestMessage(connId, body);
       showAlert("Mensagem enviada! ID: " + (res.provider_message_id || "ok"), "success");
     } catch (e) {
       showAlert(e.message);
@@ -304,5 +292,6 @@
   await loadConnections();
 })();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a11f163bfbdbcaf8',t:'MTc4MjUwNzA1Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14817f139cf9e06',t:'MTc4MjkzNzAzOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
