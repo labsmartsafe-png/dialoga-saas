@@ -405,11 +405,39 @@
   }
 
   $("#btn-save").addEventListener("click", async function () {
+    const btn = $("#btn-save");
+    // OPCAO 1 (UX): se nao ha fluxo aberto, cria um novo com o nome digitado no topo.
     if (!state.currentFlowId) {
-      showAlert("Selecione ou crie um fluxo primeiro.");
+      const nome = ($("#flow-name").value || "").trim();
+      if (!nome) {
+        showAlert("Digite um nome no campo do topo (ou clique em '+ Novo fluxo').");
+        $("#flow-name").focus();
+        return;
+      }
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Criando...';
+      try {
+        const novo = await WFApi.createFlow({
+          name: nome,
+          description: $("#flow-description").value || "",
+          nodes: state.nodes,
+          mode: currentModeValue(),
+        });
+        state.currentFlowId = novo.id;
+        state.currentFlowMode = currentModeValue();
+        state.flows.unshift(novo);
+        $("#btn-delete").style.display = "";
+        renderFlowsList();
+        renderCanvas();
+        showAlert("Fluxo criado e salvo!", "success");
+      } catch (e) {
+        showAlert("Erro ao criar fluxo: " + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Salvar";
+      }
       return;
     }
-    const btn = $("#btn-save");
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span> Salvando...';
     try {
