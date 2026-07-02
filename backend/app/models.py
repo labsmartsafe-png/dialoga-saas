@@ -69,6 +69,8 @@ class Flow(Base):
     start_node_id = Column(String(100), nullable=True)
     active = Column(Boolean, default=True)
     template_slug = Column(String(100), nullable=True)
+    # Modo de atendimento: 'guided' (trilho + no de IA opcional) | 'ai_agent' (IA na entrada)
+    mode = Column(String(20), default="guided", nullable=False)
     created_at = Column(DateTime, default=utcnow)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 

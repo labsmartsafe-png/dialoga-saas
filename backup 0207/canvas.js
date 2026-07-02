@@ -1,6 +1,5 @@
 /**
  * canvas.js - Canvas visual moderno com zoom, pan, minimap e menu de conexão.
- * (Fase A.2: adicionado suporte ao nó 'ai' — cor + item no menu de inserção.)
  */
 
 (function (global) {
@@ -141,7 +140,6 @@
       webhook: "linear-gradient(135deg, #0891b2, #0e7490)",
       human: "linear-gradient(135deg, #4338ca, #3730a3)",
       end: "linear-gradient(135deg, #ef4444, #dc2626)",
-      ai: "linear-gradient(135deg, #10b981, #14b8a6)",
     };
 
     nodes.forEach(function (n) {
@@ -153,11 +151,10 @@
       div.style.top = pos.y + "px";
       div.dataset.nodeId = n.id;
       const color = colors[n.type] || "#6b7280";
-      var typeLabel = (n.type === "ai") ? "ia" : n.type;
 
       div.innerHTML =
         '<div class="node-header">' +
-          '<span class="node-type" style="background:' + color + '">' + typeLabel + '</span>' +
+          '<span class="node-type" style="background:' + color + '">' + n.type + '</span>' +
         '</div>' +
         '<div class="node-content">' + escapeHtml((n.content || n.id).slice(0, 60)) + '</div>' +
         '<div class="node-id">' + escapeHtml(n.id) + '</div>' +
@@ -321,13 +318,20 @@
     line.setAttribute("d", createSmoothPath(startX, startY, connecting.tempX, connecting.tempY));
   }
 
+  // ============ NOVO: Menu suspenso da conexão ============
   function showConnectionMenu(mouseEvent, fromId, target) {
+    // Remove menu existente
     closeConnectionMenu();
+
     const menu = document.createElement("div");
     menu.id = "connection-menu";
     menu.className = "connection-menu";
+
+    // Posiciona no clique do mouse
     menu.style.left = mouseEvent.clientX + "px";
     menu.style.top = mouseEvent.clientY + "px";
+
+    // Ajusta se sair da tela
     setTimeout(function () {
       const rect = menu.getBoundingClientRect();
       if (rect.right > window.innerWidth) {
@@ -339,19 +343,18 @@
     }, 0);
 
     const nodeTypes = [
-      { type: "message", icon: "M", label: "Mensagem" },
-      { type: "question", icon: "?", label: "Pergunta" },
-      { type: "input", icon: "T", label: "Entrada de texto" },
-      { type: "ai", icon: "IA", label: "IA (responde com conhecimento)" },
-      { type: "condition", icon: "C", label: "Condicao" },
-      { type: "delay", icon: "D", label: "Espera / Delay" },
-      { type: "webhook", icon: "W", label: "Webhook" },
-      { type: "human", icon: "H", label: "Atendimento humano" },
-      { type: "end", icon: "F", label: "Fim de fluxo" },
+      { type: "message", icon: "💬", label: "Mensagem" },
+      { type: "question", icon: "❓", label: "Pergunta" },
+      { type: "input", icon: "✏️", label: "Entrada de texto" },
+      { type: "condition", icon: "🔀", label: "Condição" },
+      { type: "delay", icon: "⏱️", label: "Espera / Delay" },
+      { type: "webhook", icon: "🔗", label: "Webhook" },
+      { type: "human", icon: "👤", label: "Atendimento humano" },
+      { type: "end", icon: "🏁", label: "Fim de fluxo" },
     ];
 
     menu.innerHTML =
-      '<div class="cm-header">Inserir no entre</div>' +
+      '<div class="cm-header">Inserir nó entre</div>' +
       nodeTypes.map(function (nt) {
         return '<div class="cm-item" data-insert-type="' + nt.type + '">' +
           '<span class="cm-icon">' + nt.icon + '</span>' + nt.label +
@@ -359,11 +362,12 @@
       }).join("") +
       '<div class="cm-divider"></div>' +
       '<div class="cm-item cm-danger" data-delete-conn="1">' +
-        '<span class="cm-icon">X</span> Excluir conexao' +
+        '<span class="cm-icon">🗑️</span> Excluir conexão' +
       '</div>';
 
     document.body.appendChild(menu);
 
+    // Handler: inserir nó
     menu.querySelectorAll("[data-insert-type]").forEach(function (item) {
       item.addEventListener("click", function () {
         if (global.WFCanvas && global.WFCanvas.onInsertNodeBetween) {
@@ -373,6 +377,7 @@
       });
     });
 
+    // Handler: excluir conexão
     const delBtn = menu.querySelector("[data-delete-conn]");
     if (delBtn) {
       delBtn.addEventListener("click", function () {
@@ -383,6 +388,7 @@
       });
     }
 
+    // Fecha ao clicar fora (depois de um tick para não fechar imediatamente)
     setTimeout(function () {
       document.addEventListener("mousedown", onOutsideClick);
     }, 0);
@@ -401,6 +407,7 @@
     document.removeEventListener("mousedown", onOutsideClick);
   }
 
+  // ============ Desenho das conexões (CORRIGIDO) ============
   function drawConnections(nodes, positions) {
     const group = document.getElementById("connections-group");
     if (!group) return;
@@ -419,17 +426,26 @@
         let to, marker, className, strokeColor;
 
         if (target.type === "option") {
-          to = { x: positions[target.id].x, y: positions[target.id].y + 20 + target.index * 16 };
+          to = {
+            x: positions[target.id].x,
+            y: positions[target.id].y + 20 + target.index * 16,
+          };
           marker = "url(#arrowhead-option)";
           className = "option";
           strokeColor = "#10b981";
         } else if (target.type === "condition") {
-          to = { x: positions[target.id].x, y: positions[target.id].y + NODE_HEIGHT / 2 };
+          to = {
+            x: positions[target.id].x,
+            y: positions[target.id].y + NODE_HEIGHT / 2,
+          };
           marker = "url(#arrowhead-condition)";
           className = "condition";
           strokeColor = "#f59e0b";
         } else {
-          to = { x: positions[target.id].x, y: positions[target.id].y + NODE_HEIGHT / 2 };
+          to = {
+            x: positions[target.id].x,
+            y: positions[target.id].y + NODE_HEIGHT / 2,
+          };
           marker = "url(#arrowhead)";
           className = "";
           strokeColor = "#8b5cf6";
@@ -437,20 +453,22 @@
 
         const pathData = createSmoothPath(from.x, from.y, to.x, to.y);
 
+        // ============ PATH VISÍVEL ============
         const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
         path.setAttribute("d", pathData);
         path.setAttribute("marker-end", marker);
         path.setAttribute("data-from", n.id);
         path.setAttribute("data-to", target.id);
         path.setAttribute("data-type", target.type);
+        // FIX: cor sólida como fallback + gradient via style
         path.setAttribute("stroke", strokeColor);
         path.setAttribute("stroke-width", "3");
         path.setAttribute("fill", "none");
-        path.setAttribute("opacity", "0.85");
-        if (className) path.setAttribute("class", className);
+        path.setAttribute("opacity", "0.85");        if (className) path.setAttribute("class", className);
         path.style.cursor = "pointer";
         path.style.pointerEvents = "stroke";
 
+        // ============ PATH INVISÍVEL (área de clique ampla) ============
         const hitPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
         hitPath.setAttribute("d", pathData);
         hitPath.setAttribute("stroke", "transparent");
@@ -462,6 +480,7 @@
         hitPath.setAttribute("data-from", n.id);
         hitPath.setAttribute("data-to", target.id);
 
+        // ============ BOTÃO "+" NO MEIO ============
         const midpoint = getPathMidpoint(from.x, from.y, to.x, to.y);
         const plusGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
         plusGroup.setAttribute("class", "connection-plus");
@@ -494,6 +513,7 @@
         plusV.setAttribute("stroke-linecap", "round");
         plusGroup.appendChild(plusV);
 
+        // ============ HOVER ============
         function showPlus() {
           plusGroup.style.opacity = "1";
           path.setAttribute("opacity", "1");
@@ -512,12 +532,14 @@
         plusGroup.addEventListener("mouseenter", showPlus);
         plusGroup.addEventListener("mouseleave", hidePlus);
 
+        // FIX: Clique no "+" abre MENU SUSPENSO (em vez de inserir direto)
         plusGroup.addEventListener("click", function (e) {
           e.stopPropagation();
           e.preventDefault();
           showConnectionMenu(e, n.id, target);
         });
 
+        // Botão direito = remover
         function handleContextMenu(e) {
           e.preventDefault();
           e.stopPropagation();
@@ -527,6 +549,7 @@
         path.addEventListener("contextmenu", handleContextMenu);
         hitPath.addEventListener("contextmenu", handleContextMenu);
 
+        // Ordem: hitPath (atrás) → path (meio) → plusGroup (frente)
         group.appendChild(path);
         group.appendChild(hitPath);
         group.appendChild(plusGroup);
@@ -548,7 +571,7 @@
       targets.push({ id: n.condition.next, type: "condition", label: "se sim" });
     }
     if (n.fallback) {
-      targets.push({ id: n.fallback, type: "condition", label: "se nao" });
+      targets.push({ id: n.fallback, type: "condition", label: "se não" });
     }
     return targets;
   }
@@ -556,14 +579,22 @@
   function createSmoothPath(x1, y1, x2, y2) {
     const dx = x2 - x1;
     const dy = y2 - y1;
+
+    // Distância horizontal dos pontos de controle
     const cpDist = Math.max(60, Math.abs(dx) * 0.5);
+
     let cp1y = y1;
     let cp2y = y2;
+
+    // FIX: Quando os nós estão em paralelo (mesma altura), a curva fica
+    // degenerada e some. Adicionamos uma curvatura mínima (arco suave)
+    // para garantir que a linha seja sempre visível.
     if (Math.abs(dy) < 40) {
-      const bow = 14;
+      const bow = 14; // arco suave para baixo (estilo n8n)
       cp1y = y1 + bow;
       cp2y = y2 + bow;
     }
+
     return "M " + x1 + " " + y1 +
            " C " + (x1 + cpDist) + " " + cp1y +
            ", " + (x2 - cpDist) + " " + cp2y +
@@ -578,6 +609,7 @@
     if (group) group.innerHTML = "";
   }
 
+  // ============ ZOOM ============
   function setZoom(newZoom, centerX, centerY) {
     newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
     const wrapper = document.getElementById("canvas-wrapper");
@@ -704,6 +736,7 @@
     applyTransform();
   }
 
+  // ============ MINIMAP ============
   function renderMinimap(nodes, positions) {
     const minimap = document.getElementById("minimap-inner");
     if (!minimap) return;

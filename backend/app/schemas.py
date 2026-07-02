@@ -82,7 +82,8 @@ class TemplateDetail(BaseModel):
 class FlowNode(BaseModel):
     """Estrutura de um nó do fluxo."""
     id: str
-    type: Literal["message", "question", "input", "condition", "delay", "webhook", "human", "end"]
+    # 'ai' e' o novo tipo (Fase A.2): responde com IA/RAG
+    type: Literal["message", "question", "input", "condition", "delay", "webhook", "human", "end", "ai"]
     content: str = ""
     options: Optional[List[Dict[str, str]]] = None  # [{"label": "x", "value": "y", "next": "node_id"}]
     next: Optional[str] = None
@@ -90,7 +91,9 @@ class FlowNode(BaseModel):
     delay_seconds: Optional[int] = None
     condition: Optional[Dict[str, Any]] = None
     fallback: Optional[str] = None
-    # Campos para canvas visual (Fase 1 da Opção C)
+    # Campo do nó 'ai': qual base de conhecimento usar (opcional; usa a padrao das AISettings se vazio)
+    knowledge_base_id: Optional[int] = None
+    # Campos para canvas visual
     position_x: Optional[float] = None  # posição X no canvas (pixels)
     position_y: Optional[float] = None  # posição Y no canvas (pixels)
 
@@ -102,6 +105,7 @@ class FlowCreate(BaseModel):
     nodes: List[FlowNode] = []
     start_node_id: Optional[str] = None
     template_slug: Optional[str] = None
+    mode: Optional[Literal["guided", "ai_agent"]] = "guided"
 
 
 class FlowUpdate(BaseModel):
@@ -111,6 +115,7 @@ class FlowUpdate(BaseModel):
     nodes: Optional[List[FlowNode]] = None
     start_node_id: Optional[str] = None
     active: Optional[bool] = None
+    mode: Optional[Literal["guided", "ai_agent"]] = None
 
 
 class FlowOut(BaseModel):
@@ -122,6 +127,7 @@ class FlowOut(BaseModel):
     start_node_id: Optional[str]
     active: bool
     template_slug: Optional[str]
+    mode: str = "guided"
     created_at: datetime
     updated_at: datetime
 

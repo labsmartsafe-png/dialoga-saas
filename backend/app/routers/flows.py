@@ -54,6 +54,7 @@ def create_flow(
         start_node_id=start_id,
         active=True,
         template_slug=payload.template_slug,
+        mode=payload.mode or "guided",
     )
     db.add(flow)
     db.commit()
@@ -100,6 +101,8 @@ def update_flow(
         flow.start_node_id = data["start_node_id"]
     if "active" in data:
         flow.active = data["active"]
+    if "mode" in data and data["mode"]:
+        flow.mode = data["mode"]
     db.commit()
     db.refresh(flow)
     return FlowOut.model_validate(flow)

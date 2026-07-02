@@ -1,6 +1,5 @@
 /**
  * builder.js - Editor visual de fluxos do dIAloga+ (versao com canvas).
- * Fase A.2: suporte ao no 'ai' (campo knowledge_base_id) + chave de modo do fluxo.
  */
 (async function () {
   const $ = (sel) => document.querySelector(sel);
@@ -9,9 +8,7 @@
   const state = {
     flows: [],
     templates: [],
-    knowledgeBases: [],   // NOVO: bases de conhecimento p/ o no de IA
     currentFlowId: null,
-    currentFlowMode: "guided",  // NOVO
     nodes: [],
     selectedNodeId: null,
   };
@@ -31,8 +28,6 @@
       const results = await Promise.all([WFApi.listFlows(), WFApi.listTemplates()]);
       state.flows = results[0];
       state.templates = results[1];
-      // Carrega bases de conhecimento (para o no de IA). Nao bloqueia se falhar.
-      try { state.knowledgeBases = await WFApi.listKnowledgeBases(); } catch (e) { state.knowledgeBases = []; }
       renderFlowsList();
       renderTemplatesList();
       const params = new URLSearchParams(window.location.search);
@@ -91,13 +86,10 @@
     try {
       const flow = await WFApi.getFlow(id);
       state.currentFlowId = flow.id;
-      state.currentFlowMode = flow.mode || "guided";
       state.nodes = (flow.nodes || []).map(function (n) { return Object.assign({}, n); });
       state.selectedNodeId = null;
       $("#flow-name").value = flow.name || "";
       $("#flow-description").value = flow.description || "";
-      var modeSel = $("#flow-mode");
-      if (modeSel) modeSel.value = state.currentFlowMode;
       $("#btn-delete").style.display = "";
       renderFlowsList();
       renderCanvas();
@@ -120,10 +112,14 @@
     if (type === "input") base.variable = "resposta";
     if (type === "condition") base.condition = { variable: "", equals: "", next: null };
     if (type === "delay") base.delay_seconds = 1;
-    if (type === "ai") base.knowledge_base_id = null;  // NOVO
 
-    const maxX = state.nodes.reduce(function (acc, n) { return Math.max(acc, (n.position_x || 0)); }, 0);
-    const maxY = state.nodes.reduce(function (acc, n) { return Math.max(acc, (n.position_y || 0)); }, 0);
+    // Calcula posicao: coloca em uma area livre (canto inferior direito do canvas)
+    const maxX = state.nodes.reduce(function (acc, n) {
+      return Math.max(acc, (n.position_x || 0));
+    }, 0);
+    const maxY = state.nodes.reduce(function (acc, n) {
+      return Math.max(acc, (n.position_y || 0));
+    }, 0);
     base.position_x = maxX + 280 > 50 ? maxX + 280 : 50;
     base.position_y = maxY + 130 > 50 ? maxY + 130 : 50;
 
@@ -135,6 +131,7 @@
 
   function deleteNode(id) {
     state.nodes = state.nodes.filter(function (n) { return n.id !== id; });
+    // Remove referencias em outros nos
     state.nodes.forEach(function (n) {
       if (n.next === id) n.next = null;
       if (n.options) n.options.forEach(function (o) { if (o.next === id) o.next = null; });
@@ -148,54 +145,81 @@
 
   function renderCanvas() {
     if (typeof WFCanvas !== "undefined") {
+      // Callback: quando usuario arrasta da porta de saida para entrada
       WFCanvas.onRemoveConnection = function (fromNodeId, target) {
         removeConnection(fromNodeId, target);
       };
+
+      // Callback: quando usuario clica no "+" da seta (estilo n8n)
       WFCanvas.onInsertNodeBetween = function (fromNodeId, target, nodeType) {
         insertNodeBetween(fromNodeId, target, nodeType);
       };
       WFCanvas.renderNodes(
         state.nodes,
+        // onSelect
         function (nodeId) {
           state.selectedNodeId = nodeId;
           renderEditor();
         },
+        // onMove (drag-and-drop do no)
         function (nodeId, x, y) {
           const n = state.nodes.find(function (item) { return item.id === nodeId; });
-          if (n) { n.position_x = x; n.position_y = y; }
+          if (n) {
+            n.position_x = x;
+            n.position_y = y;
+          }
           renderCanvas();
         },
+        // onConnect (criou nova conexao)
         function (fromNodeId, toNodeId) {
           createConnection(fromNodeId, toNodeId);
         }
       );
     }
   }
-
+  /**
+   * Cria uma conexão entre dois nós.
+   * Para nós do tipo "question", cria uma nova opção automaticamente.
+   */
   function createConnection(fromNodeId, toNodeId) {
     const from = state.nodes.find(function (n) { return n.id === fromNodeId; });
     const to = state.nodes.find(function (n) { return n.id === toNodeId; });
     if (!from || !to) return;
+
+    // Se for uma pergunta, cria uma opção automaticamente
     if (from.type === "question") {
       const opcoes = from.options || [];
-      opcoes.push({ label: "Opcao " + (opcoes.length + 1), value: "opcao_" + (opcoes.length + 1), next: toNodeId });
+      opcoes.push({
+        label: "Opção " + (opcoes.length + 1),
+        value: "opcao_" + (opcoes.length + 1),
+        next: toNodeId,
+      });
       from.options = opcoes;
     } else if (from.type === "condition") {
+      // Para condição, conecta como "true" (campo next)
       if (!from.condition) from.condition = { variable: "", equals: "", next: null };
       from.condition.next = toNodeId;
     } else {
+      // Para outros tipos, usa o campo "next" direto
       from.next = toNodeId;
     }
+
     renderCanvas();
     renderEditor();
-    showAlert("Conexao criada: " + fromNodeId + " -> " + toNodeId, "success");
+    showAlert("Conexão criada: " + fromNodeId + " -> " + toNodeId, "success");
   }
-
+  /**
+   * Remove uma conexao entre dois nos.
+   */
   function removeConnection(fromNodeId, target) {
     const from = state.nodes.find(function (n) { return n.id === fromNodeId; });
     if (!from) return;
+
     if (target.type === "option") {
-      if (from.options && from.options[target.index]) { from.options.splice(target.index, 1); }
+      // Remove a opcao
+      if (from.options && from.options[target.index]) {
+        from.options.splice(target.index, 1);
+      }
     } else if (target.label === "sim" && from.condition) {
       from.condition.next = null;
     } else if (target.label === "nao") {
@@ -203,6 +227,7 @@
     } else {
       from.next = null;
     }
+
     renderCanvas();
     renderEditor();
     showAlert("Conexao removida.", "info");
@@ -251,16 +276,6 @@
         '<input class="form-control" id="cond-next" value="' + escapeHtml((n.condition || {}).next || "") + '"></div>' +
         '<div class="form-group"><label>Fallback (opcional)</label>' +
         '<input class="form-control" id="cond-fallback" value="' + escapeHtml(n.fallback || "") + '"></div>';
-    } else if (n.type === "ai") {
-      // NOVO: seletor de base de conhecimento p/ o no de IA
-      var kbOptions = '<option value="">Usar a base padrao (Config. de IA)</option>';
-      (state.knowledgeBases || []).forEach(function (kb) {
-        var sel = (String(n.knowledge_base_id) === String(kb.id)) ? " selected" : "";
-        kbOptions += '<option value="' + kb.id + '"' + sel + '>' + escapeHtml(kb.name) + '</option>';
-      });
-      opts = '<div class="form-group"><label>Base de conhecimento (IA)</label>' +
-        '<select class="form-control" id="ai-kb">' + kbOptions + '</select>' +
-        '<small class="text-muted">A IA responde com base no conteudo desta base. Gerencie em "IA".</small></div>';
     }
 
     let extra = "";
@@ -272,6 +287,7 @@
         '<input class="form-control" id="n-delay" type="number" min="0" value="' + (n.delay_seconds || 1) + '"></div>';
     }
 
+    // Painel de conexoes deste no (substitui o campo "next" por visual)
     let connectionsPanel = '<div class="form-group"><label>Conexoes deste no</label>';
     connectionsPanel += '<div id="conn-list" style="background: #f9fafb; padding: 8px; border-radius: 6px; min-height: 30px;">';
     if (n.type === "question") {
@@ -279,7 +295,7 @@
     } else {
       const mainNext = n.next;
       connectionsPanel += '<div style="display: flex; align-items: center; gap: 6px; font-size: 13px; padding: 4px 0;">' +
-        '<span style="color: var(--primary);">-></span>' +
+        '<span style="color: var(--primary);">→</span>' +
         (mainNext ? '<span>' + escapeHtml(mainNext) + '</span> <button class="btn btn-danger btn-sm" data-rm-conn="main" style="margin-left: auto;">X</button>' : '<span class="text-muted">Sem conexao (fim de fluxo)</span>') +
         '</div>';
       if (n.condition && n.condition.next) {
@@ -298,15 +314,11 @@
     connectionsPanel += '<p class="text-muted" style="font-size: 11px; margin-top: 8px;">Arraste da bolinha direita de um no ate outro para criar uma conexao.</p>';
     connectionsPanel += '</div></div>';
 
-    var contentLabel = (n.type === "ai")
-      ? "Instrucao/pergunta padrao (opcional)"
-      : "Conteudo / Mensagem";
-
     return '<div class="form-group"><label>Tipo</label>' +
       '<input class="form-control" disabled value="' + n.type + '"></div>' +
       '<div class="form-group"><label>ID do no</label>' +
       '<input class="form-control" id="n-id" value="' + escapeHtml(n.id) + '"></div>' +
-      '<div class="form-group"><label>' + contentLabel + '</label>' +
+      '<div class="form-group"><label>Conteudo / Mensagem</label>' +
       '<textarea class="form-control" id="n-content" placeholder="Use {{variavel}} para substituir valores do contexto">' + escapeHtml(n.content || "") + '</textarea></div>' +
       extra + opts +
       connectionsPanel +
@@ -328,8 +340,6 @@
       if (varInput) n.variable = varInput.value || null;
       const delayInput = $("#n-delay");
       if (delayInput) n.delay_seconds = parseInt(delayInput.value, 10) || 0;
-      const kbInput = $("#ai-kb");
-      if (kbInput) n.knowledge_base_id = kbInput.value ? parseInt(kbInput.value, 10) : null;
 
       if (n.type === "question") {
         const opts = [];
@@ -357,6 +367,7 @@
       if (confirm("Excluir este no?")) deleteNode(id);
     });
 
+    // Botoes para remover conexao
     $("#conn-list").querySelectorAll("[data-rm-conn]").forEach(function (btn) {
       btn.addEventListener("click", function () {
         const tipo = btn.dataset.rmConn;
@@ -399,11 +410,6 @@
     }
   });
 
-  function currentModeValue() {
-    var modeSel = $("#flow-mode");
-    return modeSel ? modeSel.value : (state.currentFlowMode || "guided");
-  }
-
   $("#btn-save").addEventListener("click", async function () {
     if (!state.currentFlowId) {
       showAlert("Selecione ou crie um fluxo primeiro.");
@@ -418,9 +424,7 @@
         description: $("#flow-description").value,
         nodes: state.nodes,
         start_node_id: state.nodes.length ? state.nodes[0].id : null,
-        mode: currentModeValue(),
       });
-      state.currentFlowMode = currentModeValue();
       showAlert("Fluxo salvo com sucesso!", "success");
       const updated = await WFApi.getFlow(state.currentFlowId);
       const idx = state.flows.findIndex(function (f) { return f.id === updated.id; });
@@ -444,7 +448,6 @@
       description: $("#flow-description").value,
       nodes: state.nodes,
       start_node_id: state.nodes.length ? state.nodes[0].id : null,
-      mode: currentModeValue(),
     }).then(function () {
       if (typeof WFSimulator !== "undefined" && WFSimulator.open) {
         WFSimulator.open(state.currentFlowId);
@@ -493,15 +496,35 @@
 
   // ============ UNDO/REDO ============
   const history = {
-    stack: [], current: -1, max: 50,
-    save: function (st) {
+    stack: [],
+    current: -1,
+    max: 50,
+
+    save: function (state) {
+      // Remove estados futuros (se estamos no meio do historico)
       this.stack = this.stack.slice(0, this.current + 1);
-      this.stack.push(JSON.stringify(st));
+      // Salva snapshot
+      this.stack.push(JSON.stringify(state));
       this.current++;
-      if (this.stack.length > this.max) { this.stack.shift(); this.current--; }
+      // Limita tamanho
+      if (this.stack.length > this.max) {
+        this.stack.shift();
+        this.current--;
+      }
     },
-    undo: function () { if (this.current <= 0) return null; this.current--; return JSON.parse(this.stack[this.current]); },
-    redo: function () { if (this.current >= this.stack.length - 1) return null; this.current++; return JSON.parse(this.stack[this.current]); },
+
+    undo: function () {
+      if (this.current <= 0) return null;
+      this.current--;
+      return JSON.parse(this.stack[this.current]);
+    },
+
+    redo: function () {
+      if (this.current >= this.stack.length - 1) return null;
+      this.current++;
+      return JSON.parse(this.stack[this.current]);
+    },
+
     canUndo: function () { return this.current > 0; },
     canRedo: function () { return this.current < this.stack.length - 1; }
   };
@@ -541,13 +564,16 @@
 
   // ============ AUTO-SAVE ============
   let lastSavedSnapshot = null;
+  let autoSaveTimer = null;
 
   function setupAutoSave() {
     setInterval(function () {
       if (!state.currentFlowId) return;
-      const currentSnapshot = JSON.stringify({ nodes: state.nodes, flowName: $("#flow-name").value, mode: currentModeValue() });
-      if (currentSnapshot !== lastSavedSnapshot) { autoSave(); }
-    }, 30000);
+      const currentSnapshot = JSON.stringify({ nodes: state.nodes, flowName: $("#flow-name").value });
+      if (currentSnapshot !== lastSavedSnapshot) {
+        autoSave();
+      }
+    }, 30000); // 30 segundos
   }
 
   async function autoSave() {
@@ -558,9 +584,8 @@
         description: $("#flow-description").value,
         nodes: state.nodes,
         start_node_id: state.nodes.length ? state.nodes[0].id : null,
-        mode: currentModeValue(),
       });
-      lastSavedSnapshot = JSON.stringify({ nodes: state.nodes, flowName: $("#flow-name").value, mode: currentModeValue() });
+      lastSavedSnapshot = JSON.stringify({ nodes: state.nodes, flowName: $("#flow-name").value });
       showAutoSaveIndicator();
     } catch (e) {
       console.error("Auto-save falhou:", e);
@@ -585,9 +610,10 @@
   function toggleDarkMode() {
     document.body.classList.toggle("dark-mode");
     const enabled = document.body.classList.contains("dark-mode");
-    localStorage.setItem("dialoga-dark-mode", enabled ? "1" : "0");
+    localStorage.setItem("dialoga-dark-mode", enabled ? "1" : "0"); 
     showAlert(enabled ? "Modo escuro ativado" : "Modo claro ativado", "info");
   }
+
   function initDarkMode() {
     if (localStorage.getItem("dialoga-dark-mode") === "1") {
       document.body.classList.add("dark-mode");
@@ -595,20 +621,59 @@
   }
   initDarkMode();
 
+  // ============ SNAP VISUAL ============
+  function setupSnapGuides() {
+    // Snap guides serao adicionados ao canvas.js se necessario
+    // Por enquanto, snap to grid ja funciona no canvas.js
+  }
+
   // ============ ATALHOS DE TECLADO ============
   function initKeyboardShortcuts() {
     document.addEventListener("keydown", function (e) {
       if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
-      if ((e.ctrlKey || e.metaKey) && e.key === "s") { e.preventDefault(); document.getElementById("btn-save").click(); }
-      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === "z") { e.preventDefault(); undo(); }
-      if ((e.ctrlKey || e.metaKey) && (e.key === "y" || (e.shiftKey && e.key === "Z"))) { e.preventDefault(); redo(); }
+
+      // Ctrl+S = Salvar
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        document.getElementById("btn-save").click();
+      }
+
+      // Ctrl+Z = Undo
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === "z") {
+        e.preventDefault();
+        undo();
+      }
+
+      // Ctrl+Y ou Ctrl+Shift+Z = Redo
+      if ((e.ctrlKey || e.metaKey) && (e.key === "y" || (e.shiftKey && e.key === "Z"))) {
+        e.preventDefault();
+        redo();
+      }
+
+      // Delete = Deletar no selecionado
       if (e.key === "Delete" && state.selectedNodeId) {
         e.preventDefault();
-        if (confirm("Excluir este no?")) { deleteNode(state.selectedNodeId); saveHistory(); }
+        if (confirm("Excluir este no?")) {
+          deleteNode(state.selectedNodeId);
+          saveHistory();
+        }
       }
-      if (e.key === "f" && typeof WFCanvas !== "undefined") { WFCanvas.fitToScreen(); }
-      if (e.key === "d" && !e.ctrlKey && !e.metaKey) { toggleDarkMode(); }
-      if ((e.ctrlKey || e.metaKey) && e.key === "d" && state.selectedNodeId) { e.preventDefault(); duplicateNode(state.selectedNodeId); }
+
+      // F = Fit to screen
+      if (e.key === "f" && typeof WFCanvas !== "undefined") {
+        WFCanvas.fitToScreen();
+      }
+
+      // D = Toggle dark mode
+      if (e.key === "d" && !e.ctrlKey && !e.metaKey) {
+        toggleDarkMode();
+      }
+
+      // Ctrl+D = Duplicar no selecionado
+      if ((e.ctrlKey || e.metaKey) && e.key === "d" && state.selectedNodeId) {
+        e.preventDefault();
+        duplicateNode(state.selectedNodeId);
+      }
     });
   }
 
@@ -627,36 +692,46 @@
     showAlert("No duplicado!", "success");
   }
 
+    /**
+   * Insere um novo nó entre dois nós conectados.
+   * Chamado pelo menu suspenso da conexão.
+   * nodeType: tipo do nó a inserir (message, question, input, etc.)
+   */
   function insertNodeBetween(fromNodeId, target, nodeType) {
-    nodeType = nodeType || "message";
+    nodeType = nodeType || "message"; // padrão se não vier
     const from = state.nodes.find(function (n) { return n.id === fromNodeId; });
     if (!from) return;
+
     const fromPos = { x: from.position_x || 0, y: from.position_y || 0 };
     const targetPos = getNodePosition(target.id);
     if (!targetPos) return;
+
     const midX = (fromPos.x + targetPos.x) / 2;
     const midY = (fromPos.y + targetPos.y) / 2;
+
     const newNodeId = "node_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
     const newNode = {
       id: newNodeId,
       type: nodeType,
-      content: "Novo no (clique para editar)",
+      content: "Novo nó (clique para editar)",
       next: target.id,
       position_x: Math.round(midX / 20) * 20,
       position_y: Math.round(midY / 20) * 20,
     };
+
+    // Inicializa campos extras conforme o tipo
     if (nodeType === "question") newNode.options = [];
     if (nodeType === "input") newNode.variable = "resposta";
     if (nodeType === "condition") newNode.condition = { variable: "", equals: "", next: null };
     if (nodeType === "delay") newNode.delay_seconds = 1;
-    if (nodeType === "ai") { newNode.knowledge_base_id = null; newNode.content = ""; }
     if (nodeType === "human" || nodeType === "end") newNode.content = "";
 
+    // Reconecta o nó origem para apontar para o novo nó
     if (target.type === "option") {
       from.options[target.index].next = newNodeId;
     } else if (target.type === "condition") {
       from.condition.next = newNodeId;
-    } else if (target.label === "se nao") {
+    } else if (target.label === "se não") {
       from.fallback = newNodeId;
     } else {
       from.next = newNodeId;
@@ -669,10 +744,11 @@
     saveHistory();
 
     const typeLabels = {
-      message: "Mensagem", question: "Pergunta", input: "Entrada", ai: "IA",
-      condition: "Condicao", delay: "Espera", webhook: "Webhook", human: "Humano", end: "Fim"
+      message: "Mensagem", question: "Pergunta", input: "Entrada",
+      condition: "Condição", delay: "Espera", webhook: "Webhook",
+      human: "Humano", end: "Fim"
     };
-    showAlert("No " + (typeLabels[nodeType] || nodeType) + " inserido!", "success");
+    showAlert("Nó " + (typeLabels[nodeType] || nodeType) + " inserido!", "success");
   }
 
   function getNodePosition(nodeId) {
@@ -681,29 +757,48 @@
     return { x: n.position_x || 0, y: n.position_y || 0 };
   }
 
+  // Modifica funcoes existentes para salvar historico
   var origAddNode = addNode;
-  addNode = function (type) { origAddNode(type); saveHistory(); };
+  addNode = function (type) {
+    origAddNode(type);
+    saveHistory();
+  };
+
   var origDeleteNode = deleteNode;
-  deleteNode = function (id) { origDeleteNode(id); saveHistory(); };
+  deleteNode = function (id) {
+    origDeleteNode(id);
+    saveHistory();
+  };
+
   var origCreateConnection = createConnection;
-  createConnection = function (fromNodeId, toNodeId) { origCreateConnection(fromNodeId, toNodeId); saveHistory(); };
+  createConnection = function (fromNodeId, toNodeId) {
+    origCreateConnection(fromNodeId, toNodeId);
+    saveHistory();
+  };
+
   var origRemoveConnection = removeConnection;
-  removeConnection = function (fromNodeId, target) { origRemoveConnection(fromNodeId, target); saveHistory(); };
+  removeConnection = function (fromNodeId, target) {
+    origRemoveConnection(fromNodeId, target);
+    saveHistory();
+  };
 
   initKeyboardShortcuts();
   setupAutoSave();
 
+  // Botoes de Undo/Redo e Dark Mode
   document.getElementById("btn-undo").addEventListener("click", undo);
   document.getElementById("btn-redo").addEventListener("click", redo);
   document.getElementById("btn-dark-mode").addEventListener("click", toggleDarkMode);
 
+  // Salva estado inicial quando carrega fluxo
   var origLoadFlow = loadFlow;
   loadFlow = async function (id) {
     await origLoadFlow(id);
+    // Reseta historico
     history.stack = [];
     history.current = -1;
     saveHistory();
-    lastSavedSnapshot = JSON.stringify({ nodes: state.nodes, flowName: $("#flow-name").value, mode: currentModeValue() });
+    lastSavedSnapshot = JSON.stringify({ nodes: state.nodes, flowName: $("#flow-name").value });
   };
 
   init();

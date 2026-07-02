@@ -1,26 +1,28 @@
 """
 Motor de execução de fluxos de chatbot.
-
 Responsável por:
 - Receber o fluxo e o nó atual
 - Devolver a mensagem do bot
 - Gerenciar opções, inputs e desvios condicionais
 - Manter contexto da conversa
 - Detectar fim de fluxo e encaminhar para humano
+
+FASE A.2 (adicionado, aditivo):
+- Novo tipo de nó 'ai': responde usando RAG (rag_service). Nao bloqueia; segue para 'next'.
+- Modo de fluxo 'ai_agent': a IA responde na entrada (send_user_message desvia p/ RAG).
+Nada da logica existente (message/question/input/condition/delay/webhook/human/end) foi alterado.
 """
 import time
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Tuple
 from sqlalchemy.orm import Session
-
 from ..models import Flow, Conversation, Message, Lead
 
 # Limite maximo de delay (em segundos) para evitar travamento
 MAX_DELAY_SECONDS = 30
 
-
-# Tipos válidos de nó
-VALID_NODE_TYPES = {"message", "question", "input", "condition", "delay", "webhook", "human", "end"}
+# Tipos válidos de nó (inclui 'ai' — Fase A.2)
+VALID_NODE_TYPES = {"message", "question", "input", "condition", "delay", "webhook", "human", "end", "ai"}
 
 
 def _validate_nodes(nodes: List[Dict[str, Any]]) -> List[str]:
@@ -56,7 +58,6 @@ def _render(text: str, context: Dict[str, Any]) -> str:
     if not text:
         return ""
     try:
-        # Substituição simples e segura
         out = text
         for k, v in context.items():
             out = out.replace("{{" + k + "}}", str(v))
@@ -112,6 +113,35 @@ def _ensure_lead(
     return lead
 
 
+# ------------------------------------------------------------------ #
+# NOVO (Fase A.2): responder com IA (RAG). Usado pelo nó 'ai' e pelo
+# modo ai_agent. Import local para nao criar dependencia circular.
+# ------------------------------------------------------------------ #
+def _ai_reply(db: Session, flow: Flow, question: str, node: Optional[Dict[str, Any]] = None) -> str:
+    """Gera uma resposta de IA via RAG. Retorna texto (com fallback amigavel em erro)."""
+    try:
+        from ..models_rag import AISettings
+        from ..services import rag_service
+    except Exception:
+        return "Desculpe, a IA não está disponível no momento."
+
+    # descobre a base de conhecimento: do nó, senao a padrao das AISettings
+    kb_id = (node or {}).get("knowledge_base_id")
+    ai = db.query(AISettings).filter(AISettings.owner_id == flow.owner_id).first()
+    if not kb_id and ai is not None:
+        kb_id = ai.knowledge_base_id
+    if not kb_id:
+        return "Ainda não fui treinado com as informações deste negócio. Vou te transferir para um atendente."
+
+    result = rag_service.answer(db, flow.owner_id, kb_id, question)
+    if result.get("ok"):
+        return result.get("answer") or "..."
+    # erro (ex.: cota, chave) -> fallback
+    fallback = (ai.fallback_message if ai and ai.fallback_message else
+                "Vou te transferir para um atendente humano.")
+    return fallback
+
+
 def start_conversation(
     db: Session,
     flow: Flow,
@@ -119,28 +149,44 @@ def start_conversation(
     user_phone: Optional[str] = None,
 ) -> Conversation:
     """Inicia uma nova conversa para o fluxo, indo até o primeiro nó executável."""
+    # MODO ATENDENTE IA: nao roda trilho. Manda uma saudacao e espera a 1a msg do usuario.
+    if getattr(flow, "mode", "guided") == "ai_agent":
+        conv = Conversation(
+            flow_id=flow.id,
+            channel="simulator",
+            state={"current_node": None, "context": {}, "mode": "ai_agent"},
+            is_active=True,
+        )
+        if user_phone:
+            conv.user_phone = user_phone
+        if user_name:
+            conv.state["context"]["nome"] = user_name
+        db.add(conv)
+        db.flush()
+        saudacao = flow.description or "Olá! Como posso te ajudar hoje? 😊"
+        _save_message(db, conv.id, "outbound", "bot", saudacao, None)
+        db.commit()
+        db.refresh(conv)
+        return conv
+
+    # MODO GUIADO (comportamento original, intacto)
     if not flow.nodes:
         raise ValueError("Fluxo sem nós definidos.")
-
     start_id = flow.start_node_id or (flow.nodes[0].get("id") if flow.nodes else None)
     if not start_id:
         raise ValueError("Fluxo sem nó inicial definido.")
-
     conv = Conversation(
         flow_id=flow.id,
         channel="simulator",
         state={"current_node": start_id, "context": {}},
         is_active=True,
     )
-    # snapshot do usuário
     if user_phone:
         conv.user_phone = user_phone
     if user_name:
         conv.state["context"]["nome"] = user_name
     db.add(conv)
     db.flush()
-
-    # Executa nós iniciais encadeados que não exigem input (mensagens, delays)
     _run_until_blocking(db, conv, flow)
     db.commit()
     db.refresh(conv)
@@ -150,7 +196,7 @@ def start_conversation(
 def _run_until_blocking(db: Session, conv: Conversation, flow: Flow) -> None:
     """
     Executa automaticamente os nós que não exigem resposta do usuário
-    (message, delay, condition) até encontrar um nó que aguarda resposta.
+    (message, delay, condition, ai) até encontrar um nó que aguarda resposta.
     """
     nodes = flow.nodes or []
     current_id = (conv.state or {}).get("current_node")
@@ -161,14 +207,26 @@ def _run_until_blocking(db: Session, conv: Conversation, flow: Flow) -> None:
         if not node:
             break
         ntype = node.get("type")
-
         if ntype == "message":
             text = _render(node.get("content", ""), conv.state.get("context", {}))
             _save_message(db, conv.id, "outbound", "bot", text, current_id)
             # BUGFIX: nao usar 'or current_id' pois causa loop infinito
             current_id = node.get("next")
             conv.state["current_node"] = current_id
-
+        elif ntype == "ai":
+            # NOVO (Fase A.2): no de IA no fluxo guiado.
+            # Usa a ultima mensagem do usuario como pergunta; se nao houver, usa o content do no.
+            last_user = (
+                db.query(Message)
+                .filter(Message.conversation_id == conv.id, Message.direction == "inbound")
+                .order_by(Message.created_at.desc())
+                .first()
+            )
+            question = (last_user.content if last_user else "") or node.get("content", "") or "Olá"
+            resposta = _ai_reply(db, flow, question, node)
+            _save_message(db, conv.id, "outbound", "bot", resposta, current_id)
+            current_id = node.get("next")
+            conv.state["current_node"] = current_id
         elif ntype == "delay":
             # BUGFIX: agora o delay espera de verdade!
             segundos = node.get("delay_seconds", 1) or 1
@@ -176,35 +234,27 @@ def _run_until_blocking(db: Session, conv: Conversation, flow: Flow) -> None:
                 segundos = int(segundos)
             except (ValueError, TypeError):
                 segundos = 1
-            # Limita ao maximo permitido
             segundos = min(segundos, MAX_DELAY_SECONDS)
-            # Salva uma mensagem de sistema informando o delay
             _save_message(
                 db, conv.id, "outbound", "system",
                 f"[Aguardando {segundos}s...]", current_id
             )
-            db.commit()  # Persiste a mensagem imediatamente
-            # Renova a sessao para evitar expiracao durante sleep longo
+            db.commit()
             db.expire_all()
             time.sleep(segundos)
             current_id = node.get("next")
             conv.state["current_node"] = current_id
-
         elif ntype == "condition":
-            # Avalia condition básica e segue o ramo correspondente
             nxt = _eval_condition(node, conv.state.get("context", {}))
             current_id = nxt or node.get("next") or node.get("fallback")
             conv.state["current_node"] = current_id
-
         elif ntype == "webhook":
-            # Apenas simulação - registra no log
             _save_message(
                 db, conv.id, "outbound", "system",
                 f"[WEBHOOK acionado] {node.get('content','')}", current_id
             )
             current_id = node.get("next")
             conv.state["current_node"] = current_id
-
         elif ntype == "human":
             _save_message(
                 db, conv.id, "outbound", "system",
@@ -215,26 +265,21 @@ def _run_until_blocking(db: Session, conv: Conversation, flow: Flow) -> None:
             conv.ended_at = datetime.now(timezone.utc)
             _ensure_lead(db, flow, conv.state.get("context", {}))
             return
-
         elif ntype == "end":
             _save_message(
                 db, conv.id, "outbound", "system",
                 "Conversa encerrada. Obrigado!",
                 current_id,
             )
-            # Cria/atualiza lead final
             _ensure_lead(db, flow, conv.state.get("context", {}))
             conv.is_active = False
             conv.ended_at = datetime.now(timezone.utc)
             return
-
         elif ntype in ("question", "input"):
-            # Bloqueante - mostra mensagem (se houver) e espera resposta
             text = _render(node.get("content", ""), conv.state.get("context", {}))
             if text:
                 _save_message(db, conv.id, "outbound", "bot", text, current_id)
             return
-
         else:
             _save_message(
                 db, conv.id, "outbound", "system",
@@ -267,12 +312,22 @@ def send_user_message(
     selected_option: Optional[str] = None,
 ) -> Conversation:
     """Processa uma resposta do usuário e avança o fluxo."""
+    # MODO ATENDENTE IA: a IA responde direto, sem trilho.
+    if getattr(flow, "mode", "guided") == "ai_agent" or (conversation.state or {}).get("mode") == "ai_agent":
+        user_content = text or selected_option or ""
+        _save_message(db, conversation.id, "inbound", "user", user_content, None)
+        resposta = _ai_reply(db, flow, user_content, None)
+        _save_message(db, conversation.id, "outbound", "bot", resposta, None)
+        # captura basica de lead (nome/telefone se aparecerem no contexto)
+        db.commit()
+        db.refresh(conversation)
+        return conversation
+
+    # MODO GUIADO (comportamento original, intacto)
     nodes = flow.nodes or []
     current_id = (conversation.state or {}).get("current_node")
     node = get_node_by_id(nodes, current_id) if current_id else None
-
     if not node:
-        # Conversa sem nó atual - finaliza
         conversation.is_active = False
         conversation.ended_at = datetime.now(timezone.utc)
         _ensure_lead(db, flow, (conversation.state or {}).get("context", {}))
@@ -280,22 +335,17 @@ def send_user_message(
         return conversation
 
     context = conversation.state.setdefault("context", {})
-
-    # Salva mensagem do usuário
     user_content = text or selected_option or ""
     _save_message(
         db, conversation.id, "inbound", "user", user_content, current_id
     )
 
-    # Captura variável se for input/question
     variable = node.get("variable")
     if variable and text is not None:
         context[variable] = text
 
-    # Define próximo nó
     next_id = None
     if node.get("type") == "question" and selected_option is not None:
-        # Procura opção correspondente
         options = node.get("options") or []
         matched_opt = None
         for opt in options:
@@ -306,12 +356,10 @@ def send_user_message(
                 matched_opt = opt
                 break
         if matched_opt:
-            # Se a opção tem variável própria, salva nela
             if matched_opt.get("variable"):
                 context[matched_opt["variable"]] = (
                     matched_opt.get("value") or matched_opt.get("label")
                 )
-            # Senão, e se o nó tem variável, salva o value/label selecionado
             elif node.get("variable"):
                 context[node["variable"]] = (
                     matched_opt.get("value") or matched_opt.get("label")
@@ -323,18 +371,14 @@ def send_user_message(
         next_id = node.get("next")
 
     if not next_id:
-        # Sem próximo - finaliza
         conversation.state["current_node"] = None
         conversation.is_active = False
         conversation.ended_at = datetime.now(timezone.utc)
         _ensure_lead(db, flow, context)
     else:
         conversation.state["current_node"] = next_id
-        # Executa próximos nós automáticos
         _run_until_blocking(db, conversation, flow)
-        # Se ficou inativo durante _run_until_blocking, garante lead criado
         if not conversation.is_active:
-            # Verifica se já existe lead desta conversa
             from ..models import Lead as LeadModel
             existing = db.query(LeadModel).filter(LeadModel.flow_id == flow.id).filter(
                 LeadModel.context == conversation.state.get("context", {})
@@ -375,6 +419,9 @@ def serialize_conversation(db: Session, conv: Conversation) -> Dict[str, Any]:
 
 def get_current_node_view(db: Session, conv: Conversation, flow: Flow) -> Tuple[Optional[Dict[str, Any]], Optional[List[Dict[str, str]]]]:
     """Retorna o nó atual e opções (se houver) para exibição no simulador."""
+    # No modo atendente IA nao ha "no atual" — a conversa segue livre
+    if getattr(flow, "mode", "guided") == "ai_agent" or (conv.state or {}).get("mode") == "ai_agent":
+        return None, None
     current_id = (conv.state or {}).get("current_node")
     if not current_id:
         return None, None
