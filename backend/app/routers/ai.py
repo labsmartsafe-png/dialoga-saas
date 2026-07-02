@@ -87,6 +87,50 @@ def index_kb(kb_id: int, payload: IndexTextRequest, db: Session = Depends(get_db
     return {"ok": True, "chunks_created": created, "chunks_total": total}
 
 
+@router.get("/knowledge-bases/{kb_id}/chunks")
+def list_kb_chunks(kb_id: int, db: Session = Depends(get_db),
+                   current_user: User = Depends(get_current_user)):
+    """Lista o conteudo indexado (chunks) de uma base — para o usuario ver o que a IA aprendeu."""
+    _get_owned_kb(db, kb_id, current_user)
+    chunks = (
+        db.query(KnowledgeChunk)
+        .filter(KnowledgeChunk.knowledge_base_id == kb_id)
+        .order_by(KnowledgeChunk.chunk_index.asc(), KnowledgeChunk.id.asc())
+        .all()
+    )
+    return {
+        "kb_id": kb_id,
+        "total": len(chunks),
+        "chunks": [
+            {
+                "id": c.id,
+                "source": c.source,
+                "content": c.content,
+                "chunk_index": c.chunk_index,
+                "created_at": c.created_at.isoformat() if c.created_at else None,
+            }
+            for c in chunks
+        ],
+    }
+
+
+@router.delete("/knowledge-bases/{kb_id}/chunks/{chunk_id}", status_code=204)
+def delete_kb_chunk(kb_id: int, chunk_id: int, db: Session = Depends(get_db),
+                    current_user: User = Depends(get_current_user)):
+    """Remove um trecho especifico do conhecimento da base."""
+    _get_owned_kb(db, kb_id, current_user)
+    chunk = (
+        db.query(KnowledgeChunk)
+        .filter(KnowledgeChunk.id == chunk_id, KnowledgeChunk.knowledge_base_id == kb_id)
+        .first()
+    )
+    if not chunk:
+        raise HTTPException(404, "Trecho não encontrado.")
+    db.delete(chunk)
+    db.commit()
+    return
+
+
 # ---------------- AI Settings ----------------
 def _get_or_create_settings(db: Session, user: User) -> AISettings:
     ai = db.query(AISettings).filter(AISettings.owner_id == user.id).first()

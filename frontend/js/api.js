@@ -71,6 +71,8 @@
     createKnowledgeBase: function (b) { return request("/api/ai/knowledge-bases", { method: "POST", body: b }); },
     deleteKnowledgeBase: function (id) { return request("/api/ai/knowledge-bases/" + id, { method: "DELETE" }); },
     indexKnowledge: function (id, b) { return request("/api/ai/knowledge-bases/" + id + "/index", { method: "POST", body: b }); },
+    listKnowledgeChunks: function (id) { return request("/api/ai/knowledge-bases/" + id + "/chunks"); },
+    deleteKnowledgeChunk: function (kbId, chunkId) { return request("/api/ai/knowledge-bases/" + kbId + "/chunks/" + chunkId, { method: "DELETE" }); },
     getAiSettings: function () { return request("/api/ai/settings"); },
     updateAiSettings: function (b) { return request("/api/ai/settings", { method: "PUT", body: b }); },
     aiAsk: function (b) { return request("/api/ai/ask", { method: "POST", body: b }); },
