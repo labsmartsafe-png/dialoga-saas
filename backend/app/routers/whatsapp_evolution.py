@@ -217,13 +217,16 @@ def _handle_message(db: Session, conn: WhatsAppConnection, data: dict):
         .first()
     )
     try:
+        is_new_conversation = convo is None
         if convo is None:
-            convo = flow_engine.start_conversation(db, flow, user_name=None, user_phone=wa_id)
-            # marca canal como whatsapp
-            convo.channel = "whatsapp"
+            convo = flow_engine.start_conversation(db, flow, user_name=None, user_phone=wa_id, channel="whatsapp")
             db.commit()
-        # processa a mensagem do usuario
-        flow_engine.send_user_message(db, convo, flow, text=text)
+
+        # Em fluxo guiado, a primeira mensagem do WhatsApp é o gatilho que inicia o bot.
+        # Ela NÃO deve ser tratada como resposta da primeira pergunta, senão um "Oi" já
+        # cairia como resposta inválida em +PERG. No modo Atendente IA, processamos direto.
+        if (not is_new_conversation) or getattr(flow, "mode", "guided") == "ai_agent":
+            flow_engine.send_user_message(db, convo, flow, text=text)
 
         # envia de volta ao usuario o que o bot gerou (mensagens outbound novas)
         _send_pending_bot_messages(db, conn, convo, wa_id)

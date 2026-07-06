@@ -13,6 +13,7 @@ FASE A.2 (adicionado, aditivo):
 Nada da logica existente (message/question/input/condition/delay/webhook/human/end) foi alterado.
 """
 import time
+import unicodedata
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Tuple
 from sqlalchemy.orm import Session
@@ -65,6 +66,71 @@ def _render(text: str, context: Dict[str, Any]) -> str:
     except Exception:
         return text
 
+
+
+
+def _normalize_answer(value: Any) -> str:
+    """Normaliza uma resposta para comparar opções digitadas no WhatsApp.
+    Ex.: "Sim, já fiz contato" -> "sim ja fiz contato".
+    """
+    if value is None:
+        return ""
+    txt = str(value).strip().lower()
+    txt = unicodedata.normalize("NFKD", txt)
+    txt = "".join(ch for ch in txt if not unicodedata.combining(ch))
+    # mantém letras/números/espaços e simplifica pontuação
+    cleaned = []
+    for ch in txt:
+        cleaned.append(ch if ch.isalnum() or ch.isspace() else " ")
+    return " ".join("".join(cleaned).split())
+
+
+def _match_question_option(options: List[Dict[str, Any]], answer: str) -> Optional[Dict[str, Any]]:
+    """Encontra uma opção de +PERG a partir de texto digitado.
+
+    Aceita:
+    - número da opção: "1", "2"...
+    - valor interno: "sim", "nao"
+    - label visível: "Sim, já fiz contato"
+    - texto que comece pelo label/valor normalizado.
+    """
+    raw = str(answer or "").strip()
+    norm = _normalize_answer(raw)
+    if not norm:
+        return None
+
+    # 1, 2, 3... como atalho para opções do WhatsApp
+    if norm.isdigit():
+        idx = int(norm) - 1
+        if 0 <= idx < len(options):
+            return options[idx]
+
+    for opt in options or []:
+        candidates = [opt.get("value"), opt.get("label")]
+        for c in candidates:
+            cn = _normalize_answer(c)
+            if not cn:
+                continue
+            if norm == cn or norm.startswith(cn) or cn.startswith(norm):
+                return opt
+    return None
+
+
+def _question_text_for_channel(node: Dict[str, Any], context: Dict[str, Any], channel: Optional[str]) -> str:
+    """Renderiza +PERG. No WhatsApp, inclui as opções no próprio texto.
+
+    No simulador, as opções continuam sendo exibidas pela UI separada para evitar duplicidade.
+    """
+    text = _render(node.get("content", ""), context)
+    if channel != "whatsapp":
+        return text
+    options = node.get("options") or []
+    if not options:
+        return text
+    lines = [text.rstrip(), "", "Responda com o número da opção:"]
+    for i, opt in enumerate(options, start=1):
+        lines.append(f"{i} - {opt.get('label') or opt.get('value') or ('Opção ' + str(i))}")
+    return "\n".join(lines).strip()
 
 def _save_message(
     db: Session,
@@ -147,13 +213,14 @@ def start_conversation(
     flow: Flow,
     user_name: Optional[str] = "Visitante",
     user_phone: Optional[str] = None,
+    channel: str = "simulator",
 ) -> Conversation:
     """Inicia uma nova conversa para o fluxo, indo até o primeiro nó executável."""
     # MODO ATENDENTE IA: nao roda trilho. Manda uma saudacao e espera a 1a msg do usuario.
     if getattr(flow, "mode", "guided") == "ai_agent":
         conv = Conversation(
             flow_id=flow.id,
-            channel="simulator",
+            channel=channel,
             state={"current_node": None, "context": {}, "mode": "ai_agent"},
             is_active=True,
         )
@@ -177,7 +244,7 @@ def start_conversation(
         raise ValueError("Fluxo sem nó inicial definido.")
     conv = Conversation(
         flow_id=flow.id,
-        channel="simulator",
+        channel=channel,
         state={"current_node": start_id, "context": {}},
         is_active=True,
     )
@@ -275,7 +342,12 @@ def _run_until_blocking(db: Session, conv: Conversation, flow: Flow) -> None:
             conv.is_active = False
             conv.ended_at = datetime.now(timezone.utc)
             return
-        elif ntype in ("question", "input"):
+        elif ntype == "question":
+            text = _question_text_for_channel(node, conv.state.get("context", {}), getattr(conv, "channel", None))
+            if text:
+                _save_message(db, conv.id, "outbound", "bot", text, current_id)
+            return
+        elif ntype == "input":
             text = _render(node.get("content", ""), conv.state.get("context", {}))
             if text:
                 _save_message(db, conv.id, "outbound", "bot", text, current_id)
@@ -345,28 +417,28 @@ def send_user_message(
         context[variable] = text
 
     next_id = None
-    if node.get("type") == "question" and selected_option is not None:
+    if node.get("type") == "question":
+        # IMPORTANTE: no simulador vem selected_option; no WhatsApp vem text.
+        # Portanto +PERG precisa interpretar ambos do mesmo jeito.
         options = node.get("options") or []
-        matched_opt = None
-        for opt in options:
-            if (
-                str(opt.get("value")) == str(selected_option)
-                or str(opt.get("label")) == str(selected_option)
-            ):
-                matched_opt = opt
-                break
+        answer = selected_option if selected_option is not None else text
+        matched_opt = _match_question_option(options, answer or user_content)
+
         if matched_opt:
+            chosen_value = matched_opt.get("value") or matched_opt.get("label")
             if matched_opt.get("variable"):
-                context[matched_opt["variable"]] = (
-                    matched_opt.get("value") or matched_opt.get("label")
-                )
+                context[matched_opt["variable"]] = chosen_value
             elif node.get("variable"):
-                context[node["variable"]] = (
-                    matched_opt.get("value") or matched_opt.get("label")
-                )
+                context[node["variable"]] = chosen_value
             next_id = matched_opt.get("next") or node.get("next")
         else:
-            next_id = node.get("next")
+            # Não avança em escolha inválida. Reenvia a pergunta para evitar encerrar o fluxo.
+            retry = "Não consegui identificar sua opção. Por favor, responda com uma das opções abaixo."
+            qtext = _question_text_for_channel(node, context, getattr(conversation, "channel", None))
+            _save_message(db, conversation.id, "outbound", "bot", (retry + "\n\n" + qtext).strip(), current_id)
+            db.commit()
+            db.refresh(conversation)
+            return conversation
     else:
         next_id = node.get("next")
 
