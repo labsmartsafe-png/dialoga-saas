@@ -70,6 +70,12 @@ def list_kb(db: Session = Depends(get_db), current_user: User = Depends(get_curr
 def delete_kb(kb_id: int, db: Session = Depends(get_db),
               current_user: User = Depends(get_current_user)):
     kb = _get_owned_kb(db, kb_id, current_user)
+    # Se esta base estiver definida como padrao nas AISettings, limpa a referencia
+    # antes de excluir (evita erro de chave estrangeira / deixa o atendente IA sem base orfã).
+    ai = db.query(AISettings).filter(AISettings.owner_id == current_user.id).first()
+    if ai is not None and ai.knowledge_base_id == kb_id:
+        ai.knowledge_base_id = None
+        db.flush()
     db.delete(kb)
     db.commit()
     return

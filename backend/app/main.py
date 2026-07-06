@@ -13,6 +13,7 @@ from .routers import auth, templates, flows, leads, whatsapp, dashboard
 from .routers.whatsapp_meta import meta_webhook_router  # NOVO: webhook Meta (modo shadow)
 from .routers.whatsapp_connections import router as whatsapp_connections_router  # NOVO: Fase 3
 from .routers.ai import router as ai_router  # NOVO: Fase A (IA + RAG)
+from .routers.whatsapp_evolution import evo_webhook_router  # NOVO: Fase 5 (Evolution/QR)
 from .json import CustomJSONResponse
 
 # Logging
@@ -88,3 +89,4 @@ app.include_router(ai_router, prefix="/api/ai", tags=["IA"])  # NOVO: Fase A (IA
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
 app.include_router(whatsapp.webhook_router, tags=["Webhook"])          # legado (intacto): /webhook/whatsapp
 app.include_router(meta_webhook_router, tags=["Webhook"])              # NOVO: /webhook/whatsapp/meta
+app.include_router(evo_webhook_router, tags=["Webhook"])               # NOVO: /webhook/whatsapp/evo (Evolution/QR)

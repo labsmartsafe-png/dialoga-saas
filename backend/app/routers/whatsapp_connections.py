@@ -169,3 +169,119 @@ def send_test(
     conn.last_error = msg
     db.commit()
     raise HTTPException(502, msg)
+
+
+# ============================================================ #
+# Evolution API (WhatsApp NAO-OFICIAL / QR Code) — Fase 5
+# ============================================================ #
+import uuid as _uuid
+from ..config import settings as _settings
+from ..crypto import encrypt_secret as _encrypt_secret
+from ..schemas_whatsapp import EvolutionConnectionCreate
+from ..services import evolution_service as _evo
+from ..models_whatsapp import WhatsAppContactState as _WAContactState
+
+
+def _evo_webhook_url() -> str:
+    """URL publica do webhook da Evolution (aponta para o backend do dIAloga+)."""
+    base = (_settings.public_base_url or "").rstrip("/")
+    return f"{base}/webhook/whatsapp/evo"
+
+
+@router.post("/evolution", response_model=WhatsAppConnectionOut)
+def create_evolution_connection(
+    payload: EvolutionConnectionCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Cria uma conexao via QR Code (Evolution). Cria a instancia na Evolution com webhook
+    de volta pro dIAloga+, e retorna a conexao (o QR e' obtido no endpoint /qrcode).
+    """
+    if not _settings.evolution_enabled:
+        raise HTTPException(400, "Conexao via QR Code (Evolution) nao esta habilitada.")
+    if payload.flow_id is not None:
+        flow = db.query(Flow).filter(Flow.id == payload.flow_id, Flow.owner_id == current_user.id).first()
+        if not flow:
+            raise HTTPException(404, "Fluxo nao encontrado.")
+
+    instance_name = f"diaplus-{current_user.id}-{_uuid.uuid4().hex[:8]}"
+    webhook_secret = _evo.gen_webhook_secret()
+
+    result = _evo.create_instance(instance_name, _evo_webhook_url(), webhook_secret)
+    if not result.get("ok"):
+        raise HTTPException(502, f"Falha ao criar instancia na Evolution: {result.get('error')}")
+
+    conn = WhatsAppConnection(
+        owner_id=current_user.id,
+        provider="evolution",
+        status="connecting",
+        display_name=payload.display_name,
+        flow_id=payload.flow_id,
+        evolution_instance_name=instance_name,
+        webhook_secret_enc=_encrypt_secret(webhook_secret),
+    )
+    db.add(conn)
+    db.commit()
+    db.refresh(conn)
+    return WhatsAppConnectionOut.model_validate(conn)
+
+
+@router.get("/{conn_id}/qrcode")
+def get_evolution_qrcode(
+    conn_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Retorna o QR Code (base64) para conectar o WhatsApp.
+    Primeiro tenta o cache (vindo do webhook QRCODE_UPDATED); se nao houver, pede um novo
+    a Evolution via /instance/connect.
+    """
+    conn = _get_owned_connection(db, conn_id, current_user)
+    if conn.provider != "evolution":
+        raise HTTPException(400, "Esta conexao nao e' do tipo QR Code.")
+
+    # 1) cache do webhook
+    holder = (
+        db.query(_WAContactState)
+        .filter(_WAContactState.connection_id == conn.id, _WAContactState.wa_id == "__qr__")
+        .first()
+    )
+    cached_qr = (holder.context or {}).get("qrcode_base64") if holder else None
+
+    # 2) pede um novo/estado atual
+    res = _evo.connect_instance(conn.evolution_instance_name)
+    qr = (res.get("qrcode_base64") if res.get("ok") else None) or cached_qr
+
+    # atualiza status atual
+    st = _evo.connection_state(conn.evolution_instance_name)
+    if st.get("ok"):
+        mapping = {"open": "connected", "connecting": "connecting", "close": "disconnected"}
+        conn.status = mapping.get(st.get("state"), conn.status)
+        db.commit()
+
+    return {
+        "ok": True,
+        "status": conn.status,
+        "qrcode_base64": qr,
+        "pairing_code": res.get("pairing_code") if res.get("ok") else None,
+        "connected": conn.status == "connected",
+    }
+
+
+@router.get("/{conn_id}/status")
+def get_evolution_status(
+    conn_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Consulta o status atual da conexao (para a UI fazer polling)."""
+    conn = _get_owned_connection(db, conn_id, current_user)
+    if conn.provider == "evolution":
+        st = _evo.connection_state(conn.evolution_instance_name)
+        if st.get("ok"):
+            mapping = {"open": "connected", "connecting": "connecting", "close": "disconnected"}
+            conn.status = mapping.get(st.get("state"), conn.status)
+            db.commit()
+    return {"ok": True, "status": conn.status, "connected": conn.status == "connected"}

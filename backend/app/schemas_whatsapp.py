@@ -42,3 +42,9 @@ class WhatsAppSendTestRequest(BaseModel):
     """Disparo de mensagem de teste por uma conexao."""
     to: str = Field(..., description="Numero com DDI, ex: 5511999999999", min_length=8, max_length=20)
     text: str = Field(..., min_length=1, max_length=1000)
+
+
+class EvolutionConnectionCreate(BaseModel):
+    """Cria uma conexao via QR Code (Evolution/nao-oficial)."""
+    display_name: Optional[str] = Field(None, max_length=255)
+    flow_id: Optional[int] = None

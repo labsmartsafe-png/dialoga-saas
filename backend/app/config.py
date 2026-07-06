@@ -41,8 +41,10 @@ class Settings(BaseSettings):
 
     # --- Evolution API (QR) ---
     evolution_enabled: bool = False
-    evolution_base_url: str = ""
-    evolution_global_api_key: str = ""
+    evolution_base_url: str = ""          # URL da Evolution (Railway)
+    evolution_global_api_key: str = ""    # AUTHENTICATION_API_KEY da Evolution
+    # URL publica DESTE backend (p/ a Evolution mandar webhook de volta)
+    public_base_url: str = "https://dialoga-backend-1slr.onrender.com"
 
     # --- IA / Gemini (Fase A) ---
     gemini_api_key: str = ""                     # Google AI Studio API key

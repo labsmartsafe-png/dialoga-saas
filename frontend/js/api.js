@@ -65,6 +65,10 @@
     createConnection: function (b) { return request("/api/whatsapp/connections", { method: "POST", body: b }); },
     deleteConnection: function (id) { return request("/api/whatsapp/connections/" + id, { method: "DELETE" }); },
     sendTestMessage: function (id, b) { return request("/api/whatsapp/connections/" + id + "/send-test", { method: "POST", body: b }); },
+    // Evolution / QR Code (Fase 5)
+    createEvolutionConnection: function (b) { return request("/api/whatsapp/connections/evolution", { method: "POST", body: b }); },
+    getEvolutionQrcode: function (id) { return request("/api/whatsapp/connections/" + id + "/qrcode"); },
+    getEvolutionStatus: function (id) { return request("/api/whatsapp/connections/" + id + "/status"); },
 
     // ---- IA + RAG (Fase A) ----
     listKnowledgeBases: function () { return request("/api/ai/knowledge-bases"); },

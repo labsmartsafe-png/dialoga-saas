@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Configurações - dIAloga+</title>
   <link rel="stylesheet" href="css/styles.css">
-  <script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=sEu8oyNDFs65qNL7P9mZZmAKL-aSCR_Vb-Wp51YCSiyBp2vYanFIpOKgkOHNqIHSSyKawjh8EKgPiuf89nBTSytAso2RmN11VdwrnHCyKXQBYKLn-HlHjyWtvYGOF3A-i9XVRQwFUwOXqnoIEEmJew" charset="UTF-8"></script><style>
+  <script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=ss6MlL8MFvdBFAUnT4k9kSpiN1O0pyjUMt5d3oMuvg6tsQbYXk-YCSleiku8tWbrswWzsKVDRzCsSJg74yH7H73adoMMdTj4Mb1BUFBrKi4jhvkSP7R83xC1Utu4uPWGAqymRNQxkuJ3746YAAjaYw" charset="UTF-8"></script><style>
     /* ===== Estilos próprios da tela de Configurações (não dependem do styles.css) ===== */
     :root{
       --cfg-bg:#f5f7fb; --cfg-card:#ffffff; --cfg-border:#e6e9f0; --cfg-text:#1a2233;
@@ -81,7 +81,6 @@
     <a href="dashboard.html">Dashboard</a>
     <a href="builder.html">Fluxos</a>
     <a href="leads.html">Leads</a>
-    <a href="ia.html">IA</a>
     <a href="configuracoes.html" class="active">Configurações</a>
   </nav>
   <div class="user-area" id="user-area"></div>
@@ -150,6 +149,28 @@
       </form>
     </div>
 
+    <!-- Conectar via QR Code (Evolution / nao-oficial) -->
+    <div class="cfg-card full">
+      <h2>📱 Conectar via QR Code (não-oficial)</h2>
+      <p class="hint">
+        Conecte um número escaneando um QR Code, sem conta na Meta. <strong>Atenção:</strong>
+        é um método não-oficial — há <strong>risco de banimento do número</strong> pelo WhatsApp,
+        especialmente com volume alto. Use um número dedicado e não o seu principal.
+      </p>
+      <form id="evo-form" style="display:flex; gap:8px; flex-wrap:wrap; align-items:end;">
+        <div class="cfg-field" style="flex:1; min-width:200px; margin-bottom:0;">
+          <label for="evo_name">Nome de exibição (opcional)</label>
+          <input type="text" id="evo_name" placeholder="Ex: WhatsApp Teste">
+        </div>
+        <div class="cfg-field" style="flex:1; min-width:200px; margin-bottom:0;">
+          <label for="evo_flow">Fluxo que responde (opcional)</label>
+          <select id="evo_flow"><option value="">— selecione —</option></select>
+        </div>
+        <button class="cfg-btn" type="submit" id="btn-evo">Gerar QR Code</button>
+      </form>
+      <div id="evo-qr-area" style="margin-top:16px;"></div>
+    </div>
+
     <!-- Lista -->
     <div class="cfg-card full">
       <h2>📋 Conexões cadastradas</h2>
@@ -191,9 +212,14 @@
     try {
       const flows = await WFApi.listFlows();
       const sel = document.getElementById("flow_id");
+      const evoSel = document.getElementById("evo_flow");
       (flows || []).forEach(function(f){
         const o = document.createElement("option");
         o.value = f.id; o.textContent = f.name; sel.appendChild(o);
+        if (evoSel) {
+          const o2 = document.createElement("option");
+          o2.value = f.id; o2.textContent = f.name; evoSel.appendChild(o2);
+        }
       });
     } catch (e) { /* opcional */ }
   }
@@ -288,10 +314,67 @@
     }
   });
 
+  // ---------- Conectar via QR Code (Evolution) ----------
+  var evoPollTimer = null;
+  document.getElementById("evo-form").addEventListener("submit", async function(ev){
+    ev.preventDefault();
+    const btn = document.getElementById("btn-evo");
+    const area = document.getElementById("evo-qr-area");
+    btn.disabled = true; btn.textContent = "Gerando...";
+    area.innerHTML = '<div class="hint">Criando conexão e gerando QR Code... (pode levar alguns segundos)</div>';
+    try {
+      const body = {
+        display_name: document.getElementById("evo_name").value || null,
+        flow_id: document.getElementById("evo_flow").value ? Number(document.getElementById("evo_flow").value) : null
+      };
+      const conn = await WFApi.createEvolutionConnection(body);
+      loadConnections();
+      startQrPolling(conn.id);
+    } catch (e) {
+      area.innerHTML = '<div class="cfg-alert err">' + escapeHtml(e.message) + '</div>';
+    } finally {
+      btn.disabled = false; btn.textContent = "Gerar QR Code";
+    }
+  });
+
+  async function startQrPolling(connId) {
+    const area = document.getElementById("evo-qr-area");
+    if (evoPollTimer) clearInterval(evoPollTimer);
+
+    async function tick() {
+      try {
+        const res = await WFApi.getEvolutionQrcode(connId);
+        if (res.connected) {
+          clearInterval(evoPollTimer); evoPollTimer = null;
+          area.innerHTML = '<div class="cfg-alert ok">✅ WhatsApp conectado com sucesso!</div>';
+          loadConnections();
+          return;
+        }
+        if (res.qrcode_base64) {
+          var src = res.qrcode_base64.indexOf("data:") === 0 ? res.qrcode_base64 : ("data:image/png;base64," + res.qrcode_base64);
+          area.innerHTML =
+            '<div style="text-align:center;">' +
+            '<p class="hint">Abra o WhatsApp no celular → Aparelhos conectados → Conectar aparelho → escaneie:</p>' +
+            '<img src="' + src + '" alt="QR Code" style="width:260px;height:260px;border:1px solid var(--cfg-border);border-radius:12px;background:#fff;padding:8px;">' +
+            '<p class="hint" style="margin-top:8px;">Aguardando leitura... (o QR expira rápido; se sumir, clique em "Gerar QR Code" de novo)</p>' +
+            '</div>';
+        } else {
+          area.innerHTML = '<div class="hint">Aguardando QR Code da Evolution... status: ' + escapeHtml(res.status || "?") + '</div>';
+        }
+      } catch (e) {
+        area.innerHTML = '<div class="cfg-alert err">' + escapeHtml(e.message) + '</div>';
+      }
+    }
+    await tick();
+    evoPollTimer = setInterval(tick, 4000);  // atualiza a cada 4s
+    // para o polling depois de 3 min para nao rodar pra sempre
+    setTimeout(function(){ if (evoPollTimer) { clearInterval(evoPollTimer); evoPollTimer = null; } }, 180000);
+  }
+
   await loadFlows();
   await loadConnections();
 })();
 </script>
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14817f139cf9e06',t:'MTc4MjkzNzAzOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a170b657ddbe120f',t:'MTc4MzM2Mjk1OA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
 </html>
