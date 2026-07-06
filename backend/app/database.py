@@ -60,6 +60,16 @@ def get_db() -> Session:
 # --------------------------------------------------------------------------- #
 _ADDITIVE_COLUMNS = [
     ("flows", "mode", "VARCHAR(20)", "guided"),
+
+    # WhatsAppConnection evoluiu em fases (Meta -> Evolution/QR).
+    # Em bancos antigos, a tabela whatsapp_connections ja pode existir sem
+    # essas colunas; create_all() NAO adiciona coluna nova. Sem esta migracao,
+    # qualquer SELECT/INSERT nesta tabela pode gerar 500 em producao.
+    ("whatsapp_connections", "flow_id", "INTEGER", None),
+    ("whatsapp_connections", "evolution_instance_name", "VARCHAR(150)", None),
+    ("whatsapp_connections", "evolution_api_key_enc", "TEXT", None),
+    ("whatsapp_connections", "webhook_secret_enc", "TEXT", None),
+
     # Futuras colunas aditivas em tabelas existentes entram aqui.
     # Ex.: ("users", "is_admin", "BOOLEAN", "0"),
 ]
