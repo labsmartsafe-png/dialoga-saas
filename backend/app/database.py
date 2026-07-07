@@ -63,12 +63,20 @@ _ADDITIVE_COLUMNS = [
 
     # WhatsAppConnection evoluiu em fases (Meta -> Evolution/QR).
     # Em bancos antigos, a tabela whatsapp_connections ja pode existir sem
-    # essas colunas; create_all() NAO adiciona coluna nova. Sem esta migracao,
-    # qualquer SELECT/INSERT nesta tabela pode gerar 500 em producao.
+    # algumas colunas novas; create_all() NAO adiciona coluna nova. Sem esta
+    # migracao, qualquer SELECT/INSERT nesta tabela pode gerar 500 em producao.
+    ("whatsapp_connections", "phone_number", "VARCHAR(40)", None),
     ("whatsapp_connections", "flow_id", "INTEGER", None),
+    ("whatsapp_connections", "phone_number_id", "VARCHAR(100)", None),
+    ("whatsapp_connections", "waba_id", "VARCHAR(100)", None),
+    ("whatsapp_connections", "access_token_enc", "TEXT", None),
+    ("whatsapp_connections", "access_token_last4", "VARCHAR(8)", None),
+    ("whatsapp_connections", "last_error", "TEXT", None),
     ("whatsapp_connections", "evolution_instance_name", "VARCHAR(150)", None),
     ("whatsapp_connections", "evolution_api_key_enc", "TEXT", None),
     ("whatsapp_connections", "webhook_secret_enc", "TEXT", None),
+    ("whatsapp_connections", "created_at", "TIMESTAMP", None),
+    ("whatsapp_connections", "updated_at", "TIMESTAMP", None),
 
     # Futuras colunas aditivas em tabelas existentes entram aqui.
     # Ex.: ("users", "is_admin", "BOOLEAN", "0"),
