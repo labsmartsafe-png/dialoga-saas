@@ -77,6 +77,7 @@ _ADDITIVE_COLUMNS = [
     ("whatsapp_connections", "webhook_secret_enc", "TEXT", None),
     ("whatsapp_connections", "created_at", "TIMESTAMP", None),
     ("whatsapp_connections", "updated_at", "TIMESTAMP", None),
+    ("whatsapp_connections", "automation_paused", "BOOLEAN", False),
 
     # CRM 1.0 — colunas aditivas em leads para separar origens e vincular conversa/conexao.
     ("leads", "conversation_id", "INTEGER", None),

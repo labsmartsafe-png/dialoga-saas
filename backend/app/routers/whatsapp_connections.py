@@ -19,6 +19,7 @@ from ..models import User, Flow
 from ..models_whatsapp import WhatsAppConnection
 from ..schemas_whatsapp import (
     WhatsAppConnectionCreate, WhatsAppConnectionOut, WhatsAppSendTestRequest,
+    WhatsAppAutomationPauseUpdate,
 )
 from ..auth import get_current_user
 from ..crypto import encrypt_secret
@@ -139,6 +140,25 @@ def delete_connection(
     db.delete(conn)
     db.commit()
     return
+
+
+@router.post("/{conn_id}/automation-paused", response_model=WhatsAppConnectionOut)
+def set_automation_paused(
+    conn_id: int,
+    payload: WhatsAppAutomationPauseUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Pausa/retoma a automação da conexão inteira.
+
+    Quando pausada, o webhook registra mensagens, mas não aciona o bot para nenhum contato
+    desta conexão. É diferente da pausa por lead (handoff individual).
+    """
+    conn = _get_owned_connection(db, conn_id, current_user)
+    conn.automation_paused = bool(payload.paused)
+    db.commit()
+    db.refresh(conn)
+    return WhatsAppConnectionOut.model_validate(conn)
 
 
 @router.post("/{conn_id}/send-test")

@@ -44,6 +44,9 @@ class WhatsAppConnection(Base):
 
     provider = Column(String(20), nullable=False)            # meta | evolution
     status = Column(String(20), default="disconnected")      # connecting|connected|disconnected|error|disabled
+    # Pausa global da automacao desta conexao/numero. Quando True, webhooks registram
+    # mensagens mas NAO acionam o bot/flow_engine para nenhum contato deste numero.
+    automation_paused = Column(Boolean, default=False, nullable=False)
     display_name = Column(String(255), nullable=True)
     phone_number = Column(String(40), nullable=True)
     # Qual fluxo este numero usa para responder (FK opcional para flows)

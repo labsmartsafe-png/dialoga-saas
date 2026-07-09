@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -236,19 +236,28 @@
         testSel.innerHTML = '<option value="">— nenhuma conexão —</option>';
         return;
       }
-      let html = '<table class="cfg-table"><thead><tr><th>Nome</th><th>Número</th><th>Phone Number ID</th><th>Status</th><th>Token</th><th></th></tr></thead><tbody>';
+      let html = '<table class="cfg-table"><thead><tr><th>Nome</th><th>Número</th><th>Phone Number ID</th><th>Status</th><th>Automação</th><th>Token</th><th></th></tr></thead><tbody>';
       conns.forEach(function(cn){
         let badge;
         if (cn.status === "connected") badge = '<span class="badge ok">● conectado</span>';
         else if (cn.status === "error") badge = '<span class="badge err" title="' + escapeHtml(cn.last_error||"") + '">● erro</span>';
         else badge = '<span class="badge idle">● ' + escapeHtml(cn.status) + '</span>';
+        const autoBadge = cn.automation_paused
+          ? '<span class="badge err">⏸ pausada</span>'
+          : '<span class="badge ok">▶ ativa</span>';
+        const toggleLabel = cn.automation_paused ? 'Retomar automação' : 'Pausar automação';
+        const toggleClass = cn.automation_paused ? 'cfg-btn ghost' : 'cfg-btn danger';
         html += '<tr>' +
           '<td>' + escapeHtml(cn.display_name || "-") + '</td>' +
           '<td>' + escapeHtml(cn.phone_number || "-") + '</td>' +
           '<td class="mono">' + escapeHtml(cn.phone_number_id || "-") + '</td>' +
           '<td>' + badge + '</td>' +
+          '<td>' + autoBadge + '</td>' +
           '<td class="mono">' + (cn.access_token_last4 ? "••••" + escapeHtml(cn.access_token_last4) : "-") + '</td>' +
-          '<td style="text-align:right;"><button class="cfg-btn danger" data-del="' + cn.id + '">Excluir</button></td>' +
+          '<td style="text-align:right; display:flex; gap:6px; justify-content:flex-end; flex-wrap:wrap;">' +
+            '<button class="' + toggleClass + '" data-toggle-auto="' + cn.id + '" data-paused="' + (cn.automation_paused ? '1' : '0') + '" style="padding:7px 12px;font-size:13px;">' + toggleLabel + '</button>' +
+            '<button class="cfg-btn danger" data-del="' + cn.id + '">Excluir</button>' +
+          '</td>' +
           '</tr>';
         const o = document.createElement("option");
         o.value = cn.id;
@@ -257,6 +266,23 @@
       });
       html += '</tbody></table>';
       c.innerHTML = html;
+
+      c.querySelectorAll("[data-toggle-auto]").forEach(function(btn){
+        btn.addEventListener("click", async function(){
+          const id = btn.getAttribute("data-toggle-auto");
+          const isPaused = btn.getAttribute("data-paused") === "1";
+          const nextPaused = !isPaused;
+          const msg = nextPaused
+            ? "Pausar a automação desta conexão? Nenhum contato receberá resposta automática enquanto estiver pausada."
+            : "Retomar a automação desta conexão? O bot voltará a responder novos atendimentos que não estejam em handoff humano.";
+          if (!confirm(msg)) return;
+          try {
+            await WFApi.setConnectionAutomationPaused(id, nextPaused);
+            showAlert(nextPaused ? "Automação pausada para esta conexão." : "Automação retomada para esta conexão.", "success");
+            loadConnections();
+          } catch (e) { showAlert(e.message); }
+        });
+      });
 
       c.querySelectorAll("[data-del]").forEach(function(btn){
         btn.addEventListener("click", async function(){
@@ -376,6 +402,6 @@
   await loadConnections();
 })();
 </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a18a91f16fa91944',t:'MTc4MzYzNDA5Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
-

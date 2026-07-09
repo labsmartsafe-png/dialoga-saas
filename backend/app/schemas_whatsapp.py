@@ -24,6 +24,7 @@ class WhatsAppConnectionOut(BaseModel):
     id: int
     provider: str
     status: str
+    automation_paused: bool = False
     display_name: Optional[str] = None
     phone_number: Optional[str] = None
     phone_number_id: Optional[str] = None
@@ -42,6 +43,11 @@ class WhatsAppSendTestRequest(BaseModel):
     """Disparo de mensagem de teste por uma conexao."""
     to: str = Field(..., description="Numero com DDI, ex: 5511999999999", min_length=8, max_length=20)
     text: str = Field(..., min_length=1, max_length=1000)
+
+
+class WhatsAppAutomationPauseUpdate(BaseModel):
+    """Pausa/retomada global da automacao de uma conexão WhatsApp."""
+    paused: bool
 
 
 class EvolutionConnectionCreate(BaseModel):

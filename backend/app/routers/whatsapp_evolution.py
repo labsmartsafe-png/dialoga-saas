@@ -218,6 +218,16 @@ def _handle_message(db: Session, conn: WhatsAppConnection, data: dict):
             logger.info("[EVO] humano assumiu lead %s (%s); bot pausado.", manual_lead.id, wa_id)
         return
 
+    # CRM 1.0.3 — Pausa global da automação desta conexão/numero.
+    # Diferente do handoff por lead: aqui nenhum contato desta conexão recebe bot.
+    if getattr(conn, "automation_paused", False):
+        paused_lead = _record_global_paused_inbound(db, conn, flow, wa_id, text, now)
+        ev.status = "processed"
+        ev.processed_at = now
+        db.commit()
+        logger.info("[EVO] automacao global pausada na conexao %s; inbound de %s registrado no lead %s.", conn.id, wa_id, getattr(paused_lead, "id", None))
+        return
+
     # CRM 1.0.1 — Trava de handoff humano.
     # Se este contato já está aguardando/recebendo atendimento humano, o bot NÃO pode
     # iniciar um novo fluxo nem responder automaticamente. Apenas registramos a mensagem.
@@ -274,6 +284,92 @@ def _handle_message(db: Session, conn: WhatsAppConnection, data: dict):
         ev.last_error = str(exc)[:500]
         db.commit()
         logger.exception("[EVO] falha ao processar msg: %s", exc)
+
+
+def _record_global_paused_inbound(db: Session, conn: WhatsAppConnection, flow: Flow, wa_id: str, text: str, now: datetime) -> Lead:
+    """Registra mensagem inbound quando a automação da conexão está pausada.
+
+    A pausa global é configurada na tela Configurações. Ela não deve acionar o bot.
+    Criamos/reutilizamos um lead em atendimento humano para que o contato apareça no CRM.
+    """
+    # Reusa conversa mais recente deste contato/fluxo, ativa ou não.
+    convo = (
+        db.query(Conversation)
+        .filter(Conversation.channel == "whatsapp",
+                Conversation.user_phone == wa_id,
+                Conversation.flow_id == flow.id)
+        .order_by(Conversation.started_at.desc())
+        .first()
+    )
+
+    if convo is None:
+        convo = Conversation(
+            flow_id=flow.id,
+            channel="whatsapp",
+            user_phone=wa_id,
+            state={"current_node": None, "context": {}, "bot_paused": True, "paused_reason": "connection_paused"},
+            is_active=False,
+            ended_at=now,
+        )
+        db.add(convo)
+        db.flush()
+
+    lead = None
+    if convo.lead_id:
+        lead = db.query(Lead).filter(Lead.id == convo.lead_id, Lead.owner_id == conn.owner_id).first()
+
+    if lead is None:
+        q = (
+            db.query(Lead)
+            .filter(
+                Lead.owner_id == conn.owner_id,
+                Lead.flow_id == flow.id,
+                Lead.phone == wa_id,
+                Lead.source.in_((lead_service.SOURCE_WHATSAPP_EVOLUTION, lead_service.SOURCE_WHATSAPP_GENERIC)),
+            )
+        )
+        if hasattr(Lead, "connection_id"):
+            q = q.filter((Lead.connection_id == conn.id) | (Lead.connection_id.is_(None)))
+        lead = q.order_by(Lead.created_at.desc()).first()
+
+    if lead is None:
+        lead = lead_service.sync_lead_from_conversation(
+            db,
+            flow,
+            convo,
+            source=lead_service.SOURCE_WHATSAPP_EVOLUTION,
+            connection_id=conn.id,
+            stage="automacao_pausada",
+            status=lead_service.STATUS_EM_ATENDIMENTO_HUMANO,
+        )
+    else:
+        lead.source = lead_service.SOURCE_WHATSAPP_EVOLUTION if lead.source == lead_service.SOURCE_WHATSAPP_GENERIC else lead.source
+        lead.connection_id = getattr(lead, "connection_id", None) or conn.id
+        lead.conversation_id = convo.id
+        lead.stage = "automacao_pausada"
+        lead.status = lead_service.STATUS_EM_ATENDIMENTO_HUMANO
+        lead.last_interaction_at = now
+        if hasattr(lead, "updated_at"):
+            lead.updated_at = now
+        convo.lead_id = lead.id
+
+    msg = Message(
+        conversation_id=convo.id,
+        direction="inbound",
+        sender="user",
+        content=text or "",
+        node_id=None,
+        message_type="text_connection_paused",
+    )
+    db.add(msg)
+
+    convo.is_active = False
+    convo.ended_at = now
+    state = dict(convo.state or {})
+    state["bot_paused"] = True
+    state["paused_reason"] = "connection_paused"
+    convo.state = state
+    return lead
 
 
 def _handle_manual_outbound(db: Session, conn: WhatsAppConnection, flow: Flow, wa_id: str, text: str, now: datetime) -> Lead | None:
