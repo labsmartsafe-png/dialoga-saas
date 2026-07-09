@@ -28,7 +28,12 @@ SOURCE_WHATSAPP_GENERIC = "whatsapp"
 STATUS_NOVO = "novo"
 STATUS_EM_ATENDIMENTO = "em_atendimento"
 STATUS_AGUARDANDO_HUMANO = "aguardando_humano"
+STATUS_EM_ATENDIMENTO_HUMANO = "em_atendimento_humano"
 STATUS_ENCERRADO = "encerrado"
+
+# Enquanto o lead estiver em um destes status, o bot NÃO deve reiniciar fluxo
+# nem responder automaticamente. A mensagem é apenas registrada para o humano.
+HUMAN_HANDOFF_STATUSES = (STATUS_AGUARDANDO_HUMANO, STATUS_EM_ATENDIMENTO_HUMANO)
 
 
 def utcnow() -> datetime:
@@ -208,4 +213,25 @@ def mark_finished(
         connection_id=connection_id,
         stage=stage,
         status=STATUS_ENCERRADO,
+    )
+
+
+def mark_manual_takeover(
+    db: Session,
+    flow: Flow,
+    conv: Conversation,
+    *,
+    source: Optional[str] = None,
+    connection_id: Optional[int] = None,
+    stage: str = "atendimento_manual",
+) -> Lead:
+    """Marca que um humano assumiu manualmente e o bot deve ficar pausado."""
+    return sync_lead_from_conversation(
+        db,
+        flow,
+        conv,
+        source=source,
+        connection_id=connection_id,
+        stage=stage,
+        status=STATUS_EM_ATENDIMENTO_HUMANO,
     )

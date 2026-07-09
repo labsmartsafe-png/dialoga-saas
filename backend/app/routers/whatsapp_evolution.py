@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 from ..config import settings
 from ..database import SessionLocal
 from ..crypto import decrypt_secret
-from ..models import Conversation, Message, Flow
+from ..models import Conversation, Message, Flow, Lead
 from ..models_whatsapp import WhatsAppConnection, WhatsAppInboundEvent, WhatsAppContactState
 from ..services import evolution_service as evo
 from ..services import flow_engine
@@ -150,8 +150,7 @@ def _handle_connection(db: Session, conn: WhatsAppConnection, data: dict):
 def _handle_message(db: Session, conn: WhatsAppConnection, data: dict):
     """Mensagem recebida -> dedup -> roda flow engine -> responde."""
     key = data.get("key") or {}
-    if key.get("fromMe"):
-        return  # ignora o que nos mesmos enviamos
+    from_me = bool(key.get("fromMe"))
     remote = key.get("remoteJid") or ""
     if remote.endswith("@g.us"):
         return  # ignora grupos
@@ -207,6 +206,30 @@ def _handle_message(db: Session, conn: WhatsAppConnection, data: dict):
         db.commit()
         return
 
+    # CRM 1.0.2 — Auto-pausar quando o humano responde manualmente pelo WhatsApp.
+    # Mensagens fromMe=true são mensagens enviadas pelo número conectado (humano/manual).
+    # Se o humano falou com um lead que estava no bot, pausamos a automação imediatamente.
+    if from_me:
+        manual_lead = _handle_manual_outbound(db, conn, flow, wa_id, text, now)
+        ev.status = "processed"
+        ev.processed_at = now
+        db.commit()
+        if manual_lead is not None:
+            logger.info("[EVO] humano assumiu lead %s (%s); bot pausado.", manual_lead.id, wa_id)
+        return
+
+    # CRM 1.0.1 — Trava de handoff humano.
+    # Se este contato já está aguardando/recebendo atendimento humano, o bot NÃO pode
+    # iniciar um novo fluxo nem responder automaticamente. Apenas registramos a mensagem.
+    handoff_lead = _find_handoff_lead(db, conn, flow, wa_id)
+    if handoff_lead is not None:
+        _record_handoff_inbound(db, handoff_lead, flow, wa_id, text, now)
+        ev.status = "processed"
+        ev.processed_at = now
+        db.commit()
+        logger.info("[EVO] bot pausado para lead %s (%s); mensagem registrada para humano.", handoff_lead.id, wa_id)
+        return
+
     # acha/cria conversa ativa deste contato para este flow
     convo = (
         db.query(Conversation)
@@ -251,6 +274,185 @@ def _handle_message(db: Session, conn: WhatsAppConnection, data: dict):
         ev.last_error = str(exc)[:500]
         db.commit()
         logger.exception("[EVO] falha ao processar msg: %s", exc)
+
+
+def _handle_manual_outbound(db: Session, conn: WhatsAppConnection, flow: Flow, wa_id: str, text: str, now: datetime) -> Lead | None:
+    """Detecta mensagem manual do humano (fromMe=true) e pausa o bot.
+
+    Quando o atendente responde diretamente pelo WhatsApp conectado, a Evolution
+    envia a mensagem como fromMe=true. Esse é o sinal de que o humano assumiu.
+    A partir daqui, o lead entra em 'em_atendimento_humano' e novas mensagens do
+    lead não reiniciam o fluxo.
+    """
+    # Preferimos conversa ativa: é o caso em que o bot ainda estava conduzindo o fluxo.
+    convo = (
+        db.query(Conversation)
+        .filter(Conversation.channel == "whatsapp",
+                Conversation.user_phone == wa_id,
+                Conversation.flow_id == flow.id,
+                Conversation.is_active == True)  # noqa: E712
+        .order_by(Conversation.started_at.desc())
+        .first()
+    )
+
+    lead = None
+    if convo is not None and convo.lead_id:
+        lead = db.query(Lead).filter(Lead.id == convo.lead_id, Lead.owner_id == conn.owner_id).first()
+
+    if lead is None:
+        q = (
+            db.query(Lead)
+            .filter(
+                Lead.owner_id == conn.owner_id,
+                Lead.flow_id == flow.id,
+                Lead.phone == wa_id,
+                Lead.source.in_((lead_service.SOURCE_WHATSAPP_EVOLUTION, lead_service.SOURCE_WHATSAPP_GENERIC)),
+                Lead.status.in_((
+                    lead_service.STATUS_NOVO,
+                    lead_service.STATUS_EM_ATENDIMENTO,
+                    lead_service.STATUS_AGUARDANDO_HUMANO,
+                    lead_service.STATUS_EM_ATENDIMENTO_HUMANO,
+                )),
+            )
+        )
+        if hasattr(Lead, "connection_id"):
+            q = q.filter((Lead.connection_id == conn.id) | (Lead.connection_id.is_(None)))
+        lead = q.order_by(Lead.created_at.desc()).first()
+
+    # Se não há lead/conversa conhecida, não cria automação nem pausa nada.
+    if lead is None and convo is None:
+        return None
+
+    if convo is None and getattr(lead, "conversation_id", None):
+        convo = db.query(Conversation).filter(Conversation.id == lead.conversation_id).first()
+
+    if convo is None:
+        convo = Conversation(
+            flow_id=flow.id,
+            channel="whatsapp",
+            user_phone=wa_id,
+            state={"current_node": None, "context": dict((lead.context if lead else {}) or {}), "bot_paused": True},
+            is_active=False,
+            ended_at=now,
+        )
+        db.add(convo)
+        db.flush()
+
+    # Registra a mensagem manual no histórico para a futura Inbox Humano.
+    msg = Message(
+        conversation_id=convo.id,
+        direction="outbound",
+        sender="human",
+        content=text or "",
+        node_id=None,
+        message_type="text_manual",
+    )
+    db.add(msg)
+
+    if lead is None:
+        lead = lead_service.sync_lead_from_conversation(
+            db,
+            flow,
+            convo,
+            source=lead_service.SOURCE_WHATSAPP_EVOLUTION,
+            connection_id=conn.id,
+            stage="atendimento_manual",
+            status=lead_service.STATUS_EM_ATENDIMENTO_HUMANO,
+        )
+    else:
+        convo.lead_id = lead.id
+        lead.conversation_id = convo.id
+        lead.connection_id = getattr(lead, "connection_id", None) or conn.id
+        lead.last_interaction_at = now
+        if hasattr(lead, "updated_at"):
+            lead.updated_at = now
+        # Refina source genérico, se necessário.
+        if lead.source == lead_service.SOURCE_WHATSAPP_GENERIC:
+            lead.source = lead_service.SOURCE_WHATSAPP_EVOLUTION
+        lead.status = lead_service.STATUS_EM_ATENDIMENTO_HUMANO
+        lead.stage = "atendimento_manual"
+
+    # Pausa a conversa do bot.
+    convo.is_active = False
+    convo.ended_at = now
+    state = dict(convo.state or {})
+    state["bot_paused"] = True
+    state["paused_reason"] = "manual_takeover"
+    convo.state = state
+    return lead
+
+
+def _find_handoff_lead(db: Session, conn: WhatsAppConnection, flow: Flow, wa_id: str) -> Lead | None:
+    """Retorna lead cujo bot está pausado por handoff humano.
+
+    Escopo Evolution/QR: source='whatsapp_evolution', mesmo owner, fluxo, telefone e conexão.
+    connection_id é usado quando disponível; se lead antigo não tiver connection_id, ainda assim
+    bloqueamos pelo telefone/fluxo/source para não deixar o bot atrapalhar o humano.
+    """
+    q = (
+        db.query(Lead)
+        .filter(
+            Lead.owner_id == conn.owner_id,
+            Lead.flow_id == flow.id,
+            Lead.phone == wa_id,
+            Lead.source == lead_service.SOURCE_WHATSAPP_EVOLUTION,
+            Lead.status.in_(lead_service.HUMAN_HANDOFF_STATUSES),
+        )
+    )
+    if hasattr(Lead, "connection_id"):
+        q = q.filter((Lead.connection_id == conn.id) | (Lead.connection_id.is_(None)))
+    return q.order_by(Lead.created_at.desc()).first()
+
+
+def _record_handoff_inbound(db: Session, lead: Lead, flow: Flow, wa_id: str, text: str, now: datetime):
+    """Registra inbound recebido enquanto bot está pausado para humano.
+
+    Não chama flow_engine e não envia outbound. A mensagem fica no histórico da conversa
+    vinculada ao lead, para a futura Inbox Humano.
+    """
+    convo = None
+    if getattr(lead, "conversation_id", None):
+        convo = db.query(Conversation).filter(Conversation.id == lead.conversation_id).first()
+
+    if convo is None:
+        convo = (
+            db.query(Conversation)
+            .filter(Conversation.channel == "whatsapp",
+                    Conversation.user_phone == wa_id,
+                    Conversation.flow_id == flow.id)
+            .order_by(Conversation.started_at.desc())
+            .first()
+        )
+
+    if convo is None:
+        # Fallback raro: cria conversa inativa só para preservar histórico humano.
+        convo = Conversation(
+            flow_id=flow.id,
+            channel="whatsapp",
+            user_phone=wa_id,
+            state={"current_node": None, "context": dict(lead.context or {}), "bot_paused": True},
+            is_active=False,
+            ended_at=now,
+        )
+        db.add(convo)
+        db.flush()
+
+    _save_handoff_message = Message(
+        conversation_id=convo.id,
+        direction="inbound",
+        sender="user",
+        content=text or "",
+        node_id=None,
+        message_type="text_handoff",
+    )
+    db.add(_save_handoff_message)
+
+    lead.conversation_id = convo.id
+    lead.last_interaction_at = now
+    if hasattr(lead, "updated_at"):
+        lead.updated_at = now
+    # Mantém status aguardando_humano/em_atendimento_humano; não encerra nem reinicia.
+    convo.lead_id = lead.id
 
 
 def _send_pending_bot_messages(db: Session, conn: WhatsAppConnection, convo: Conversation, wa_id: str):
