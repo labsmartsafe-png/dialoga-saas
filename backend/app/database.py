@@ -78,6 +78,12 @@ _ADDITIVE_COLUMNS = [
     ("whatsapp_connections", "created_at", "TIMESTAMP", None),
     ("whatsapp_connections", "updated_at", "TIMESTAMP", None),
 
+    # CRM 1.0 — colunas aditivas em leads para separar origens e vincular conversa/conexao.
+    ("leads", "conversation_id", "INTEGER", None),
+    ("leads", "connection_id", "INTEGER", None),
+    ("leads", "last_interaction_at", "TIMESTAMP", None),
+    ("leads", "updated_at", "TIMESTAMP", None),
+
     # Futuras colunas aditivas em tabelas existentes entram aqui.
     # Ex.: ("users", "is_admin", "BOOLEAN", "0"),
 ]

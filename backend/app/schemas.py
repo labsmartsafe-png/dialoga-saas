@@ -146,7 +146,11 @@ class LeadOut(BaseModel):
     context: Optional[Dict[str, Any]]
     source: str
     status: str
+    conversation_id: Optional[int] = None
+    connection_id: Optional[int] = None
+    last_interaction_at: Optional[datetime] = None
     created_at: datetime
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -155,6 +159,7 @@ class LeadOut(BaseModel):
 class LeadUpdate(BaseModel):
     name: Optional[str] = None
     status: Optional[str] = None
+    stage: Optional[str] = None
 
 
 # =================== SIMULATOR ===================

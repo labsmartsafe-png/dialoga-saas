@@ -82,7 +82,12 @@ class Flow(Base):
 
 
 class Lead(Base):
-    """Lead capturado por um fluxo."""
+    """Lead capturado por um fluxo.
+
+    Fase CRM 1.0:
+    - source passa a diferenciar simulator | whatsapp_evolution | whatsapp_meta | manual/import/api.
+    - campos aditivos vinculam lead à conversa/conexão e registram última interação.
+    """
     __tablename__ = "leads"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -95,9 +100,16 @@ class Lead(Base):
     stage = Column(String(255), nullable=True)
     # Contexto/varáveis capturadas durante a conversa
     context = Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
-    source = Column(String(50), default="simulator")  # simulator | whatsapp
-    status = Column(String(50), default="novo")  # novo, qualificado, convertido, perdido
+    source = Column(String(50), default="simulator")  # simulator | whatsapp_evolution | whatsapp_meta | manual | import | api
+    status = Column(String(50), default="novo")  # novo, em_atendimento, aguardando_humano, encerrado, convertido, perdido
+
+    # Campos aditivos do CRM 1.0 (nullable para não quebrar dados antigos)
+    conversation_id = Column(Integer, nullable=True, index=True)
+    connection_id = Column(Integer, nullable=True, index=True)
+    last_interaction_at = Column(DateTime, nullable=True)
+
     created_at = Column(DateTime, default=utcnow, index=True)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
     owner = relationship("User", back_populates="leads")
     flow = relationship("Flow", back_populates="leads")

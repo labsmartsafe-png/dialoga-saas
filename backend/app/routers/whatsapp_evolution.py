@@ -26,6 +26,7 @@ from ..models import Conversation, Message, Flow
 from ..models_whatsapp import WhatsAppConnection, WhatsAppInboundEvent, WhatsAppContactState
 from ..services import evolution_service as evo
 from ..services import flow_engine
+from ..services import lead_service
 
 logger = logging.getLogger("whatsflow.whatsapp.evo")
 
@@ -220,6 +221,17 @@ def _handle_message(db: Session, conn: WhatsAppConnection, data: dict):
         is_new_conversation = convo is None
         if convo is None:
             convo = flow_engine.start_conversation(db, flow, user_name=None, user_phone=wa_id, channel="whatsapp")
+            # CRM 1.0: a origem real desta conversa é WhatsApp QR/Evolution.
+            # O flow_engine cria o lead genérico da conversa; aqui refinamos source e connection_id.
+            lead_service.sync_lead_from_conversation(
+                db,
+                flow,
+                convo,
+                source=lead_service.SOURCE_WHATSAPP_EVOLUTION,
+                connection_id=conn.id,
+                stage="inicio",
+                status=lead_service.STATUS_EM_ATENDIMENTO,
+            )
             db.commit()
 
         # Em fluxo guiado, a primeira mensagem do WhatsApp é o gatilho que inicia o bot.
