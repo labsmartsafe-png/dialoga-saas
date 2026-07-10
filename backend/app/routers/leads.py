@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from ..auth import get_current_user
 from ..database import get_db
-from ..models import Flow, Lead, User
+from ..models import Conversation, Flow, Lead, User
 from ..schemas import LeadOut, LeadUpdate
 
 
@@ -104,6 +104,14 @@ def delete_lead(
     lead = db.query(Lead).filter(Lead.id == lead_id, Lead.owner_id == current_user.id).first()
     if not lead:
         raise HTTPException(404, "Lead não encontrado")
+
+    # CRM 1.0+: conversas podem apontar para leads via conversations.lead_id.
+    # Se apagarmos o lead sem limpar esse vínculo, o PostgreSQL pode bloquear o DELETE
+    # por chave estrangeira. Preservamos o histórico da conversa e apenas desvinculamos.
+    db.query(Conversation).filter(
+        Conversation.lead_id == lead.id
+    ).update({Conversation.lead_id: None}, synchronize_session=False)
+
     db.delete(lead)
     db.commit()
     return
