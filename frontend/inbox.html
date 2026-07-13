@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inbox Humano - dIAloga+</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .inbox-layout{display:grid;grid-template-columns:360px 1fr;gap:18px;min-height:calc(100vh - 150px)}
+    .panel{background:#fff;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}.panel-head{padding:16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px}.panel-body{padding:0}.thread-list{max-height:calc(100vh - 245px);overflow:auto}.thread{padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:.15s;background:#fff}.thread:hover{background:#f8fafc}.thread.active{background:#eef2ff;border-left:4px solid var(--primary)}.thread-title{font-weight:800;color:var(--text);font-size:14px;display:flex;justify-content:space-between;gap:8px}.thread-meta{font-size:12px;color:var(--muted);margin-top:4px}.thread-last{font-size:13px;color:var(--text);margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.unread-dot{width:9px;height:9px;border-radius:50%;background:#22c55e;display:inline-block;flex-shrink:0}.badge-human{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800}.badge-human.wait{background:#fef3c7;color:#92400e}.badge-human.active{background:#ffedd5;color:#9a3412}.chat{display:flex;flex-direction:column;height:calc(100vh - 190px)}.chat-head{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.chat-title{font-size:18px;font-weight:900}.chat-sub{font-size:13px;color:var(--muted);margin-top:3px}.messages{flex:1;overflow:auto;padding:18px;background:#f8fafc}.msg{max-width:75%;margin-bottom:12px;padding:10px 12px;border-radius:14px;font-size:14px;line-height:1.45;box-shadow:0 1px 2px rgba(0,0,0,.04)}.msg.inbound{background:#fff;border:1px solid var(--border);margin-right:auto}.msg.outbound{background:#dcfce7;border:1px solid #bbf7d0;margin-left:auto}.msg.bot{background:#eef2ff;border-color:#c7d2fe}.msg.system{background:#f3f4f6;border-color:#e5e7eb;margin-left:auto;margin-right:auto;text-align:center;color:#6b7280}.msg-meta{font-size:10px;color:#6b7280;margin-top:5px}.composer{padding:14px;border-top:1px solid var(--border);display:flex;gap:10px;background:#fff}.composer textarea{flex:1;min-height:48px;max-height:120px;resize:vertical;border:1px solid var(--border);border-radius:12px;padding:10px 12px;font-family:inherit}.empty-chat{display:flex;align-items:center;justify-content:center;flex:1;color:var(--muted);text-align:center;padding:30px}.context-box{padding:12px 16px;border-bottom:1px solid var(--border);background:#fafafa}.ctx-tag{display:inline-flex;background:#f3f4f6;border-radius:7px;padding:4px 8px;margin:3px;font-size:11px}.filters{display:flex;gap:8px;align-items:center}.filters select{padding:8px;border:1px solid var(--border);border-radius:8px}@media(max-width:900px){.inbox-layout{grid-template-columns:1fr}.chat{height:70vh}.thread-list{max-height:320px}}
+  </style>
+</head>
+<body>
+<script>if(localStorage.getItem("dialoga-dark-mode")==="1")document.body.classList.add("dark-mode");</script>
+<nav class="navbar">
+  <div class="brand"><img src="img/logo-dialoga.png" alt="dIAloga+"></div>
+  <nav>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="builder.html">Fluxos</a>
+    <a href="leads.html">Leads</a>
+    <a href="inbox.html" class="active">Inbox</a>
+    <a href="ia.html">IA</a>
+    <a href="configuracoes.html">Configurações</a>
+  </nav>
+  <div class="user-area" id="user-area"></div>
+</nav>
+
+<main class="container container-lg">
+  <div class="flex justify-between items-center mb-3">
+    <div>
+      <h1 style="font-size:26px;">Inbox Humano</h1>
+      <p class="text-muted">Atendimentos em que o bot está pausado e o humano precisa responder.</p>
+    </div>
+    <button class="btn btn-secondary" id="btn-refresh">Atualizar</button>
+  </div>
+  <div id="alert-area"></div>
+
+  <div class="inbox-layout">
+    <section class="panel">
+      <div class="panel-head">
+        <strong>Atendimentos</strong>
+        <div class="filters">
+          <select id="filter-status">
+            <option value="">Todos</option>
+            <option value="aguardando_humano">Aguardando</option>
+            <option value="em_atendimento_humano">Em atendimento</option>
+          </select>
+        </div>
+      </div>
+      <div class="panel-body"><div class="thread-list" id="thread-list"><div class="empty-chat">Carregando...</div></div></div>
+    </section>
+
+    <section class="panel chat" id="chat-panel">
+      <div class="empty-chat" id="empty-chat"><div><div style="font-size:48px;">💬</div><h3>Selecione um atendimento</h3><p>Abra uma conversa à esquerda para responder pelo painel.</p></div></div>
+      <div id="chat-content" style="display:none; height:100%; flex-direction:column;">
+        <div class="chat-head">
+          <div><div class="chat-title" id="chat-title">-</div><div class="chat-sub" id="chat-sub">-</div></div>
+          <div class="flex gap-1">
+            <button class="btn btn-secondary" id="btn-assume">Assumir</button>
+            <button class="btn btn-secondary" id="btn-close">Encerrar</button>
+          </div>
+        </div>
+        <div class="context-box" id="context-box"></div>
+        <div class="messages" id="messages"></div>
+        <form class="composer" id="composer">
+          <textarea id="message-text" placeholder="Digite sua resposta humana..."></textarea>
+          <button class="btn btn-primary" type="submit" id="btn-send">Enviar</button>
+        </form>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>window.API_BASE="https://dialoga-backend-1slr.onrender.com";</script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script>
+(async function(){
+  const alertArea=document.getElementById('alert-area');let threads=[];let current=null;
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+  function fmt(iso){if(!iso)return'-';try{return new Date(iso).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}catch{return iso}}
+  function alert(msg,type){alertArea.innerHTML='<div class="alert alert-'+(type||'error')+'">'+esc(msg)+'</div>';setTimeout(()=>alertArea.innerHTML='',5000)}
+  function statusBadge(s){return s==='em_atendimento_humano'?'<span class="badge-human active">Em atendimento</span>':'<span class="badge-human wait">Aguardando</span>'}
+  function lastText(t){const m=t.last_message;if(!m)return 'Sem mensagens registradas';return (m.sender==='human'?'Humano: ':m.sender==='bot'?'Bot: ':'Lead: ')+(m.content||'')}
+  async function loadThreads(){const st=document.getElementById('filter-status').value;const qs=st?'?status='+encodeURIComponent(st):'';threads=await WFApi.inboxList(qs);renderThreads();if(current){const exists=threads.find(t=>t.id===current.id);if(!exists){current=null;showEmpty()}}}
+  function renderThreads(){const el=document.getElementById('thread-list');if(!threads.length){el.innerHTML='<div class="empty-chat">Nenhum atendimento humano pendente.</div>';return}el.innerHTML=threads.map(t=>'<div class="thread '+(current&&current.id===t.id?'active':'')+'" data-id="'+t.id+'"><div class="thread-title"><span>'+esc(t.name||t.phone||'Sem nome')+'</span>'+(t.unread_hint?'<span class="unread-dot"></span>':'')+'</div><div class="thread-meta">'+esc(t.phone||'-')+' · '+statusBadge(t.status)+'</div><div class="thread-last">'+esc(lastText(t))+'</div><div class="thread-meta">'+fmt(t.last_interaction_at||t.created_at)+'</div></div>').join('');el.querySelectorAll('[data-id]').forEach(row=>row.addEventListener('click',()=>openThread(parseInt(row.dataset.id,10))))}
+  function showEmpty(){document.getElementById('empty-chat').style.display='flex';document.getElementById('chat-content').style.display='none'}
+  async function openThread(id){current=await WFApi.inboxGet(id);document.getElementById('empty-chat').style.display='none';document.getElementById('chat-content').style.display='flex';renderThreads();renderChat()}
+  function renderContext(ctx){ctx=ctx||{};const keys=Object.keys(ctx).filter(k=>ctx[k]!==null&&ctx[k]!==undefined&&ctx[k]!==''&&!['nome','name','telefone','phone','email'].includes(k.toLowerCase()));if(!keys.length)return '<span class="text-muted">Sem variáveis capturadas.</span>';return keys.map(k=>'<span class="ctx-tag"><strong>'+esc(k)+':</strong>&nbsp;'+esc(ctx[k])+'</span>').join('')}
+  function renderChat(){document.getElementById('chat-title').textContent=current.name||current.phone||'Sem nome';document.getElementById('chat-sub').textContent=(current.phone||'-')+' · '+(current.flow_name||'Fluxo não identificado')+' · '+current.status;document.getElementById('context-box').innerHTML=renderContext(current.context);const box=document.getElementById('messages');const msgs=current.messages||[];box.innerHTML=msgs.map(m=>{let cls=m.direction==='inbound'?'inbound':(m.sender==='bot'?'bot':m.sender==='system'?'system':'outbound');return '<div class="msg '+cls+'"><div>'+esc(m.content)+'</div><div class="msg-meta">'+esc(m.sender)+' · '+fmt(m.created_at)+'</div></div>'}).join('')||'<div class="empty-chat">Sem mensagens.</div>';setTimeout(()=>{box.scrollTop=box.scrollHeight},50)}
+  document.getElementById('composer').addEventListener('submit',async function(ev){ev.preventDefault();if(!current)return;const ta=document.getElementById('message-text');const text=ta.value.trim();if(!text)return;const btn=document.getElementById('btn-send');btn.disabled=true;try{await WFApi.inboxSend(current.id,{text});ta.value='';await openThread(current.id);await loadThreads()}catch(e){alert(e.message)}finally{btn.disabled=false}});
+  document.getElementById('btn-assume').addEventListener('click',async()=>{if(!current)return;try{await WFApi.inboxAssume(current.id);await openThread(current.id);await loadThreads();alert('Atendimento assumido.','success')}catch(e){alert(e.message)}});
+  document.getElementById('btn-close').addEventListener('click',async()=>{if(!current)return;if(!confirm('Encerrar este atendimento? Uma mensagem futura poderá abrir novo fluxo.'))return;try{await WFApi.inboxClose(current.id);current=null;showEmpty();await loadThreads();alert('Atendimento encerrado.','success')}catch(e){alert(e.message)}});
+  document.getElementById('filter-status').addEventListener('change',loadThreads);document.getElementById('btn-refresh').addEventListener('click',loadThreads);
+  const user=await WFAuth.requireAuth();if(!user)return;WFAuth.renderUserChip(document.getElementById('user-area'),user);await loadThreads();
+})();
+</script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1ab3bbc1d09e2a7',t:'MTc4Mzk3NjU5NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

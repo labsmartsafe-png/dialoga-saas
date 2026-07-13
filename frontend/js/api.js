@@ -60,6 +60,13 @@
     exportLeadsUrl: function (qs) { return API_BASE + "/api/leads/export/csv" + (qs || ""); },
     metrics: function () { return request("/api/dashboard/metrics"); },
 
+    // ---- Inbox Humano (CRM 1.1) ----
+    inboxList: function (qs) { return request("/api/inbox/conversations" + (qs || "")); },
+    inboxGet: function (leadId) { return request("/api/inbox/conversations/" + leadId); },
+    inboxAssume: function (leadId) { return request("/api/inbox/conversations/" + leadId + "/assume", { method: "POST" }); },
+    inboxSend: function (leadId, b) { return request("/api/inbox/conversations/" + leadId + "/send", { method: "POST", body: b }); },
+    inboxClose: function (leadId) { return request("/api/inbox/conversations/" + leadId + "/close", { method: "POST" }); },
+
     // ---- WhatsApp Conexões (Fase 3) ----
     listConnections: function () { return request("/api/whatsapp/connections"); },
     createConnection: function (b) { return request("/api/whatsapp/connections", { method: "POST", body: b }); },
