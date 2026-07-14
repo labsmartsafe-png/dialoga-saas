@@ -57,6 +57,9 @@
     listLeads: function (qs) { return request("/api/leads" + (qs || "")); },
     updateLead: function (id, b) { return request("/api/leads/" + id, { method: "PUT", body: b }); },
     deleteLead: function (id) { return request("/api/leads/" + id, { method: "DELETE" }); },
+    listLeadNotes: function (leadId) { return request("/api/leads/" + leadId + "/notes"); },
+    createLeadNote: function (leadId, b) { return request("/api/leads/" + leadId + "/notes", { method: "POST", body: b }); },
+    deleteLeadNote: function (leadId, noteId) { return request("/api/leads/" + leadId + "/notes/" + noteId, { method: "DELETE" }); },
     exportLeadsUrl: function (qs) { return API_BASE + "/api/leads/export/csv" + (qs || ""); },
     metrics: function () { return request("/api/dashboard/metrics"); },
 

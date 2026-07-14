@@ -1,13 +1,15 @@
 """
-Modelos SQLAlchemy do WhatsFlow.
-Define as entidades principais: User, Flow, Lead, Template, Conversation, Message.
+Modelos SQLAlchemy do WhatsFlow/dIAloga+.
+Define entidades principais: User, Flow, Lead, LeadNote, Template, Conversation, Message.
 """
 from datetime import datetime, timezone
+
 from sqlalchemy import (
     Column, String, Integer, Text, DateTime, Boolean, ForeignKey, JSON, Float
 )
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.mutable import MutableDict
+from sqlalchemy.ext.mutable import MutableDict, MutableList
+
 from .database import Base
 
 
@@ -26,14 +28,13 @@ class User(Base):
     company_name = Column(String(255), nullable=False)
     full_name = Column(String(255), nullable=True)
     phone = Column(String(50), nullable=True)
-    plan = Column(String(50), default="basico")  # basico, profissional, enterprise
+    plan = Column(String(50), default="basico")
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=utcnow)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
     flows = relationship("Flow", back_populates="owner", cascade="all, delete-orphan")
     leads = relationship("Lead", back_populates="owner", cascade="all, delete-orphan")
-    # WhatsApp (relationship em sentido unico; nao altera schema de users)
     whatsapp_connections = relationship(
         "WhatsAppConnection", back_populates="owner", cascade="all, delete-orphan"
     )
@@ -49,7 +50,6 @@ class Template(Base):
     description = Column(Text, nullable=False)
     category = Column(String(100), nullable=False)
     icon = Column(String(50), default="🤖")
-    # Estrutura do fluxo (JSON)
     flow_data = Column(JSON, nullable=False)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=utcnow)
@@ -63,13 +63,10 @@ class Flow(Base):
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
-    # Nós do fluxo armazenados como JSON
     nodes = Column(JSON, nullable=False, default=list)
-    # Estado inicial (id do primeiro nó)
     start_node_id = Column(String(100), nullable=True)
     active = Column(Boolean, default=True)
     template_slug = Column(String(100), nullable=True)
-    # Modo de atendimento: 'guided' (trilho + no de IA opcional) | 'ai_agent' (IA na entrada)
     mode = Column(String(20), default="guided", nullable=False)
     created_at = Column(DateTime, default=utcnow)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
@@ -84,9 +81,10 @@ class Flow(Base):
 class Lead(Base):
     """Lead capturado por um fluxo.
 
-    Fase CRM 1.0:
-    - source passa a diferenciar simulator | whatsapp_evolution | whatsapp_meta | manual/import/api.
-    - campos aditivos vinculam lead à conversa/conexão e registram última interação.
+    CRM:
+    - source diferencia simulator | whatsapp_evolution | whatsapp_meta | manual/import/api.
+    - tags classificam operacionalmente o lead.
+    - conversation_id/connection_id vinculam CRM à conversa e à conexão WhatsApp.
     """
     __tablename__ = "leads"
 
@@ -96,14 +94,12 @@ class Lead(Base):
     name = Column(String(255), nullable=True)
     phone = Column(String(50), nullable=True, index=True)
     email = Column(String(255), nullable=True)
-    # Etapa em que o lead parou
     stage = Column(String(255), nullable=True)
-    # Contexto/varáveis capturadas durante a conversa
     context = Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
-    source = Column(String(50), default="simulator")  # simulator | whatsapp_evolution | whatsapp_meta | manual | import | api
-    status = Column(String(50), default="novo")  # novo, em_atendimento, aguardando_humano, encerrado, convertido, perdido
+    source = Column(String(50), default="simulator")
+    status = Column(String(50), default="novo")
+    tags = Column(MutableList.as_mutable(JSON), nullable=True, default=list)
 
-    # Campos aditivos do CRM 1.0 (nullable para não quebrar dados antigos)
     conversation_id = Column(Integer, nullable=True, index=True)
     connection_id = Column(Integer, nullable=True, index=True)
     last_interaction_at = Column(DateTime, nullable=True)
@@ -115,6 +111,19 @@ class Lead(Base):
     flow = relationship("Flow", back_populates="leads")
 
 
+class LeadNote(Base):
+    """Nota interna do CRM. Não é enviada ao WhatsApp."""
+    __tablename__ = "lead_notes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    lead_id = Column(Integer, ForeignKey("leads.id"), nullable=False, index=True)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=utcnow, index=True)
+
+    lead = relationship("Lead")
+
+
 class Conversation(Base):
     """Histórico de uma conversa (real ou simulada)."""
     __tablename__ = "conversations"
@@ -123,8 +132,7 @@ class Conversation(Base):
     flow_id = Column(Integer, ForeignKey("flows.id"), nullable=False)
     lead_id = Column(Integer, ForeignKey("leads.id"), nullable=True)
     user_phone = Column(String(50), nullable=True, index=True)
-    channel = Column(String(50), default="simulator")  # simulator | whatsapp
-    # Estado atual da conversa (id do nó atual + contexto) - MutableDict detecta mutações
+    channel = Column(String(50), default="simulator")
     state = Column(MutableDict.as_mutable(JSON), nullable=True, default=dict)
     is_active = Column(Boolean, default=True)
     started_at = Column(DateTime, default=utcnow)
@@ -143,8 +151,8 @@ class Message(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     conversation_id = Column(Integer, ForeignKey("conversations.id"), nullable=False)
-    direction = Column(String(20), nullable=False)  # inbound | outbound
-    sender = Column(String(50), nullable=False)  # user | bot | system
+    direction = Column(String(20), nullable=False)
+    sender = Column(String(50), nullable=False)
     content = Column(Text, nullable=False)
     node_id = Column(String(100), nullable=True)
     message_type = Column(String(50), default="text")
@@ -154,7 +162,6 @@ class Message(Base):
 
 
 # --- WhatsApp real + billing (tabelas NOVAS, aditivas) ---
-# Importar aqui garante que Base.metadata.create_all() (em init_db) crie as tabelas novas.
 from .models_whatsapp import (  # noqa: E402,F401
     WhatsAppConnection,
     WhatsAppInboundEvent,

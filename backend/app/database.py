@@ -84,6 +84,7 @@ _ADDITIVE_COLUMNS = [
     ("leads", "connection_id", "INTEGER", None),
     ("leads", "last_interaction_at", "TIMESTAMP", None),
     ("leads", "updated_at", "TIMESTAMP", None),
+    ("leads", "tags", "JSON", None),
 
     # Futuras colunas aditivas em tabelas existentes entram aqui.
     # Ex.: ("users", "is_admin", "BOOLEAN", "0"),

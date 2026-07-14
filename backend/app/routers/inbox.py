@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from ..auth import get_current_user
 from ..database import get_db
-from ..models import Conversation, Flow, Lead, Message, User
+from ..models import Conversation, Flow, Lead, LeadNote, Message, User
 from ..models_whatsapp import WhatsAppConnection
 from ..services import evolution_service as evo
 from ..services import lead_service
@@ -91,6 +91,7 @@ def _serialize_lead(db: Session, lead: Lead) -> dict:
         "context": lead.context or {},
         "source": lead.source,
         "status": lead.status,
+        "tags": lead.tags or [],
         "conversation_id": getattr(lead, "conversation_id", None),
         "connection_id": getattr(lead, "connection_id", None),
         "last_interaction_at": lead.last_interaction_at.isoformat() if getattr(lead, "last_interaction_at", None) else None,
@@ -199,9 +200,22 @@ def get_inbox_conversation(
             _serialize_message(m)
             for m in db.query(Message).filter(Message.conversation_id == conv.id).order_by(Message.created_at.asc()).all()
         ]
+    notes = [
+        {
+            "id": n.id,
+            "lead_id": n.lead_id,
+            "content": n.content,
+            "created_at": n.created_at.isoformat() if n.created_at else None,
+        }
+        for n in db.query(LeadNote)
+        .filter(LeadNote.lead_id == lead.id, LeadNote.owner_id == current_user.id)
+        .order_by(LeadNote.created_at.desc())
+        .all()
+    ]
     data = _serialize_lead(db, lead)
     data["conversation_id"] = conv.id if conv else data.get("conversation_id")
     data["messages"] = messages
+    data["notes"] = notes
     return data
 
 

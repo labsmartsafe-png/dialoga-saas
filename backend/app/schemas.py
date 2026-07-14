@@ -146,6 +146,7 @@ class LeadOut(BaseModel):
     context: Optional[Dict[str, Any]]
     source: str
     status: str
+    tags: Optional[List[str]] = None
     conversation_id: Optional[int] = None
     connection_id: Optional[int] = None
     last_interaction_at: Optional[datetime] = None
@@ -160,6 +161,21 @@ class LeadUpdate(BaseModel):
     name: Optional[str] = None
     status: Optional[str] = None
     stage: Optional[str] = None
+    tags: Optional[List[str]] = None
+
+
+class LeadNoteCreate(BaseModel):
+    content: str = Field(..., min_length=1, max_length=2000)
+
+
+class LeadNoteOut(BaseModel):
+    id: int
+    lead_id: int
+    content: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
 
 
 # =================== SIMULATOR ===================

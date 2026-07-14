@@ -18,8 +18,8 @@ from sqlalchemy.orm import Session
 
 from ..auth import get_current_user
 from ..database import get_db
-from ..models import Conversation, Flow, Lead, User
-from ..schemas import LeadOut, LeadUpdate
+from ..models import Conversation, Flow, Lead, LeadNote, User
+from ..schemas import LeadOut, LeadUpdate, LeadNoteCreate, LeadNoteOut
 
 
 router = APIRouter()
@@ -86,12 +86,82 @@ def update_lead(
         lead.status = payload.status
     if payload.stage is not None:
         lead.stage = payload.stage
+    if payload.tags is not None:
+        # Normaliza tags: remove vazias, espaços e duplicadas preservando ordem.
+        seen = set()
+        tags = []
+        for t in payload.tags:
+            tag = str(t or "").strip()
+            key = tag.lower()
+            if tag and key not in seen:
+                seen.add(key)
+                tags.append(tag)
+        lead.tags = tags
     if hasattr(lead, "updated_at"):
         lead.updated_at = datetime.now(timezone.utc)
 
     db.commit()
     db.refresh(lead)
     return LeadOut.model_validate(lead)
+
+
+@router.get("/{lead_id}/notes", response_model=list[LeadNoteOut])
+def list_lead_notes(
+    lead_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Lista notas internas de um lead."""
+    lead = db.query(Lead).filter(Lead.id == lead_id, Lead.owner_id == current_user.id).first()
+    if not lead:
+        raise HTTPException(404, "Lead não encontrado")
+    notes = (
+        db.query(LeadNote)
+        .filter(LeadNote.lead_id == lead.id, LeadNote.owner_id == current_user.id)
+        .order_by(LeadNote.created_at.desc())
+        .all()
+    )
+    return [LeadNoteOut.model_validate(n) for n in notes]
+
+
+@router.post("/{lead_id}/notes", response_model=LeadNoteOut, status_code=201)
+def create_lead_note(
+    lead_id: int,
+    payload: LeadNoteCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Cria nota interna. Não envia nada ao WhatsApp."""
+    lead = db.query(Lead).filter(Lead.id == lead_id, Lead.owner_id == current_user.id).first()
+    if not lead:
+        raise HTTPException(404, "Lead não encontrado")
+    note = LeadNote(owner_id=current_user.id, lead_id=lead.id, content=payload.content.strip())
+    db.add(note)
+    if hasattr(lead, "updated_at"):
+        lead.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(note)
+    return LeadNoteOut.model_validate(note)
+
+
+@router.delete("/{lead_id}/notes/{note_id}", status_code=204)
+def delete_lead_note(
+    lead_id: int,
+    note_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Exclui nota interna do lead."""
+    note = (
+        db.query(LeadNote)
+        .filter(LeadNote.id == note_id, LeadNote.lead_id == lead_id, LeadNote.owner_id == current_user.id)
+        .first()
+    )
+    if not note:
+        raise HTTPException(404, "Nota não encontrada")
+    db.delete(note)
+    db.commit()
+    return
 
 
 @router.delete("/{lead_id}", status_code=204)
@@ -111,6 +181,10 @@ def delete_lead(
     db.query(Conversation).filter(
         Conversation.lead_id == lead.id
     ).update({Conversation.lead_id: None}, synchronize_session=False)
+    db.query(LeadNote).filter(
+        LeadNote.lead_id == lead.id,
+        LeadNote.owner_id == current_user.id,
+    ).delete(synchronize_session=False)
 
     db.delete(lead)
     db.commit()
@@ -149,7 +223,7 @@ def export_leads_csv(
 
     header = [
         "id", "nome", "telefone", "email", "fluxo", "status", "etapa", "origem",
-        "conversation_id", "connection_id", "ultima_interacao", "data_criacao",
+        "conversation_id", "connection_id", "tags", "ultima_interacao", "data_criacao",
     ]
     header += context_keys
     writer.writerow(header)
@@ -167,6 +241,7 @@ def export_leads_csv(
             l.source or "",
             getattr(l, "conversation_id", None) or "",
             getattr(l, "connection_id", None) or "",
+            ", ".join(l.tags or []) if getattr(l, "tags", None) else "",
             l.last_interaction_at.isoformat() if getattr(l, "last_interaction_at", None) else "",
             l.created_at.isoformat() if l.created_at else "",
         ]
