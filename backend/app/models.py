@@ -124,6 +124,29 @@ class LeadNote(Base):
     lead = relationship("Lead")
 
 
+class Appointment(Base):
+    """Agendamento interno vinculado a lead/fluxo.
+
+    Fase C.1: agenda interna sem Google Calendar.
+    """
+    __tablename__ = "appointments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    lead_id = Column(Integer, ForeignKey("leads.id"), nullable=True, index=True)
+    flow_id = Column(Integer, ForeignKey("flows.id"), nullable=True, index=True)
+    title = Column(String(255), nullable=False)
+    scheduled_at = Column(DateTime, nullable=False, index=True)
+    status = Column(String(50), default="solicitado", index=True)  # solicitado|confirmado|cancelado|realizado|nao_compareceu
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=utcnow, index=True)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+    owner = relationship("User")
+    lead = relationship("Lead")
+    flow = relationship("Flow")
+
+
 class Conversation(Base):
     """Histórico de uma conversa (real ou simulada)."""
     __tablename__ = "conversations"

@@ -70,6 +70,12 @@
     inboxSend: function (leadId, b) { return request("/api/inbox/conversations/" + leadId + "/send", { method: "POST", body: b }); },
     inboxClose: function (leadId) { return request("/api/inbox/conversations/" + leadId + "/close", { method: "POST" }); },
 
+    // ---- Agenda interna (Fase C.1) ----
+    listAppointments: function (qs) { return request("/api/appointments" + (qs || "")); },
+    createAppointment: function (b) { return request("/api/appointments", { method: "POST", body: b }); },
+    updateAppointment: function (id, b) { return request("/api/appointments/" + id, { method: "PUT", body: b }); },
+    deleteAppointment: function (id) { return request("/api/appointments/" + id, { method: "DELETE" }); },
+
     // ---- WhatsApp Conexões (Fase 3) ----
     listConnections: function () { return request("/api/whatsapp/connections"); },
     createConnection: function (b) { return request("/api/whatsapp/connections", { method: "POST", body: b }); },

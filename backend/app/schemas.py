@@ -204,6 +204,44 @@ class SimulatorResponse(BaseModel):
     messages: List[Dict[str, Any]] = []
 
 
+# =================== APPOINTMENTS ===================
+class AppointmentCreate(BaseModel):
+    title: str = Field(..., min_length=2, max_length=255)
+    scheduled_at: datetime
+    lead_id: Optional[int] = None
+    flow_id: Optional[int] = None
+    status: Optional[Literal["solicitado", "confirmado", "cancelado", "realizado", "nao_compareceu"]] = "solicitado"
+    notes: Optional[str] = None
+
+
+class AppointmentUpdate(BaseModel):
+    title: Optional[str] = Field(None, min_length=2, max_length=255)
+    scheduled_at: Optional[datetime] = None
+    lead_id: Optional[int] = None
+    flow_id: Optional[int] = None
+    status: Optional[Literal["solicitado", "confirmado", "cancelado", "realizado", "nao_compareceu"]] = None
+    notes: Optional[str] = None
+
+
+class AppointmentOut(BaseModel):
+    id: int
+    owner_id: int
+    lead_id: Optional[int] = None
+    flow_id: Optional[int] = None
+    title: str
+    scheduled_at: datetime
+    status: str
+    notes: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+    lead_name: Optional[str] = None
+    lead_phone: Optional[str] = None
+    flow_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
 # =================== DASHBOARD ===================
 class DashboardMetrics(BaseModel):
     flows_count: int

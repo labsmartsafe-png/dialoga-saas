@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agenda - dIAloga+</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .agenda-grid{display:grid;grid-template-columns:360px 1fr;gap:18px}.card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:18px}.field{margin-bottom:12px}.field label{display:block;font-size:12px;font-weight:800;color:var(--muted);margin-bottom:5px;text-transform:uppercase}.field input,.field select,.field textarea{width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:10px;padding:10px;font-family:inherit}.field textarea{min-height:80px}.appt{border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;background:#fff}.appt-title{font-weight:900;color:var(--text)}.appt-meta{font-size:13px;color:var(--muted);margin-top:4px}.status{display:inline-flex;border-radius:999px;padding:4px 9px;font-size:11px;font-weight:900}.status.solicitado{background:#dbeafe;color:#1e40af}.status.confirmado{background:#d1fae5;color:#065f46}.status.cancelado{background:#fee2e2;color:#991b1b}.status.realizado{background:#ede9fe;color:#5b21b6}.status.nao_compareceu{background:#fef3c7;color:#92400e}.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.filters-bar{align-items:end}.empty{padding:40px;text-align:center;color:var(--muted)}body.dark-mode .card,body.dark-mode .appt{background:#171d2b;border-color:#262e40;color:#e6eaf2}body.dark-mode .field input,body.dark-mode .field select,body.dark-mode .field textarea{background:#1f2636;color:#e6eaf2;border-color:#323b50}body.dark-mode .appt-title{color:#e6eaf2}body.dark-mode .appt-meta{color:#9aa3b2}@media(max-width:900px){.agenda-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<script>if(localStorage.getItem("dialoga-dark-mode")==="1")document.body.classList.add("dark-mode");</script>
+<nav class="navbar">
+  <div class="brand"><img src="img/logo-dialoga.png" alt="dIAloga+"></div>
+  <nav>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="builder.html">Fluxos</a>
+    <a href="leads.html">Leads</a>
+    <a href="inbox.html">Inbox</a>
+    <a href="agenda.html" class="active">Agenda</a>
+    <a href="ia.html">IA</a>
+    <a href="configuracoes.html">Configurações</a>
+  </nav>
+  <div class="user-area" id="user-area"></div>
+</nav>
+
+<main class="container container-lg">
+  <div class="flex justify-between items-center mb-3">
+    <div><h1 style="font-size:26px;">Agenda</h1><p class="text-muted">Agendamentos internos vinculados aos seus leads.</p></div>
+    <button class="btn btn-secondary" id="btn-refresh">Atualizar</button>
+  </div>
+  <div id="alert-area"></div>
+
+  <div class="agenda-grid">
+    <section class="card">
+      <h2 style="font-size:18px;margin-bottom:14px;">Novo agendamento</h2>
+      <form id="appt-form">
+        <input type="hidden" id="appt-id">
+        <div class="field"><label>Título</label><input id="title" placeholder="Ex: Avaliação / Banho e tosa / Visita" required></div>
+        <div class="field"><label>Data e hora</label><input id="scheduled_at" type="datetime-local" required></div>
+        <div class="field"><label>Lead</label><select id="lead_id"><option value="">— sem lead —</option></select></div>
+        <div class="field"><label>Status</label><select id="status"><option value="solicitado">Solicitado</option><option value="confirmado">Confirmado</option><option value="cancelado">Cancelado</option><option value="realizado">Realizado</option><option value="nao_compareceu">Não compareceu</option></select></div>
+        <div class="field"><label>Observações</label><textarea id="notes" placeholder="Detalhes do agendamento..."></textarea></div>
+        <div class="flex gap-1"><button class="btn btn-primary" type="submit" id="btn-save">Salvar</button><button class="btn btn-secondary" type="button" id="btn-clear-form">Limpar</button></div>
+      </form>
+    </section>
+
+    <section>
+      <div class="filters-bar">
+        <div class="form-group"><select class="form-control" id="filter-status"><option value="">Todos status</option><option value="solicitado">Solicitado</option><option value="confirmado">Confirmado</option><option value="cancelado">Cancelado</option><option value="realizado">Realizado</option><option value="nao_compareceu">Não compareceu</option></select></div>
+        <div class="form-group"><input class="form-control" id="filter-date" type="date"></div>
+        <button class="btn btn-primary" id="btn-filter">Filtrar</button>
+        <button class="btn btn-secondary" id="btn-clear-filter">Limpar</button>
+      </div>
+      <div id="appt-list"><div class="empty">Carregando...</div></div>
+    </section>
+  </div>
+</main>
+
+<script>window.API_BASE="https://dialoga-backend-1slr.onrender.com";</script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script>
+(async function(){
+  const alertArea=document.getElementById('alert-area');let leads=[];let appointments=[];
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+  function alert(msg,type){alertArea.innerHTML='<div class="alert alert-'+(type||'error')+'">'+esc(msg)+'</div>';setTimeout(()=>alertArea.innerHTML='',5000)}
+  function fmt(iso){if(!iso)return'-';try{return new Date(iso).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}catch{return iso}}
+  function toLocalInput(iso){if(!iso)return'';const d=new Date(iso);const pad=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes())}
+  function fromLocalInput(v){if(!v)return null;return new Date(v).toISOString()}
+  function statusLabel(s){return ({solicitado:'Solicitado',confirmado:'Confirmado',cancelado:'Cancelado',realizado:'Realizado',nao_compareceu:'Não compareceu'}[s]||s)}
+  function leadLabel(l){return (l.name||l.phone||('Lead #'+l.id))+(l.phone?' — '+l.phone:'')}
+  async function loadLeads(){leads=await WFApi.listLeads('?include_simulator=false');const sel=document.getElementById('lead_id');sel.innerHTML='<option value="">— sem lead —</option>'+leads.map(l=>'<option value="'+l.id+'">'+esc(leadLabel(l))+'</option>').join('')}
+  async function loadAppointments(){const params=new URLSearchParams();const st=document.getElementById('filter-status').value;const dt=document.getElementById('filter-date').value;if(st)params.set('status',st);if(dt){params.set('date_from',new Date(dt+'T00:00:00').toISOString());params.set('date_to',new Date(dt+'T23:59:59').toISOString())}appointments=await WFApi.listAppointments(params.toString()?'?'+params.toString():'');renderAppointments()}
+  function renderAppointments(){const el=document.getElementById('appt-list');if(!appointments.length){el.innerHTML='<div class="empty">Nenhum agendamento encontrado.</div>';return}el.innerHTML=appointments.map(a=>'<div class="appt"><div class="flex justify-between items-center"><div class="appt-title">'+esc(a.title)+'</div><span class="status '+esc(a.status)+'">'+esc(statusLabel(a.status))+'</span></div><div class="appt-meta">🗓️ '+fmt(a.scheduled_at)+'</div><div class="appt-meta">👤 '+esc(a.lead_name||a.lead_phone||'Sem lead')+(a.flow_name?' · '+esc(a.flow_name):'')+'</div>'+(a.notes?'<div class="appt-meta" style="margin-top:8px;">📝 '+esc(a.notes)+'</div>':'')+'<div class="actions"><button class="btn btn-secondary btn-sm" data-edit="'+a.id+'">Editar</button><button class="btn btn-secondary btn-sm" data-status="'+a.id+'" data-next="confirmado">Confirmar</button><button class="btn btn-secondary btn-sm" data-status="'+a.id+'" data-next="realizado">Realizado</button><button class="btn btn-secondary btn-sm" data-status="'+a.id+'" data-next="cancelado">Cancelar</button><button class="btn btn-danger btn-sm" data-del="'+a.id+'">Excluir</button></div></div>').join('');bindList()}
+  function bindList(){document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>editAppointment(parseInt(b.dataset.edit,10)));document.querySelectorAll('[data-status]').forEach(b=>b.onclick=async()=>{try{await WFApi.updateAppointment(b.dataset.status,{status:b.dataset.next});await loadAppointments()}catch(e){alert(e.message)}});document.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{if(!confirm('Excluir este agendamento?'))return;try{await WFApi.deleteAppointment(b.dataset.del);await loadAppointments();alert('Agendamento excluído.','success')}catch(e){alert(e.message)}})}
+  function editAppointment(id){const a=appointments.find(x=>x.id===id);if(!a)return;document.getElementById('appt-id').value=a.id;document.getElementById('title').value=a.title;document.getElementById('scheduled_at').value=toLocalInput(a.scheduled_at);document.getElementById('lead_id').value=a.lead_id||'';document.getElementById('status').value=a.status;document.getElementById('notes').value=a.notes||'';window.scrollTo({top:0,behavior:'smooth'})}
+  function clearForm(){document.getElementById('appt-id').value='';document.getElementById('appt-form').reset()}
+  document.getElementById('appt-form').onsubmit=async ev=>{ev.preventDefault();const id=document.getElementById('appt-id').value;const body={title:document.getElementById('title').value.trim(),scheduled_at:fromLocalInput(document.getElementById('scheduled_at').value),lead_id:document.getElementById('lead_id').value?Number(document.getElementById('lead_id').value):null,status:document.getElementById('status').value,notes:document.getElementById('notes').value||null};try{if(id)await WFApi.updateAppointment(id,body);else await WFApi.createAppointment(body);clearForm();await loadAppointments();alert('Agendamento salvo.','success')}catch(e){alert(e.message)}};
+  document.getElementById('btn-clear-form').onclick=clearForm;document.getElementById('btn-refresh').onclick=loadAppointments;document.getElementById('btn-filter').onclick=loadAppointments;document.getElementById('btn-clear-filter').onclick=()=>{document.getElementById('filter-status').value='';document.getElementById('filter-date').value='';loadAppointments()};
+  const user=await WFAuth.requireAuth();if(!user)return;WFAuth.renderUserChip(document.getElementById('user-area'),user);await loadLeads();await loadAppointments();
+})();
+</script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
