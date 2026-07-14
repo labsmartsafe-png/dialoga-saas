@@ -67,6 +67,42 @@ class GeminiProvider:
             raise AIProviderError("Resposta de embedding sem 'values'.")
         return values
 
+    # ---------------- Audio / Transcricao ----------------
+    def transcribe_audio_base64(self, audio_base64: str, mime_type: str = "audio/mp4") -> str:
+        """Transcreve áudio base64 usando Gemini multimodal.
+
+        Retorna apenas o texto transcrito, em português do Brasil quando possível.
+        """
+        self._require_key()
+        if not audio_base64:
+            raise AIProviderError("Audio vazio para transcricao.")
+        url = f"{GEMINI_BASE}/models/{self.chat_model}:generateContent?key={self.api_key}"
+        body = {
+            "contents": [{
+                "role": "user",
+                "parts": [
+                    {"text": "Transcreva fielmente este áudio de WhatsApp para texto em português do Brasil. Responda somente com a transcrição, sem comentários."},
+                    {"inline_data": {"mime_type": mime_type or "audio/mp4", "data": audio_base64}},
+                ],
+            }],
+            "generationConfig": {"temperature": 0.0, "maxOutputTokens": 1200},
+        }
+        try:
+            with httpx.Client(timeout=60.0) as client:
+                r = client.post(url, json=body)
+        except Exception as exc:
+            raise AIProviderError(f"Erro de rede na transcricao: {type(exc).__name__}") from exc
+        if r.status_code != 200:
+            raise AIProviderError(f"Transcricao falhou HTTP {r.status_code}: {r.text[:300]}")
+        data = r.json()
+        try:
+            cands = data.get("candidates") or []
+            parts = (cands[0].get("content") or {}).get("parts") or []
+            text = "".join(p.get("text", "") for p in parts).strip()
+            return text or ""
+        except Exception as exc:
+            raise AIProviderError(f"Resposta de transcricao inesperada: {exc}") from exc
+
     # ---------------- Chat / Geracao ----------------
     def generate(self, system_prompt: str, user_message: str,
                  history: list[dict[str, Any]] | None = None,

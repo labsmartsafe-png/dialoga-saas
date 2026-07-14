@@ -27,6 +27,7 @@ from ..models_whatsapp import WhatsAppConnection, WhatsAppInboundEvent, WhatsApp
 from ..services import evolution_service as evo
 from ..services import flow_engine
 from ..services import lead_service
+from ..services.ai_provider import get_ai_provider, AIProviderError
 
 logger = logging.getLogger("whatsflow.whatsapp.evo")
 
@@ -180,7 +181,15 @@ def _handle_message(db: Session, conn: WhatsAppConnection, data: dict):
         return  # corrida: outro processou
 
     wa_id = evo.normalize_jid(remote)
-    text = evo.extract_text_from_message(data.get("message") or {})
+    message_obj = data.get("message") or {}
+    text = evo.extract_text_from_message(message_obj)
+    inbound_kind = "text"
+
+    # Fase B — áudio: se vier áudio, baixa mídia da Evolution e transcreve com Gemini.
+    if not text and evo.is_audio_message(message_obj):
+        inbound_kind = "audio"
+        text = _transcribe_evolution_audio(conn, key, message_obj)
+
     if not text:
         text = "[mensagem sem texto]"
 
@@ -240,6 +249,15 @@ def _handle_message(db: Session, conn: WhatsAppConnection, data: dict):
         logger.info("[EVO] bot pausado para lead %s (%s); mensagem registrada para humano.", handoff_lead.id, wa_id)
         return
 
+    # Se era áudio e a transcrição falhou, não avançamos o fluxo para não salvar lixo
+    # em variáveis de +INPUT. Pedimos texto e encerramos este evento.
+    if inbound_kind == "audio" and text.startswith("[Áudio recebido"):
+        evo.send_text(conn.evolution_instance_name, wa_id, "Recebi seu áudio, mas não consegui transcrever agora. Pode enviar sua mensagem em texto, por favor?")
+        ev.status = "processed"
+        ev.processed_at = now
+        db.commit()
+        return
+
     # acha/cria conversa ativa deste contato para este flow
     convo = (
         db.query(Conversation)
@@ -284,6 +302,36 @@ def _handle_message(db: Session, conn: WhatsAppConnection, data: dict):
         ev.last_error = str(exc)[:500]
         db.commit()
         logger.exception("[EVO] falha ao processar msg: %s", exc)
+
+
+def _transcribe_evolution_audio(conn: WhatsAppConnection, message_key: dict, message_obj: dict) -> str:
+    """Baixa áudio da Evolution e transcreve com Gemini.
+
+    Retorna texto transcrito ou uma mensagem amigável de fallback.
+    """
+    media = evo.get_base64_from_media_message(
+        conn.evolution_instance_name,
+        message_key,
+        convert_to_mp4=True,
+    )
+    if not media.get("ok"):
+        logger.warning("[EVO] falha ao baixar audio para transcricao: %s", media.get("error"))
+        return "[Áudio recebido, mas não consegui baixar para transcrever. Peça para o cliente enviar em texto.]"
+
+    mime = media.get("mimetype") or evo.extract_audio_mimetype(message_obj) or "audio/mp4"
+    try:
+        transcript = get_ai_provider().transcribe_audio_base64(media.get("base64") or "", mime)
+    except AIProviderError as exc:
+        logger.warning("[EVO] falha ao transcrever audio: %s", exc)
+        return "[Áudio recebido, mas não consegui transcrever agora. Peça para o cliente enviar em texto.]"
+    except Exception as exc:
+        logger.exception("[EVO] erro inesperado ao transcrever audio: %s", exc)
+        return "[Áudio recebido, mas ocorreu um erro ao transcrever. Peça para o cliente enviar em texto.]"
+
+    transcript = (transcript or "").strip()
+    if not transcript:
+        return "[Áudio recebido, mas a transcrição veio vazia. Peça para o cliente enviar em texto.]"
+    return f"🎧 Áudio transcrito: {transcript}"
 
 
 def _record_global_paused_inbound(db: Session, conn: WhatsAppConnection, flow: Flow, wa_id: str, text: str, now: datetime) -> Lead:

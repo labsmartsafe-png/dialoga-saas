@@ -172,6 +172,44 @@ def send_text(instance_name: str, to_number: str, text: str) -> Dict[str, Any]:
     return {"ok": False, "error": f"HTTP {r.status_code}: {r.text[:300]}"}
 
 
+def get_base64_from_media_message(instance_name: str, message_key: dict, convert_to_mp4: bool = True) -> Dict[str, Any]:
+    """Busca base64 de mídia recebida pela Evolution.
+
+    Evolution v2: POST /chat/getBase64FromMediaMessage/{instance}
+    Retorna {ok, base64, mimetype, media_type, file_name, raw} ou {ok:false,error}.
+    """
+    if not _configured():
+        return {"ok": False, "error": "Evolution nao configurada."}
+    msg_id = (message_key or {}).get("id")
+    if not msg_id:
+        return {"ok": False, "error": "message.key.id ausente para baixar midia."}
+    url = f"{_base_url()}/chat/getBase64FromMediaMessage/{instance_name}"
+    body = {
+        "message": {"key": message_key},
+        "convertToMp4": bool(convert_to_mp4),
+    }
+    try:
+        with httpx.Client(timeout=60.0) as client:
+            r = client.post(url, headers=_headers(), json=body)
+    except Exception as exc:
+        return {"ok": False, "error": f"Erro de rede ao baixar midia: {type(exc).__name__}"}
+    if r.status_code not in (200, 201):
+        return {"ok": False, "error": f"HTTP {r.status_code}: {r.text[:300]}"}
+    data = r.json()
+    b64 = data.get("base64") or data.get("media") or data.get("data")
+    if isinstance(b64, str) and "," in b64 and b64.strip().startswith("data:"):
+        b64 = b64.split(",", 1)[1]
+    return {
+        "ok": bool(b64),
+        "base64": b64,
+        "mimetype": data.get("mimetype") or data.get("mimeType") or "audio/mp4",
+        "media_type": data.get("mediaType") or data.get("media_type"),
+        "file_name": data.get("fileName") or data.get("file_name"),
+        "raw": data,
+        "error": None if b64 else "Resposta sem base64.",
+    }
+
+
 # --------------------- Parsing do webhook recebido --------------------- #
 def normalize_jid(jid: Optional[str]) -> Optional[str]:
     """Extrai o numero de um JID do WhatsApp (ex: 5521999@s.whatsapp.net -> 5521999)."""
@@ -198,3 +236,15 @@ def extract_text_from_message(message: dict) -> Optional[str]:
         sr = lst.get("singleSelectReply") or {}
         return sr.get("selectedRowId") or lst.get("title")
     return None
+
+
+def is_audio_message(message: dict) -> bool:
+    """Detecta áudio/PTT em payload Baileys."""
+    if not message:
+        return False
+    return bool(message.get("audioMessage"))
+
+
+def extract_audio_mimetype(message: dict) -> Optional[str]:
+    audio = (message or {}).get("audioMessage") or {}
+    return audio.get("mimetype") or audio.get("mimeType")
