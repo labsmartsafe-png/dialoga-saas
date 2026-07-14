@@ -39,6 +39,7 @@ def list_leads(
     flow_id: Optional[int] = None,
     status: Optional[str] = None,
     source: Optional[str] = None,
+    tag: Optional[str] = None,
     include_simulator: bool = True,
     date_from: Optional[str] = None,
     date_to: Optional[str] = None,
@@ -65,6 +66,9 @@ def list_leads(
         q = q.filter(Lead.created_at <= dt_to)
 
     leads = q.order_by(Lead.created_at.desc()).all()
+    if tag:
+        needle = tag.strip().lower()
+        leads = [l for l in leads if any(str(t).strip().lower() == needle for t in (l.tags or []))]
     return [LeadOut.model_validate(l) for l in leads]
 
 
@@ -195,6 +199,7 @@ def delete_lead(
 def export_leads_csv(
     flow_id: Optional[int] = None,
     source: Optional[str] = None,
+    tag: Optional[str] = None,
     include_simulator: bool = True,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -209,6 +214,9 @@ def export_leads_csv(
         q = q.filter(Lead.source != "simulator")
 
     leads = q.order_by(Lead.created_at.desc()).all()
+    if tag:
+        needle = tag.strip().lower()
+        leads = [l for l in leads if any(str(t).strip().lower() == needle for t in (l.tags or []))]
     flows_map = {f.id: f.name for f in db.query(Flow).filter(Flow.owner_id == current_user.id).all()}
 
     all_context_keys = set()

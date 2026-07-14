@@ -150,6 +150,7 @@ def _connection_for_lead(db: Session, lead: Lead, user: User) -> WhatsAppConnect
 @router.get("/conversations")
 def list_inbox_conversations(
     status: Optional[str] = None,
+    tag: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -161,9 +162,13 @@ def list_inbox_conversations(
     else:
         q = q.filter(Lead.status.in_(statuses))
     q = q.order_by(Lead.last_interaction_at.desc().nullslast(), Lead.created_at.desc())
+    leads = q.all()
+    if tag:
+        needle = tag.strip().lower()
+        leads = [l for l in leads if any(str(t).strip().lower() == needle for t in (l.tags or []))]
 
     items = []
-    for lead in q.all():
+    for lead in leads:
         conv = _conversation_for_lead(db, lead)
         last_msg = None
         unread_hint = False
