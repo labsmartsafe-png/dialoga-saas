@@ -67,7 +67,14 @@
       </div>
       <div id="recent-flows"><div class="empty-state"><div class="spinner"></div></div></div>
     </div>
-    <div class="card" style="grid-column: 1 / -1;">
+    <div class="card">
+      <div class="flex justify-between items-center">
+        <div class="card-title">Próximos agendamentos</div>
+        <a href="agenda.html" class="btn btn-secondary btn-sm">Ver agenda</a>
+      </div>
+      <div id="upcoming-appointments"><div class="empty-state"><div class="spinner"></div></div></div>
+    </div>
+    <div class="card">
       <div class="flex justify-between items-center">
         <div class="card-title">Leads recentes</div>
         <a href="leads.html" class="btn btn-secondary btn-sm">Ver todos</a>
@@ -96,6 +103,7 @@ window.API_BASE = "https://dialoga-backend-1slr.onrender.com";
       renderChart(m.leads_by_day || []);
       renderFlows(m.recent_flows || []);
       renderLeads(m.recent_leads || []);
+      await loadUpcomingAppointments();
     } catch (e) {
       alertArea.innerHTML = '<div class="alert alert-error">' + e.message + '</div>';
     }
@@ -148,6 +156,33 @@ window.API_BASE = "https://dialoga-backend-1slr.onrender.com";
     c.innerHTML = html;
   }
 
+
+  async function loadUpcomingAppointments() {
+    const c = document.getElementById("upcoming-appointments");
+    if (!c || !WFApi.listAppointments) return;
+    try {
+      const now = new Date();
+      const future = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      const qs = "?date_from=" + encodeURIComponent(now.toISOString()) + "&date_to=" + encodeURIComponent(future.toISOString());
+      const items = await WFApi.listAppointments(qs);
+      renderAppointments((items || []).slice(0, 5));
+    } catch (e) {
+      c.innerHTML = '<div class="empty-state">Não foi possível carregar agenda.</div>';
+    }
+  }
+
+  function renderAppointments(items) {
+    const c = document.getElementById("upcoming-appointments");
+    if (!items.length) {
+      c.innerHTML = '<div class="empty-state">Nenhum agendamento nos próximos 7 dias.<br><a href="agenda.html" class="btn btn-primary btn-sm mt-2">Criar agendamento</a></div>';
+      return;
+    }
+    const labels = {solicitado:"Solicitado",confirmado:"Confirmado",cancelado:"Cancelado",realizado:"Realizado",nao_compareceu:"Não compareceu"};
+    c.innerHTML = items.map(function(a){
+      return '<div class="list-item"><div class="info"><h4><a href="agenda.html">' + escapeHtml(a.title) + '</a></h4><small>' + fmt(a.scheduled_at) + ' · ' + escapeHtml(labels[a.status] || a.status || '') + (a.lead_name || a.lead_phone ? ' · ' + escapeHtml(a.lead_name || a.lead_phone) : '') + '</small></div><a href="agenda.html" class="btn btn-secondary btn-sm">Abrir</a></div>';
+    }).join("");
+  }
+
   function escapeHtml(s) {
     return String(s || "").replace(/[&<>"']/g, function(c){
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
@@ -165,5 +200,5 @@ window.API_BASE = "https://dialoga-backend-1slr.onrender.com";
 })();
 </script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1b1b2aef83adba8',t:'MTc4NDA0NDM4Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1b1d2435fc9e11b',t:'MTc4NDA0NTY3Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
