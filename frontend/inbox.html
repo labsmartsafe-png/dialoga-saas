@@ -8,6 +8,82 @@
   <style>
     .inbox-layout{display:grid;grid-template-columns:360px 1fr;gap:18px;min-height:calc(100vh - 150px)}
     .panel{background:#fff;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}.panel-head{padding:16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px}.panel-body{padding:0}.thread-list{max-height:calc(100vh - 245px);overflow:auto}.thread{padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:.15s;background:#fff}.thread:hover{background:#f8fafc}.thread.active{background:#eef2ff;border-left:4px solid var(--primary)}.thread-title{font-weight:800;color:var(--text);font-size:14px;display:flex;justify-content:space-between;gap:8px}.thread-meta{font-size:12px;color:var(--muted);margin-top:4px}.thread-last{font-size:13px;color:var(--text);margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.unread-dot{width:9px;height:9px;border-radius:50%;background:#22c55e;display:inline-block;flex-shrink:0}.badge-human{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800}.badge-human.wait{background:#fef3c7;color:#92400e}.badge-human.active{background:#ffedd5;color:#9a3412}.chat{display:flex;flex-direction:column;height:calc(100vh - 190px)}.chat-head{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.chat-title{font-size:18px;font-weight:900}.chat-sub{font-size:13px;color:var(--muted);margin-top:3px}.messages{flex:1;overflow:auto;padding:18px;background:#f8fafc}.msg{max-width:75%;margin-bottom:12px;padding:10px 12px;border-radius:14px;font-size:14px;line-height:1.45;box-shadow:0 1px 2px rgba(0,0,0,.04)}.msg.inbound{background:#fff;border:1px solid var(--border);margin-right:auto}.msg.outbound{background:#dcfce7;border:1px solid #bbf7d0;margin-left:auto}.msg.bot{background:#eef2ff;border-color:#c7d2fe}.msg.system{background:#f3f4f6;border-color:#e5e7eb;margin-left:auto;margin-right:auto;text-align:center;color:#6b7280}.msg-meta{font-size:10px;color:#6b7280;margin-top:5px}.composer{padding:14px;border-top:1px solid var(--border);display:flex;gap:10px;background:#fff}.composer textarea{flex:1;min-height:48px;max-height:120px;resize:vertical;border:1px solid var(--border);border-radius:12px;padding:10px 12px;font-family:inherit}.empty-chat{display:flex;align-items:center;justify-content:center;flex:1;color:var(--muted);text-align:center;padding:30px}.context-box{padding:12px 16px;border-bottom:1px solid var(--border);background:#fafafa}.ctx-tag{display:inline-flex;background:#f3f4f6;border-radius:7px;padding:4px 8px;margin:3px;font-size:11px}.filters{display:flex;gap:8px;align-items:center}.filters select{padding:8px;border:1px solid var(--border);border-radius:8px}@media(max-width:900px){.inbox-layout{grid-template-columns:1fr}.chat{height:70vh}.thread-list{max-height:320px}}
+    /* Dark mode local da Inbox: sobrescreve cores hardcoded desta tela */
+    body.dark-mode .panel{background:#171d2b;border-color:#262e40;color:#e6eaf2}
+    body.dark-mode .panel-head{border-color:#262e40;background:#171d2b;color:#e6eaf2}
+    body.dark-mode .thread{background:#171d2b;border-color:#262e40;color:#e6eaf2}
+    body.dark-mode .thread:hover{background:#1f2636}
+    body.dark-mode .thread.active{background:#1f2a44;border-left-color:#22d3ee}
+    body.dark-mode .thread-title{color:#e6eaf2}
+    body.dark-mode .thread-last{color:#cbd5e1}
+    body.dark-mode .thread-meta{color:#9aa3b2}
+    body.dark-mode .chat-head{border-color:#262e40;background:#171d2b;color:#e6eaf2}
+    body.dark-mode .chat-title{color:#e6eaf2}
+    body.dark-mode .chat-sub{color:#9aa3b2}
+    body.dark-mode .messages{background:#0f1420}
+    body.dark-mode .msg{box-shadow:0 1px 2px rgba(0,0,0,.35)}
+    body.dark-mode .msg.inbound{background:#171d2b;border-color:#262e40;color:#e6eaf2}
+    body.dark-mode .msg.outbound{background:#0c2a1f;border-color:#14532d;color:#dcfce7}
+    body.dark-mode .msg.bot{background:#1f2636;border-color:#323b50;color:#e6eaf2}
+    body.dark-mode .msg.system{background:#1f2636;border-color:#323b50;color:#9aa3b2}
+    body.dark-mode .msg-meta{color:#9aa3b2}
+    body.dark-mode .composer{background:#171d2b;border-color:#262e40}
+    body.dark-mode .composer textarea,
+    body.dark-mode .filters select{background:#1f2636;color:#e6eaf2;border-color:#323b50}
+    body.dark-mode .composer textarea::placeholder{color:#9aa3b2}
+    body.dark-mode .context-box{background:#121826;border-color:#262e40;color:#e6eaf2}
+    body.dark-mode .ctx-tag{background:#1f2636;color:#e6eaf2;border:1px solid #323b50}
+    body.dark-mode .empty-chat{color:#9aa3b2}
+    body.dark-mode .badge-human.wait{background:#3a2b11;color:#facc15}
+    body.dark-mode .badge-human.active{background:#3b2414;color:#fdba74}
+
+    /* Reforço visual: caixa do WhatsApp/Inbox 100% escura no modo dark.
+       Usamos !important porque o styles.css global pode sobrescrever alguns blocos. */
+    body.dark-mode #chat-panel,
+    body.dark-mode #chat-content,
+    body.dark-mode .panel.chat{
+      background:#0f1420 !important;
+      color:#e6eaf2 !important;
+    }
+    body.dark-mode #messages.messages{
+      background:#0b1020 !important;
+      color:#e6eaf2 !important;
+    }
+    body.dark-mode #context-box.context-box{
+      background:#111827 !important;
+      color:#cbd5e1 !important;
+      border-color:#263247 !important;
+    }
+    body.dark-mode #composer.composer{
+      background:#111827 !important;
+      border-color:#263247 !important;
+    }
+    body.dark-mode #message-text{
+      background:#0f172a !important;
+      color:#e6eaf2 !important;
+      border-color:#334155 !important;
+    }
+    body.dark-mode #message-text::placeholder{color:#94a3b8 !important;}
+    body.dark-mode .msg.inbound{
+      background:#111827 !important;
+      border-color:#334155 !important;
+      color:#e5e7eb !important;
+    }
+    body.dark-mode .msg.outbound{
+      background:#064e3b !important;
+      border-color:#047857 !important;
+      color:#ecfdf5 !important;
+    }
+    body.dark-mode .msg.bot{
+      background:#172033 !important;
+      border-color:#334155 !important;
+      color:#dbeafe !important;
+    }
+    body.dark-mode .msg.system{
+      background:#1e293b !important;
+      border-color:#334155 !important;
+      color:#cbd5e1 !important;
+    }
   </style>
 </head>
 <body>
@@ -95,6 +171,6 @@
   const user=await WFAuth.requireAuth();if(!user)return;WFAuth.renderUserChip(document.getElementById('user-area'),user);await loadThreads();
 })();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1ab887db818bdfb',t:'MTc4Mzk3OTczOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1b098d40c6449ae',t:'MTc4NDAzMjgzNw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
