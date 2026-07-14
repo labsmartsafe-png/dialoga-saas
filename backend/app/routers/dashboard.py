@@ -1,111 +1,133 @@
 """
-Rotas de dashboard - métricas agregadas.
+Dashboard — métricas gerais e ROI operacional básico.
+
+Mantém compatibilidade com o dashboard antigo e adiciona métricas úteis para venda:
+- leads reais vs simulador
+- atendimentos humanos pendentes
+- agendamentos solicitados/confirmados/hoje/próximos 7 dias
+- taxa de conversão lead real -> agendamento
 """
 from datetime import datetime, timedelta, timezone
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-from sqlalchemy import func
 
-from ..database import get_db
-from ..models import Flow, Lead, Conversation, User
-from ..schemas import DashboardMetrics
+from fastapi import APIRouter, Depends
+from sqlalchemy import func
+from sqlalchemy.orm import Session
+
 from ..auth import get_current_user
+from ..database import get_db
+from ..models import Appointment, Conversation, Flow, Lead, User
+from ..services import lead_service
+
 
 router = APIRouter()
 
 
-@router.get("/metrics", response_model=DashboardMetrics)
+def _now():
+    return datetime.now(timezone.utc)
+
+
+def _start_of_day(dt: datetime) -> datetime:
+    return dt.replace(hour=0, minute=0, second=0, microsecond=0)
+
+
+def _serialize_flow(flow: Flow) -> dict:
+    return {
+        "id": flow.id,
+        "name": flow.name,
+        "node_count": len(flow.nodes or []),
+        "updated_at": flow.updated_at.isoformat() if flow.updated_at else None,
+    }
+
+
+def _serialize_lead(lead: Lead) -> dict:
+    return {
+        "id": lead.id,
+        "name": lead.name,
+        "phone": lead.phone,
+        "status": lead.status,
+        "source": lead.source,
+        "created_at": lead.created_at.isoformat() if lead.created_at else None,
+    }
+
+
+@router.get("/metrics")
 def metrics(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Retorna métricas do dashboard do usuário."""
-    flows_total = db.query(func.count(Flow.id)).filter(
-        Flow.owner_id == current_user.id
-    ).scalar() or 0
-    flows_active = db.query(func.count(Flow.id)).filter(
-        Flow.owner_id == current_user.id, Flow.active == True
-    ).scalar() or 0
-    leads_total = db.query(func.count(Lead.id)).filter(
-        Lead.owner_id == current_user.id
-    ).scalar() or 0
-    today = datetime.now(timezone.utc).date()
-    week_start = today - timedelta(days=today.weekday())
-    leads_today = db.query(func.count(Lead.id)).filter(
-        Lead.owner_id == current_user.id,
-        func.date(Lead.created_at) == today,
-    ).scalar() or 0
-    leads_week = db.query(func.count(Lead.id)).filter(
-        Lead.owner_id == current_user.id,
-        Lead.created_at >= datetime.combine(week_start, datetime.min.time()),
-    ).scalar() or 0
-    conv_total = db.query(func.count(Conversation.id)).join(
-        Flow, Flow.id == Conversation.flow_id
-    ).filter(Flow.owner_id == current_user.id).scalar() or 0
-    conv_sim = db.query(func.count(Conversation.id)).join(
-        Flow, Flow.id == Conversation.flow_id
-    ).filter(Flow.owner_id == current_user.id, Conversation.channel == "simulator").scalar() or 0
-    conv_real = conv_total - conv_sim
+    now = _now()
+    today = _start_of_day(now)
+    week_ago = now - timedelta(days=7)
+    next_7 = now + timedelta(days=7)
+
+    flows_q = db.query(Flow).filter(Flow.owner_id == current_user.id)
+    leads_q = db.query(Lead).filter(Lead.owner_id == current_user.id)
+    real_leads_q = leads_q.filter(Lead.source != "simulator")
+    conv_q = db.query(Conversation).join(Flow, Flow.id == Conversation.flow_id).filter(Flow.owner_id == current_user.id)
+    appt_q = db.query(Appointment).filter(Appointment.owner_id == current_user.id)
+
+    leads_count = leads_q.count()
+    real_leads_count = real_leads_q.count()
+    simulator_leads_count = leads_q.filter(Lead.source == "simulator").count()
+
+    appointments_total = appt_q.count()
+    appointments_requested = appt_q.filter(Appointment.status == "solicitado").count()
+    appointments_confirmed = appt_q.filter(Appointment.status == "confirmado").count()
+    appointments_done = appt_q.filter(Appointment.status == "realizado").count()
+    appointments_today = appt_q.filter(Appointment.scheduled_at >= today, Appointment.scheduled_at < today + timedelta(days=1)).count()
+    appointments_next_7_days = appt_q.filter(Appointment.scheduled_at >= now, Appointment.scheduled_at <= next_7).count()
+
+    human_pending = leads_q.filter(Lead.status == lead_service.STATUS_AGUARDANDO_HUMANO).count()
+    human_active = leads_q.filter(Lead.status == lead_service.STATUS_EM_ATENDIMENTO_HUMANO).count()
+
+    # Conversão operacional simples: leads reais que têm ao menos um agendamento / total leads reais.
+    lead_ids_with_appt = {
+        row[0]
+        for row in db.query(Appointment.lead_id)
+        .filter(Appointment.owner_id == current_user.id, Appointment.lead_id.isnot(None))
+        .distinct()
+        .all()
+    }
+    real_lead_ids = {row[0] for row in real_leads_q.with_entities(Lead.id).all()}
+    real_leads_with_appointment = len(real_lead_ids.intersection(lead_ids_with_appt))
+    appointment_conversion_rate = round((real_leads_with_appointment / real_leads_count) * 100, 1) if real_leads_count else 0.0
 
     # Leads por dia (últimos 7 dias)
     leads_by_day = []
     for i in range(6, -1, -1):
         day = today - timedelta(days=i)
-        count = db.query(func.count(Lead.id)).filter(
-            Lead.owner_id == current_user.id,
-            func.date(Lead.created_at) == day,
-        ).scalar() or 0
-        leads_by_day.append({"date": day.isoformat(), "count": count})
+        nxt = day + timedelta(days=1)
+        count = leads_q.filter(Lead.created_at >= day, Lead.created_at < nxt).count()
+        leads_by_day.append({"date": day.date().isoformat(), "count": count})
 
-    # Fluxos recentes
-    recent_flows_q = (
-        db.query(Flow)
-        .filter(Flow.owner_id == current_user.id)
-        .order_by(Flow.updated_at.desc())
-        .limit(5)
-        .all()
-    )
-    recent_flows = [
-        {
-            "id": f.id,
-            "name": f.name,
-            "active": f.active,
-            "node_count": len(f.nodes or []),
-            "updated_at": f.updated_at.isoformat() if f.updated_at else None,
-        }
-        for f in recent_flows_q
-    ]
+    recent_flows = flows_q.order_by(Flow.updated_at.desc()).limit(5).all()
+    recent_leads = leads_q.order_by(Lead.created_at.desc()).limit(5).all()
 
-    # Leads recentes
-    recent_leads_q = (
-        db.query(Lead)
-        .filter(Lead.owner_id == current_user.id)
-        .order_by(Lead.created_at.desc())
-        .limit(5)
-        .all()
-    )
-    recent_leads = [
-        {
-            "id": l.id,
-            "name": l.name,
-            "phone": l.phone,
-            "stage": l.stage,
-            "status": l.status,
-            "created_at": l.created_at.isoformat() if l.created_at else None,
-        }
-        for l in recent_leads_q
-    ]
+    return {
+        # Compatibilidade com dashboard antigo
+        "flows_count": flows_q.count(),
+        "active_flows_count": flows_q.filter(Flow.active == True).count(),  # noqa: E712
+        "leads_count": leads_count,
+        "leads_today": leads_q.filter(Lead.created_at >= today).count(),
+        "leads_this_week": leads_q.filter(Lead.created_at >= week_ago).count(),
+        "conversations_total": conv_q.count(),
+        "conversations_simulated": conv_q.filter(Conversation.channel == "simulator").count(),
+        "conversations_real": conv_q.filter(Conversation.channel != "simulator").count(),
+        "leads_by_day": leads_by_day,
+        "recent_flows": [_serialize_flow(f) for f in recent_flows],
+        "recent_leads": [_serialize_lead(l) for l in recent_leads],
 
-    return DashboardMetrics(
-        flows_count=flows_total,
-        active_flows_count=flows_active,
-        leads_count=leads_total,
-        leads_today=leads_today,
-        leads_this_week=leads_week,
-        conversations_total=conv_total,
-        conversations_simulated=conv_sim,
-        conversations_real=conv_real,
-        leads_by_day=leads_by_day,
-        recent_flows=recent_flows,
-        recent_leads=recent_leads,
-    )
+        # Novas métricas ROI/CRM
+        "real_leads_count": real_leads_count,
+        "simulator_leads_count": simulator_leads_count,
+        "human_pending_count": human_pending,
+        "human_active_count": human_active,
+        "appointments_total": appointments_total,
+        "appointments_requested": appointments_requested,
+        "appointments_confirmed": appointments_confirmed,
+        "appointments_done": appointments_done,
+        "appointments_today": appointments_today,
+        "appointments_next_7_days": appointments_next_7_days,
+        "real_leads_with_appointment": real_leads_with_appointment,
+        "appointment_conversion_rate": appointment_conversion_rate,
+    }

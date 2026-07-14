@@ -53,6 +53,11 @@
     <div class="metric-card"><div class="label">Conversas</div><div class="value" id="m-conv">-</div></div>
     <div class="metric-card"><div class="label">Simuladas</div><div class="value" id="m-conv-sim">-</div></div>
     <div class="metric-card"><div class="label">Reais</div><div class="value" id="m-conv-real">-</div></div>
+    <div class="metric-card"><div class="label">Leads reais</div><div class="value" id="m-real-leads">-</div></div>
+    <div class="metric-card"><div class="label">Aguardando humano</div><div class="value" id="m-human-pending">-</div></div>
+    <div class="metric-card"><div class="label">Agend. hoje</div><div class="value" id="m-appt-today">-</div></div>
+    <div class="metric-card"><div class="label">Agend. confirmados</div><div class="value" id="m-appt-confirmed">-</div></div>
+    <div class="metric-card"><div class="label">Conversão p/ agenda</div><div class="value" id="m-appt-conv">-</div></div>
   </section>
 
   <div class="dashboard-grid">
@@ -118,6 +123,11 @@ window.API_BASE = "https://dialoga-backend-1slr.onrender.com";
     document.getElementById("m-conv").textContent = m.conversations_total;
     document.getElementById("m-conv-sim").textContent = m.conversations_simulated;
     document.getElementById("m-conv-real").textContent = m.conversations_real;
+    document.getElementById("m-real-leads").textContent = m.real_leads_count || 0;
+    document.getElementById("m-human-pending").textContent = m.human_pending_count || 0;
+    document.getElementById("m-appt-today").textContent = m.appointments_today || 0;
+    document.getElementById("m-appt-confirmed").textContent = m.appointments_confirmed || 0;
+    document.getElementById("m-appt-conv").textContent = (m.appointment_conversion_rate || 0) + "%";
   }
 
   function renderChart(days) {
@@ -200,5 +210,5 @@ window.API_BASE = "https://dialoga-backend-1slr.onrender.com";
 })();
 </script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1b1d2435fc9e11b',t:'MTc4NDA0NTY3Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1b2e7f3ae1dcaaa',t:'MTc4NDA1NzA1MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
