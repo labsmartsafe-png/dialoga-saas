@@ -81,6 +81,9 @@
     // ---- Setup / Nichos ----
     listNichePackages: function () { return request("/api/setup/niches"); },
     applyNichePackage: function (b) { return request("/api/setup/apply", { method: "POST", body: b }); },
+    setupCreateFlow: function (b) { return request("/api/setup/create-flow", { method: "POST", body: b }); },
+    setupCreateKb: function (b) { return request("/api/setup/create-kb", { method: "POST", body: b }); },
+    setupIndexKb: function (b) { return request("/api/setup/index-kb", { method: "POST", body: b }); },
 
     // ---- Google Calendar ----
     calendarAuthUrl: function () { return request("/api/calendar/google/auth-url"); },

@@ -1,14 +1,11 @@
 """
-Fase D.1 — Pacotes de nicho prontos.
+Fase D.2.2 — Setup guiado em etapas.
 
-Cria fluxos guiados iniciais por nicho e retorna sugestões de tags,
-pipeline, tipos de agendamento e base de conhecimento exemplo.
-
-A primeira versão é propositalmente segura:
-- cria apenas um novo Flow;
-- não altera fluxos existentes;
-- não indexa IA automaticamente;
-- não conecta WhatsApp automaticamente.
+Endpoints separados evitam request pesado:
+- criar fluxo
+- criar base
+- indexar IA
+- salvar ROI
 """
 from __future__ import annotations
 
@@ -82,11 +79,7 @@ PACKAGES: Dict[str, Dict[str, Any]] = {
                 {"label": "Outro", "value": "outro", "next": "nome_pet"},
             ]),
             _input("nome_pet", "Qual é o nome do pet?", "nome_pet", "porte"),
-            _question("porte", "Qual é o porte do pet?", "porte_pet", [
-                {"label": "Pequeno", "value": "pequeno", "next": "preferencia"},
-                {"label": "Médio", "value": "medio", "next": "preferencia"},
-                {"label": "Grande", "value": "grande", "next": "preferencia"},
-            ]),
+            _input("porte", "Qual é o porte do pet?", "porte_pet", "preferencia"),
             _input("preferencia", "Qual dia/horário você prefere para o atendimento?", "preferencia_horario", "resumo"),
             _msg("resumo", "Obrigado!\n\nResumo:\nServiço: {{servico_pet}}\nPet: {{nome_pet}}\nPorte: {{porte_pet}}\nPreferência: {{preferencia_horario}}\n\nVou encaminhar para confirmar a agenda.", "humano"),
             _node("humano", "human"),
@@ -105,15 +98,8 @@ PACKAGES: Dict[str, Dict[str, Any]] = {
         "nodes": [
             _msg("inicio", "Olá! Vou te ajudar a encontrar o veículo ideal e, se fizer sentido, agendar uma visita/test-drive.", "modelo"),
             _input("modelo", "Qual veículo ou modelo você está procurando?", "modelo_interesse", "compra"),
-            _question("compra", "Você pretende comprar de qual forma?", "forma_compra", [
-                {"label": "À vista", "value": "avista", "next": "troca"},
-                {"label": "Financiamento", "value": "financiamento", "next": "troca"},
-                {"label": "Ainda estou pesquisando", "value": "pesquisa", "next": "troca"},
-            ]),
-            _question("troca", "Você tem veículo para dar na troca?", "tem_troca", [
-                {"label": "Sim", "value": "sim", "next": "prazo"},
-                {"label": "Não", "value": "nao", "next": "prazo"},
-            ]),
+            _input("compra", "Você pretende comprar à vista, financiamento ou ainda está pesquisando?", "forma_compra", "troca"),
+            _input("troca", "Você tem veículo para dar na troca?", "tem_troca", "prazo"),
             _input("prazo", "Qual seu prazo para compra ou visita?", "prazo_compra", "resumo"),
             _msg("resumo", "Resumo do interesse:\nVeículo: {{modelo_interesse}}\nForma: {{forma_compra}}\nTroca: {{tem_troca}}\nPrazo: {{prazo_compra}}\n\nVou encaminhar para um consultor verificar disponibilidade e agendar.", "humano"),
             _node("humano", "human"),
@@ -135,12 +121,12 @@ PACKAGES: Dict[str, Dict[str, Any]] = {
                 {"label": "Sim, já fiz contato", "value": "sim", "next": "pede_chamado"},
                 {"label": "Não, ainda não fiz contato", "value": "nao", "next": "contatos_suporte"},
             ]),
-            _input("pede_chamado", "Perfeito. Informe o número do chamado que você está atendendo.", "numero_chamado", "pede_local"),
-            _input("pede_local", "Agora informe o local do atendimento.", "local_atendimento", "pede_duvida"),
-            _input("pede_duvida", "Descreva qual é a dúvida ou dificuldade encontrada.", "duvida_tecnica", "resumo"),
-            _msg("resumo", "Obrigado pelas informações.\n\nChamado: {{numero_chamado}}\nLocal: {{local_atendimento}}\nDúvida: {{duvida_tecnica}}\n\nAguarde. Sua solicitação será encaminhada para atendimento humano.", "humano"),
+            _input("pede_chamado", "Informe o número do chamado.", "numero_chamado", "pede_local"),
+            _input("pede_local", "Informe o local do atendimento.", "local_atendimento", "pede_duvida"),
+            _input("pede_duvida", "Descreva a dúvida ou dificuldade.", "duvida_tecnica", "resumo"),
+            _msg("resumo", "Chamado: {{numero_chamado}}\nLocal: {{local_atendimento}}\nDúvida: {{duvida_tecnica}}\n\nAguarde. Sua solicitação será encaminhada para atendimento humano.", "humano"),
             _node("humano", "human"),
-            _msg("contatos_suporte", "Para seguir, é necessário primeiro fazer contato com o Suporte Operacional.\n\nWhatsApp/Telefone: (XX) XXXXX-XXXX\nE-mail: suporte@suaempresa.com.br\n\nApós abrir o chamado, envie nova mensagem informando número do chamado, local e dúvida.", "fim"),
+            _msg("contatos_suporte", "Para seguir, faça contato com o Suporte Operacional.\nWhatsApp/Telefone: (XX) XXXXX-XXXX\nE-mail: suporte@suaempresa.com.br", "fim"),
             _node("fim", "end"),
         ],
         "start_node_id": "recepcao",
@@ -149,17 +135,7 @@ PACKAGES: Dict[str, Dict[str, Any]] = {
 
 
 def list_packages() -> List[Dict[str, Any]]:
-    return [
-        {
-            "id": key,
-            "title": pkg["title"],
-            "description": pkg["description"],
-            "pipeline_type": pkg["pipeline_type"],
-            "appointment_types": pkg["appointment_types"],
-            "suggested_tags": pkg["suggested_tags"],
-        }
-        for key, pkg in PACKAGES.items()
-    ]
+    return [{"id": k, "title": p["title"], "description": p["description"], "pipeline_type": p["pipeline_type"], "appointment_types": p["appointment_types"], "suggested_tags": p["suggested_tags"]} for k, p in PACKAGES.items()]
 
 
 def get_package(package_id: str) -> Dict[str, Any]:
@@ -168,41 +144,33 @@ def get_package(package_id: str) -> Dict[str, Any]:
     return PACKAGES[package_id]
 
 
-
-def _profile_lines(profile: Optional[Dict[str, Any]]) -> str:
+def profile_lines(profile: Optional[Dict[str, Any]]) -> str:
     profile = profile or {}
+    mapping = [("business_name", "Nome do negócio"), ("address", "Endereço"), ("hours", "Horário"), ("services", "Serviços/produtos"), ("human_contact", "Contato humano"), ("payment_methods", "Pagamento"), ("extra_info", "Extras")]
     lines = []
-    mapping = [
-        ("business_name", "Nome do negócio"),
-        ("address", "Endereço"),
-        ("hours", "Horário de atendimento"),
-        ("services", "Serviços/produtos principais"),
-        ("human_contact", "Contato humano"),
-        ("payment_methods", "Formas de pagamento"),
-        ("extra_info", "Informações extras"),
-    ]
     for key, label in mapping:
-        val = (profile.get(key) or "").strip() if isinstance(profile.get(key), str) else profile.get(key)
+        val = profile.get(key)
+        if isinstance(val, str):
+            val = val.strip()
         if val:
             lines.append(f"- {label}: {val}")
     return "\n".join(lines)
 
 
-def _customize_seed(seed: str, profile: Optional[Dict[str, Any]]) -> str:
-    extra = _profile_lines(profile)
-    if not extra:
-        return seed
-    return seed + "\n\nDados informados no setup:\n" + extra
+def customize_seed(package_id: str, profile: Optional[Dict[str, Any]]) -> str:
+    seed = get_package(package_id)["knowledge_base_seed"]
+    extra = profile_lines(profile)
+    return seed + ("\n\nDados informados no setup:\n" + extra if extra else "")
 
 
-def _save_roi_if_present(db: Session, user: User, profile: Optional[Dict[str, Any]]):
-    profile = profile or {}
-    raw = profile.get("average_ticket")
+def save_roi_if_present(db: Session, user: User, average_ticket: Optional[float]):
+    if average_ticket is None:
+        return None
     try:
-        ticket = float(raw) if raw not in (None, "") else None
+        ticket = float(average_ticket)
     except Exception:
-        ticket = None
-    if ticket is None or ticket < 0:
+        return None
+    if ticket < 0:
         return None
     settings = db.query(ROISettings).filter(ROISettings.owner_id == user.id).first()
     if settings is None:
@@ -211,84 +179,50 @@ def _save_roi_if_present(db: Session, user: User, profile: Optional[Dict[str, An
     else:
         settings.average_ticket = ticket
         settings.currency = settings.currency or "BRL"
-    db.flush()
+    db.commit()
     return ticket
 
 
+def create_flow_from_package(db: Session, user: User, package_id: str, business_name: Optional[str] = None, profile: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    pkg = get_package(package_id)
+    business_name = business_name or (profile or {}).get("business_name")
+    name_suffix = f" - {business_name.strip()}" if business_name else ""
+    flow = Flow(owner_id=user.id, name=f"{pkg['flow_name']}{name_suffix}", description=pkg["flow_description"], nodes=deepcopy(pkg["nodes"]), start_node_id=pkg["start_node_id"], active=True, template_slug=f"niche:{package_id}", mode="guided")
+    db.add(flow)
+    db.commit()
+    db.refresh(flow)
+    return {"ok": True, "package_id": package_id, "flow_id": flow.id, "flow_name": flow.name, "pipeline_type": pkg["pipeline_type"], "appointment_types": pkg["appointment_types"], "suggested_tags": pkg["suggested_tags"], "knowledge_base_seed": customize_seed(package_id, profile)}
 
-def _create_and_index_kb(db: Session, user: User, name: str, text: str) -> Dict[str, Any]:
-    """Cria base de conhecimento e tenta indexar o texto.
 
-    Se Gemini/cota falhar, a base fica criada e retornamos warning sem quebrar o setup.
-    """
-    kb = KnowledgeBase(owner_id=user.id, name=name, description="Criada automaticamente pelo Setup por Nicho")
+def create_kb(db: Session, user: User, package_id: str, business_name: Optional[str], text: str) -> Dict[str, Any]:
+    pkg = get_package(package_id)
+    kb_name = f"Base {pkg['title']}" + (f" - {business_name.strip()}" if business_name else "")
+    kb = KnowledgeBase(owner_id=user.id, name=kb_name, description="Criada pelo Setup por Nicho")
     db.add(kb)
     db.commit()
     db.refresh(kb)
-
-    chunks_created = 0
-    warning = None
-    try:
-        chunks_created = rag_service.index_text(db, kb, text, source="setup_nicho")
-    except Exception as exc:
-        db.rollback()
-        warning = f"Base criada, mas a indexação falhou: {exc}"
-
     ai = db.query(AISettings).filter(AISettings.owner_id == user.id).first()
     if ai is None:
         ai = AISettings(owner_id=user.id)
         db.add(ai)
     ai.knowledge_base_id = kb.id
     db.commit()
+    return {"ok": True, "kb_id": kb.id, "kb_name": kb.name, "text": text}
 
-    return {"kb_id": kb.id, "kb_name": kb.name, "chunks_created": chunks_created, "warning": warning}
+
+def index_kb(db: Session, user: User, kb_id: int, text: str) -> Dict[str, Any]:
+    kb = db.query(KnowledgeBase).filter(KnowledgeBase.id == kb_id, KnowledgeBase.owner_id == user.id).first()
+    if not kb:
+        raise KeyError("kb")
+    created = rag_service.index_text(db, kb, text, source="setup_nicho")
+    return {"ok": True, "kb_id": kb.id, "chunks_created": created}
 
 
 def apply_package(db: Session, user: User, package_id: str, business_name: Optional[str] = None, profile: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    pkg = get_package(package_id)
+    """Compatibilidade: agora cria só fluxo + texto e salva ROI, sem indexar."""
     profile = profile or {}
-    business_name = business_name or profile.get("business_name")
-    name_suffix = f" - {business_name.strip()}" if business_name else ""
-    average_ticket_saved = _save_roi_if_present(db, user, profile)
-    flow = Flow(
-        owner_id=user.id,
-        name=f"{pkg['flow_name']}{name_suffix}",
-        description=pkg["flow_description"],
-        nodes=deepcopy(pkg["nodes"]),
-        start_node_id=pkg["start_node_id"],
-        active=True,
-        template_slug=f"niche:{package_id}",
-        mode="guided",
-    )
-    db.add(flow)
-    db.commit()
-    db.refresh(flow)
-
-    knowledge_base_seed = _customize_seed(pkg["knowledge_base_seed"], profile)
-    kb_result = None
-    if profile.get("create_knowledge_base", True):
-        kb_name = f"Base {pkg['title']}"
-        if business_name:
-            kb_name += f" - {business_name.strip()}"
-        kb_result = _create_and_index_kb(db, user, kb_name, knowledge_base_seed)
-
-    return {
-        "ok": True,
-        "package_id": package_id,
-        "flow_id": flow.id,
-        "flow_name": flow.name,
-        "pipeline_type": pkg["pipeline_type"],
-        "appointment_types": pkg["appointment_types"],
-        "suggested_tags": pkg["suggested_tags"],
-        "knowledge_base_seed": knowledge_base_seed,
-        "knowledge_base": kb_result,
-        "business_profile": profile,
-        "average_ticket_saved": average_ticket_saved,
-        "next_steps": [
-            "Revise o fluxo criado no Builder.",
-            "Revise a base de conhecimento criada automaticamente em IA e ajuste se necessário." if kb_result else "Cole o texto sugerido em IA > Base de conhecimento e adapte ao negócio.",
-            "Conecte ou selecione este fluxo na conexão WhatsApp.",
-            "Configure ticket médio no Dashboard para ROI.",
-            "Crie agendamentos usando os tipos sugeridos para atualizar o pipeline.",
-        ],
-    }
+    save_roi_if_present(db, user, profile.get("average_ticket"))
+    result = create_flow_from_package(db, user, package_id, business_name, profile)
+    result["average_ticket_saved"] = profile.get("average_ticket")
+    result["next_steps"] = ["Revise o fluxo criado no Builder.", "Crie a base de conhecimento no próximo passo do Setup.", "Ensine a IA em etapa separada.", "Conecte este fluxo na conexão WhatsApp."]
+    return result

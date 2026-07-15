@@ -3,65 +3,47 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Setup por Nicho - dIAloga+</title>
+  <title>Setup Guiado - dIAloga+</title>
   <link rel="stylesheet" href="css/styles.css">
   <style>
-    .setup-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}.pkg-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:18px}.pkg-card h3{margin:0 0 8px}.pkg-meta{font-size:13px;color:var(--muted);margin:8px 0}.tag{display:inline-flex;border-radius:999px;background:#f3f4f6;padding:4px 8px;margin:3px;font-size:11px}.result{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-top:18px}.seed{white-space:pre-wrap;background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:12px;font-size:13px;max-height:260px;overflow:auto}body.dark-mode .pkg-card,body.dark-mode .result{background:#171d2b;border-color:#262e40;color:#e6eaf2}body.dark-mode .tag{background:#1f2636;color:#e6eaf2}body.dark-mode .seed{background:#0f172a;border-color:#334155;color:#e6eaf2}
+    .steps{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.step{padding:8px 12px;border-radius:999px;background:#f3f4f6;color:#6b7280;font-size:12px;font-weight:800}.step.active{background:#dbeafe;color:#1e40af}.step.done{background:#d1fae5;color:#065f46}.setup-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}.pkg-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:18px;cursor:pointer}.pkg-card.active{border:2px solid var(--primary);background:#eef2ff}.pkg-card h3{margin:0 0 8px}.pkg-meta{font-size:13px;color:var(--muted);margin:8px 0}.tag{display:inline-flex;border-radius:999px;background:#f3f4f6;padding:4px 8px;margin:3px;font-size:11px}.result,.setup-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-top:18px}.seed{white-space:pre-wrap;background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:12px;font-size:13px;max-height:260px;overflow:auto}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}body.dark-mode .pkg-card,body.dark-mode .result,body.dark-mode .setup-card{background:#171d2b;border-color:#262e40;color:#e6eaf2}body.dark-mode .pkg-card.active{background:#1f2a44;border-color:#22d3ee}body.dark-mode .tag{background:#1f2636;color:#e6eaf2}body.dark-mode .seed{background:#0f172a;border-color:#334155;color:#e6eaf2}body.dark-mode .step{background:#1f2636;color:#9aa3b2}body.dark-mode .step.active{background:#1f2a44;color:#93c5fd}body.dark-mode .step.done{background:#0c2a1f;color:#86efac}
   </style>
 </head>
 <body>
 <script>if(localStorage.getItem("dialoga-dark-mode")==="1")document.body.classList.add("dark-mode");</script>
-<nav class="navbar">
-  <div class="brand"><img src="img/logo-dialoga.png" alt="dIAloga+"></div>
-  <nav>
-    <a href="dashboard.html">Dashboard</a>
-    <a href="setup.html" class="active">Setup</a>
-    <a href="builder.html">Fluxos</a>
-    <a href="leads.html">Leads</a>
-    <a href="inbox.html">Inbox</a>
-    <a href="agenda.html">Agenda</a>
-    <a href="ia.html">IA</a>
-    <a href="configuracoes.html">Configurações</a>
-  </nav>
-  <div class="user-area" id="user-area"></div>
-</nav>
-
+<nav class="navbar"><div class="brand"><img src="img/logo-dialoga.png" alt="dIAloga+"></div><nav><a href="dashboard.html">Dashboard</a><a href="setup.html" class="active">Setup</a><a href="builder.html">Fluxos</a><a href="leads.html">Leads</a><a href="inbox.html">Inbox</a><a href="agenda.html">Agenda</a><a href="ia.html">IA</a><a href="configuracoes.html">Configurações</a></nav><div class="user-area" id="user-area"></div></nav>
 <main class="container container-lg">
-  <div class="flex justify-between items-center mb-3">
-    <div><h1 style="font-size:26px;">Setup por Nicho</h1><p class="text-muted">Escolha um pacote pronto para criar um fluxo inicial e receber orientações de configuração.</p></div>
-  </div>
+  <div class="flex justify-between items-center mb-3"><div><h1 style="font-size:26px;">Setup Guiado</h1><p class="text-muted">Configure por etapas para evitar travamentos e deixar tudo claro.</p></div></div>
   <div id="alert-area"></div>
+  <div class="steps" id="steps"></div>
 
-  <div class="card" style="margin-bottom:18px;">
-    <h2 style="font-size:18px;margin-bottom:12px;">Dados básicos do negócio</h2>
-    <div class="form-group"><label>Nome do negócio</label><input class="form-control" id="business-name" placeholder="Ex: Clínica Sorriso, Pet Feliz, Auto Prime"></div>
-    <div class="form-group"><label>Endereço</label><input class="form-control" id="address" placeholder="Rua, número, bairro, cidade"></div>
-    <div class="form-group"><label>Horário de atendimento</label><input class="form-control" id="hours" placeholder="Ex: Segunda a sexta, 9h às 18h"></div>
-    <div class="form-group"><label>Serviços/produtos principais</label><textarea class="form-control" id="services" rows="3" placeholder="Liste serviços, procedimentos, produtos ou modelos principais"></textarea></div>
-    <div class="form-group"><label>Contato humano</label><input class="form-control" id="human-contact" placeholder="WhatsApp, telefone ou e-mail de atendimento"></div>
-    <div class="form-group"><label>Formas de pagamento</label><input class="form-control" id="payment-methods" placeholder="Pix, cartão, boleto, financiamento..."></div>
-    <div class="form-group"><label>Ticket médio para ROI (R$)</label><input class="form-control" type="number" min="0" step="0.01" id="average-ticket" placeholder="Ex: 250"></div>
-    <div class="form-group"><label>Informações extras</label><textarea class="form-control" id="extra-info" rows="3" placeholder="Regras, diferenciais, observações importantes..."></textarea></div>
-    <label style="display:flex;gap:8px;align-items:center;font-size:14px;"><input type="checkbox" id="create-kb" checked> Criar e ensinar base de conhecimento automaticamente</label>
-  </div>
+  <section class="setup-card" id="screen-niche"><h2>1. Escolha o nicho</h2><div class="setup-grid" id="packages"><div class="empty-state"><div class="spinner"></div></div></div><div class="actions"><button class="btn btn-primary" id="next-profile" disabled>Continuar</button></div></section>
 
-  <div class="setup-grid" id="packages"><div class="empty-state"><div class="spinner"></div></div></div>
-  <div id="result"></div>
+  <section class="setup-card" id="screen-profile" style="display:none;"><h2>2. Dados do negócio</h2><div class="form-group"><label>Nome do negócio</label><input class="form-control" id="business-name" placeholder="Ex: Clínica Sorriso"></div><div class="form-group"><label>Endereço</label><input class="form-control" id="address"></div><div class="form-group"><label>Horário de atendimento</label><input class="form-control" id="hours" placeholder="Segunda a sexta, 9h às 18h"></div><div class="form-group"><label>Serviços/produtos principais</label><textarea class="form-control" id="services" rows="3"></textarea></div><div class="form-group"><label>Contato humano</label><input class="form-control" id="human-contact"></div><div class="form-group"><label>Formas de pagamento</label><input class="form-control" id="payment-methods"></div><div class="form-group"><label>Ticket médio ROI (R$)</label><input class="form-control" type="number" min="0" step="0.01" id="average-ticket"></div><div class="form-group"><label>Informações extras</label><textarea class="form-control" id="extra-info" rows="3"></textarea></div><div class="actions"><button class="btn btn-secondary" data-back="niche">Voltar</button><button class="btn btn-primary" id="btn-create-flow">3. Criar fluxo</button></div></section>
+
+  <section class="setup-card" id="screen-flow" style="display:none;"><h2>3. Fluxo criado</h2><div id="flow-result"></div><div class="actions"><button class="btn btn-primary" id="btn-create-kb">4. Criar base de conhecimento</button><a class="btn btn-secondary" id="open-flow" href="#">Abrir fluxo</a></div></section>
+
+  <section class="setup-card" id="screen-kb" style="display:none;"><h2>4. Base de conhecimento</h2><div id="kb-result"></div><h3>Texto que será ensinado</h3><div class="seed" id="seed"></div><div class="actions"><button class="btn btn-primary" id="btn-index-kb">5. Ensinar IA agora</button><a class="btn btn-secondary" href="ia.html">Ensinar depois na tela IA</a></div></section>
+
+  <section class="setup-card" id="screen-done" style="display:none;"><h2>Setup concluído ✅</h2><div id="done-result"></div><div class="actions"><a class="btn btn-primary" href="configuracoes.html">Conectar WhatsApp</a><a class="btn btn-secondary" href="dashboard.html">Ir ao Dashboard</a><a class="btn btn-secondary" href="ia.html">Ver IA</a></div></section>
 </main>
-
-<script>window.API_BASE="https://dialoga-backend-1slr.onrender.com";</script>
-<script src="js/api.js"></script>
-<script src="js/auth.js"></script>
+<script>window.API_BASE="https://dialoga-backend-1slr.onrender.com";</script><script src="js/api.js"></script><script src="js/auth.js"></script>
 <script>
 (async function(){
-  const alertArea=document.getElementById('alert-area');
-  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-  function alert(msg,type){alertArea.innerHTML='<div class="alert alert-'+(type||'error')+'">'+esc(msg)+'</div>';setTimeout(()=>alertArea.innerHTML='',5000)}
-  function renderPackages(items){const el=document.getElementById('packages');if(!items.length){el.innerHTML='<div class="empty-state">Nenhum pacote disponível.</div>';return}el.innerHTML=items.map(p=>'<div class="pkg-card"><h3>'+esc(p.title)+'</h3><p class="pkg-meta">'+esc(p.description)+'</p><div class="pkg-meta"><strong>Pipeline:</strong> '+esc(p.pipeline_type)+'</div><div>'+((p.suggested_tags||[]).map(t=>'<span class="tag">🏷️ '+esc(t)+'</span>').join(''))+'</div><div class="pkg-meta"><strong>Agenda:</strong> '+esc((p.appointment_types||[]).join(', '))+'</div><button class="btn btn-primary" data-apply="'+esc(p.id)+'">Usar este pacote</button></div>').join('');el.querySelectorAll('[data-apply]').forEach(btn=>btn.addEventListener('click',()=>apply(btn.dataset.apply)))}
-  async function apply(id){if(!confirm('Criar um novo fluxo com este pacote?'))return;try{const res=await WFApi.applyNichePackage({package_id:id,business_name:document.getElementById('business-name').value||null,address:document.getElementById('address').value||null,hours:document.getElementById('hours').value||null,services:document.getElementById('services').value||null,human_contact:document.getElementById('human-contact').value||null,payment_methods:document.getElementById('payment-methods').value||null,average_ticket:document.getElementById('average-ticket').value?Number(document.getElementById('average-ticket').value):null,extra_info:document.getElementById('extra-info').value||null,create_knowledge_base:document.getElementById('create-kb').checked});renderResult(res);alert('Pacote aplicado com sucesso!','success')}catch(e){alert(e.message)}}
-  function renderResult(r){document.getElementById('result').innerHTML='<div class="result"><h2>Pacote aplicado ✅</h2><p><strong>Fluxo criado:</strong> '+esc(r.flow_name)+' (#'+esc(r.flow_id)+')</p><p><strong>Pipeline:</strong> '+esc(r.pipeline_type)+'</p><p><strong>Tipos de agenda:</strong> '+esc((r.appointment_types||[]).join(', '))+'</p><p><strong>Tags sugeridas:</strong><br>'+((r.suggested_tags||[]).map(t=>'<span class="tag">🏷️ '+esc(t)+'</span>').join(''))+'</p><h3>Base de conhecimento sugerida</h3><div class="seed">'+esc(r.knowledge_base_seed||'')+'</div><h3>Próximos passos</h3><ol>'+(r.next_steps||[]).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol><div class="flex gap-1"><a class="btn btn-primary" href="builder.html?flow='+esc(r.flow_id)+'">Abrir fluxo</a><a class="btn btn-secondary" href="ia.html">Configurar IA</a><a class="btn btn-secondary" href="configuracoes.html">Conectar WhatsApp</a></div></div>'}
-  const user=await WFAuth.requireAuth();if(!user)return;WFAuth.renderUserChip(document.getElementById('user-area'),user);try{renderPackages(await WFApi.listNichePackages())}catch(e){alert(e.message)}
+ const alertArea=document.getElementById('alert-area');let packages=[],selected=null,flowRes=null,kbRes=null,current='niche';
+ const stepNames=['niche','profile','flow','kb','done'];const labels={niche:'1 Nicho',profile:'2 Dados',flow:'3 Fluxo',kb:'4 Base/IA',done:'5 Final'};
+ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+ function alert(msg,type){alertArea.innerHTML='<div class="alert alert-'+(type||'error')+'">'+esc(msg)+'</div>';setTimeout(()=>alertArea.innerHTML='',6000)}
+ function setScreen(name){current=name;stepNames.forEach(n=>{document.getElementById('screen-'+n).style.display=n===name?'block':'none'});renderSteps()}
+ function renderSteps(){document.getElementById('steps').innerHTML=stepNames.map((n,i)=>'<span class="step '+(n===current?'active':(stepNames.indexOf(current)>i?'done':''))+'">'+labels[n]+'</span>').join('')}
+ function profile(){return{package_id:selected,business_name:val('business-name'),address:val('address'),hours:val('hours'),services:val('services'),human_contact:val('human-contact'),payment_methods:val('payment-methods'),average_ticket:val('average-ticket')?Number(val('average-ticket')):null,extra_info:val('extra-info')}}
+ function val(id){return document.getElementById(id).value||null}
+ function renderPackages(){const el=document.getElementById('packages');el.innerHTML=packages.map(p=>'<div class="pkg-card '+(selected===p.id?'active':'')+'" data-pkg="'+p.id+'"><h3>'+esc(p.title)+'</h3><p class="pkg-meta">'+esc(p.description)+'</p><div class="pkg-meta"><strong>Pipeline:</strong> '+esc(p.pipeline_type)+'</div>'+p.suggested_tags.map(t=>'<span class="tag">🏷️ '+esc(t)+'</span>').join('')+'<div class="pkg-meta"><strong>Agenda:</strong> '+esc(p.appointment_types.join(', '))+'</div></div>').join('');el.querySelectorAll('[data-pkg]').forEach(x=>x.onclick=()=>{selected=x.dataset.pkg;document.getElementById('next-profile').disabled=false;renderPackages()})}
+ document.getElementById('next-profile').onclick=()=>setScreen('profile');document.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>setScreen(b.dataset.back));
+ document.getElementById('btn-create-flow').onclick=async()=>{if(!selected)return;try{flowRes=await WFApi.setupCreateFlow(profile());document.getElementById('flow-result').innerHTML='<p><strong>Fluxo:</strong> '+esc(flowRes.flow_name)+' (#'+flowRes.flow_id+')</p><p><strong>Pipeline:</strong> '+esc(flowRes.pipeline_type)+'</p><p><strong>Tags:</strong> '+flowRes.suggested_tags.map(t=>'<span class="tag">🏷️ '+esc(t)+'</span>').join('')+'</p>';document.getElementById('open-flow').href='builder.html?flow='+flowRes.flow_id;setScreen('flow')}catch(e){alert(e.message)}};
+ document.getElementById('btn-create-kb').onclick=async()=>{try{kbRes=await WFApi.setupCreateKb({package_id:selected,business_name:profile().business_name,text:flowRes.knowledge_base_seed});document.getElementById('kb-result').innerHTML='<p><strong>Base criada:</strong> '+esc(kbRes.kb_name)+' (#'+kbRes.kb_id+')</p>';document.getElementById('seed').textContent=flowRes.knowledge_base_seed;setScreen('kb')}catch(e){alert(e.message)}};
+ document.getElementById('btn-index-kb').onclick=async()=>{try{const r=await WFApi.setupIndexKb({kb_id:kbRes.kb_id,text:flowRes.knowledge_base_seed});document.getElementById('done-result').innerHTML='<p>Fluxo criado: #'+esc(flowRes.flow_id)+'</p><p>Base IA: #'+esc(kbRes.kb_id)+'</p><p>Chunks indexados: '+esc(r.chunks_created)+'</p>';setScreen('done')}catch(e){alert('A indexação falhou, mas o fluxo e a base foram criados. Você pode tentar novamente pela tela IA. Erro: '+e.message)}};
+ const user=await WFAuth.requireAuth();if(!user)return;WFAuth.renderUserChip(document.getElementById('user-area'),user);packages=await WFApi.listNichePackages();renderPackages();renderSteps();
 })();
-</script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1ba938a096bf156',t:'MTc4NDEzNzQ3OA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
-</html>
+</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1bac497d8fd646d',t:'MTc4NDEzOTQ4Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body></html>
