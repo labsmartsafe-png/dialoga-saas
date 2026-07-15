@@ -18,6 +18,7 @@ from ..database import get_db
 from ..models import Appointment, Conversation, Flow, Lead, User
 from ..models_rag import AISettings, KnowledgeBase
 from ..models_whatsapp import WhatsAppConnection
+from ..services import plan_limits
 
 router = APIRouter()
 
@@ -69,7 +70,14 @@ def _user_summary(db: Session, user: User) -> dict:
         "knowledge_bases_count": kb_count,
         "monthly_ai_used": ai.monthly_ai_used if ai else 0,
         "monthly_ai_limit": ai.monthly_ai_limit if ai else 0,
+        "plan_limits": plan_limits.limits_for(user),
     }
+
+
+@router.get("/plans")
+def admin_plans(admin: User = Depends(require_admin)):
+    """Tabela de limites dos planos disponíveis."""
+    return plan_limits.public_plan_table()
 
 
 @router.get("/overview")
@@ -128,7 +136,8 @@ def admin_update_user(
             raise HTTPException(400, "Você não pode remover seu próprio admin sem ADMIN_EMAILS.")
         user.is_admin = payload.is_admin
     if payload.plan is not None:
-        user.plan = payload.plan.strip() or user.plan
+        user.plan = plan_limits.normalize_plan(payload.plan.strip() or user.plan)
+        plan_limits.sync_ai_limit_for_user(db, user)
     user.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(user)

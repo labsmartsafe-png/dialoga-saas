@@ -26,6 +26,7 @@ from ..crypto import encrypt_secret
 from ..services.whatsapp_meta_service import (
     send_text_via_connection, validate_connection_token,
 )
+from ..services import plan_limits
 
 logger = logging.getLogger("whatsflow.whatsapp.connections")
 
@@ -71,6 +72,17 @@ def create_connection(
     - Criptografa o token antes de salvar.
     - phone_number_id e' unico por provider (UNIQUE no banco).
     """
+    # valida limite de conexões somente ao criar nova conexão; upsert existente é permitido
+    existing_same = (
+        db.query(WhatsAppConnection)
+        .filter(WhatsAppConnection.provider == "meta",
+                WhatsAppConnection.phone_number_id == payload.phone_number_id,
+                WhatsAppConnection.owner_id == current_user.id)
+        .first()
+    )
+    if existing_same is None:
+        plan_limits.assert_can_create_whatsapp_connection(db, current_user)
+
     # valida flow se enviado
     if payload.flow_id is not None:
         flow = (
@@ -220,6 +232,7 @@ def create_evolution_connection(
     """
     if not _settings.evolution_enabled:
         raise HTTPException(400, "Conexao via QR Code (Evolution) nao esta habilitada.")
+    plan_limits.assert_can_create_whatsapp_connection(db, current_user)
     if payload.flow_id is not None:
         flow = db.query(Flow).filter(Flow.id == payload.flow_id, Flow.owner_id == current_user.id).first()
         if not flow:

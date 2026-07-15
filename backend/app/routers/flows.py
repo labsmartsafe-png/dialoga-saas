@@ -16,6 +16,7 @@ from ..services.flow_engine import (
     start_conversation, send_user_message, serialize_conversation,
     get_current_node_view,
 )
+from ..services import plan_limits
 
 router = APIRouter()
 
@@ -42,6 +43,7 @@ def create_flow(
     current_user: User = Depends(get_current_user),
 ):
     """Cria um novo fluxo."""
+    plan_limits.assert_can_create_flow(db, current_user)
     nodes = [n.model_dump() for n in payload.nodes]
     start_id = payload.start_node_id
     if not start_id and nodes:

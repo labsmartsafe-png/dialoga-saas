@@ -80,6 +80,7 @@
 
     // ---- Admin ----
     adminOverview: function () { return request("/api/admin/overview"); },
+    adminPlans: function () { return request("/api/admin/plans"); },
     adminUsers: function (qs) { return request("/api/admin/users" + (qs || "")); },
     adminUpdateUser: function (id, b) { return request("/api/admin/users/" + id, { method: "PUT", body: b }); },
 

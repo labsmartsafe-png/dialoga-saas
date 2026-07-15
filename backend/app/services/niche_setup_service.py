@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 
 from ..models import Flow, ROISettings, User
 from ..models_rag import AISettings, KnowledgeBase
-from ..services import rag_service
+from ..services import rag_service, plan_limits
 
 
 def _node(node_id: str, ntype: str, content: str = "", **extra) -> dict:
@@ -184,6 +184,7 @@ def save_roi_if_present(db: Session, user: User, average_ticket: Optional[float]
 
 
 def create_flow_from_package(db: Session, user: User, package_id: str, business_name: Optional[str] = None, profile: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    plan_limits.assert_can_create_flow(db, user)
     pkg = get_package(package_id)
     business_name = business_name or (profile or {}).get("business_name")
     name_suffix = f" - {business_name.strip()}" if business_name else ""
@@ -195,6 +196,7 @@ def create_flow_from_package(db: Session, user: User, package_id: str, business_
 
 
 def create_kb(db: Session, user: User, package_id: str, business_name: Optional[str], text: str) -> Dict[str, Any]:
+    plan_limits.assert_can_create_knowledge_base(db, user)
     pkg = get_package(package_id)
     kb_name = f"Base {pkg['title']}" + (f" - {business_name.strip()}" if business_name else "")
     kb = KnowledgeBase(owner_id=user.id, name=kb_name, description="Criada pelo Setup por Nicho")

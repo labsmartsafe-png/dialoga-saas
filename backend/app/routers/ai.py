@@ -25,7 +25,7 @@ from ..schemas_rag import (
     AISettingsUpdate, AISettingsOut, AIAskRequest,
 )
 from ..auth import get_current_user
-from ..services import rag_service
+from ..services import rag_service, plan_limits
 
 logger = logging.getLogger("whatsflow.router.ai")
 
@@ -47,6 +47,7 @@ def _get_owned_kb(db: Session, kb_id: int, user: User) -> KnowledgeBase:
 @router.post("/knowledge-bases", response_model=KnowledgeBaseOut)
 def create_kb(payload: KnowledgeBaseCreate, db: Session = Depends(get_db),
               current_user: User = Depends(get_current_user)):
+    plan_limits.assert_can_create_knowledge_base(db, current_user)
     kb = KnowledgeBase(owner_id=current_user.id, name=payload.name,
                        description=payload.description)
     db.add(kb)
