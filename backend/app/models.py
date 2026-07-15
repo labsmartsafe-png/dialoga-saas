@@ -124,6 +124,23 @@ class LeadNote(Base):
     lead = relationship("Lead")
 
 
+class ROISettings(Base):
+    """Configuração simples de ROI por usuário/empresa.
+
+    Fase Dashboard ROI básico: permite estimar receita potencial usando ticket médio.
+    """
+    __tablename__ = "roi_settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    average_ticket = Column(Float, default=0.0)
+    currency = Column(String(10), default="BRL")
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+    owner = relationship("User")
+
+
 class Appointment(Base):
     """Agendamento interno vinculado a lead/fluxo.
 

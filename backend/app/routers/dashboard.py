@@ -15,11 +15,21 @@ from sqlalchemy.orm import Session
 
 from ..auth import get_current_user
 from ..database import get_db
-from ..models import Appointment, Conversation, Flow, Lead, User
+from ..models import Appointment, Conversation, Flow, Lead, ROISettings, User
 from ..services import lead_service
+from ..schemas import ROISettingsOut, ROISettingsUpdate
 
 
 router = APIRouter()
+
+
+def _get_or_create_roi_settings(db: Session, owner_id: int) -> ROISettings:
+    settings = db.query(ROISettings).filter(ROISettings.owner_id == owner_id).first()
+    if settings is None:
+        settings = ROISettings(owner_id=owner_id, average_ticket=0.0, currency="BRL")
+        db.add(settings)
+        db.flush()
+    return settings
 
 
 def _now():
@@ -50,6 +60,31 @@ def _serialize_lead(lead: Lead) -> dict:
     }
 
 
+@router.get("/roi-settings", response_model=ROISettingsOut)
+def get_roi_settings(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    settings = _get_or_create_roi_settings(db, current_user.id)
+    db.commit()
+    return ROISettingsOut.model_validate(settings)
+
+
+@router.put("/roi-settings", response_model=ROISettingsOut)
+def update_roi_settings(
+    payload: ROISettingsUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    settings = _get_or_create_roi_settings(db, current_user.id)
+    settings.average_ticket = float(payload.average_ticket or 0)
+    settings.currency = payload.currency or "BRL"
+    settings.updated_at = _now()
+    db.commit()
+    db.refresh(settings)
+    return ROISettingsOut.model_validate(settings)
+
+
 @router.get("/metrics")
 def metrics(
     db: Session = Depends(get_db),
@@ -76,6 +111,12 @@ def metrics(
     appointments_done = appt_q.filter(Appointment.status == "realizado").count()
     appointments_today = appt_q.filter(Appointment.scheduled_at >= today, Appointment.scheduled_at < today + timedelta(days=1)).count()
     appointments_next_7_days = appt_q.filter(Appointment.scheduled_at >= now, Appointment.scheduled_at <= next_7).count()
+
+    roi_settings = _get_or_create_roi_settings(db, current_user.id)
+    average_ticket = float(roi_settings.average_ticket or 0)
+    estimated_confirmed_revenue = round(appointments_confirmed * average_ticket, 2)
+    estimated_done_revenue = round(appointments_done * average_ticket, 2)
+    estimated_pipeline_revenue = round((appointments_requested + appointments_confirmed) * average_ticket, 2)
 
     human_pending = leads_q.filter(Lead.status == lead_service.STATUS_AGUARDANDO_HUMANO).count()
     human_active = leads_q.filter(Lead.status == lead_service.STATUS_EM_ATENDIMENTO_HUMANO).count()
@@ -130,4 +171,9 @@ def metrics(
         "appointments_next_7_days": appointments_next_7_days,
         "real_leads_with_appointment": real_leads_with_appointment,
         "appointment_conversion_rate": appointment_conversion_rate,
+        "roi_average_ticket": average_ticket,
+        "roi_currency": roi_settings.currency or "BRL",
+        "estimated_confirmed_revenue": estimated_confirmed_revenue,
+        "estimated_done_revenue": estimated_done_revenue,
+        "estimated_pipeline_revenue": estimated_pipeline_revenue,
     }

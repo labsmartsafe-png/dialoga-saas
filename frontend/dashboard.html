@@ -58,9 +58,23 @@
     <div class="metric-card"><div class="label">Agend. hoje</div><div class="value" id="m-appt-today">-</div></div>
     <div class="metric-card"><div class="label">Agend. confirmados</div><div class="value" id="m-appt-confirmed">-</div></div>
     <div class="metric-card"><div class="label">Conversão p/ agenda</div><div class="value" id="m-appt-conv">-</div></div>
+    <div class="metric-card"><div class="label">Receita confirmada estim.</div><div class="value" id="m-roi-confirmed">-</div></div>
+    <div class="metric-card"><div class="label">Pipeline estimado</div><div class="value" id="m-roi-pipeline">-</div></div>
   </section>
 
   <div class="dashboard-grid">
+    <div class="card">
+      <div class="card-title">Configuração de ROI</div>
+      <p class="text-muted" style="font-size:13px;margin-bottom:12px;">Informe o ticket médio para estimar receita dos agendamentos.</p>
+      <form id="roi-form" class="flex gap-1" style="align-items:end;flex-wrap:wrap;">
+        <div class="form-group" style="min-width:160px;">
+          <label style="font-size:12px;color:var(--muted);font-weight:700;">Ticket médio (R$)</label>
+          <input class="form-control" type="number" id="roi-ticket" min="0" step="0.01" placeholder="Ex: 250">
+        </div>
+        <button class="btn btn-primary" type="submit">Salvar ROI</button>
+      </form>
+      <div class="text-muted" id="roi-hint" style="font-size:12px;margin-top:10px;"></div>
+    </div>
     <div class="card">
       <div class="card-title">Leads por dia (ultimos 7 dias)</div>
       <div class="bar-chart" id="bar-chart" style="margin: 30px 12px 12px;"></div>
@@ -128,6 +142,12 @@ window.API_BASE = "https://dialoga-backend-1slr.onrender.com";
     document.getElementById("m-appt-today").textContent = m.appointments_today || 0;
     document.getElementById("m-appt-confirmed").textContent = m.appointments_confirmed || 0;
     document.getElementById("m-appt-conv").textContent = (m.appointment_conversion_rate || 0) + "%";
+    document.getElementById("m-roi-confirmed").textContent = money(m.estimated_confirmed_revenue || 0);
+    document.getElementById("m-roi-pipeline").textContent = money(m.estimated_pipeline_revenue || 0);
+    const hint = document.getElementById("roi-hint");
+    if (hint) hint.textContent = "Ticket médio atual: " + money(m.roi_average_ticket || 0) + ". Receita realizada estimada: " + money(m.estimated_done_revenue || 0) + ".";
+    const ticket = document.getElementById("roi-ticket");
+    if (ticket && !ticket.value) ticket.value = m.roi_average_ticket || 0;
   }
 
   function renderChart(days) {
@@ -193,6 +213,12 @@ window.API_BASE = "https://dialoga-backend-1slr.onrender.com";
     }).join("");
   }
 
+
+  function money(v) {
+    try { return Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }); }
+    catch { return "R$ " + (v || 0); }
+  }
+
   function escapeHtml(s) {
     return String(s || "").replace(/[&<>"']/g, function(c){
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
@@ -205,10 +231,23 @@ window.API_BASE = "https://dialoga-backend-1slr.onrender.com";
     catch { return iso; }
   }
 
+  const roiForm = document.getElementById("roi-form");
+  if (roiForm) {
+    roiForm.addEventListener("submit", async function(ev){
+      ev.preventDefault();
+      try {
+        await WFApi.updateRoiSettings({ average_ticket: Number(document.getElementById("roi-ticket").value || 0), currency: "BRL" });
+        await load();
+      } catch (e) {
+        alertArea.innerHTML = '<div class="alert alert-error">' + escapeHtml(e.message) + '</div>';
+      }
+    });
+  }
+
   document.getElementById("btn-refresh").addEventListener("click", load);
   load();
 })();
 </script>
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1b2e7f3ae1dcaaa',t:'MTc4NDA1NzA1MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1b916c28ec837ab',t:'MTc4NDEyMTg4Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
 </html>

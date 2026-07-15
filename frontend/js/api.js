@@ -62,6 +62,8 @@
     deleteLeadNote: function (leadId, noteId) { return request("/api/leads/" + leadId + "/notes/" + noteId, { method: "DELETE" }); },
     exportLeadsUrl: function (qs) { return API_BASE + "/api/leads/export/csv" + (qs || ""); },
     metrics: function () { return request("/api/dashboard/metrics"); },
+    getRoiSettings: function () { return request("/api/dashboard/roi-settings"); },
+    updateRoiSettings: function (b) { return request("/api/dashboard/roi-settings", { method: "PUT", body: b }); },
 
     // ---- Inbox Humano (CRM 1.1) ----
     inboxList: function (qs) { return request("/api/inbox/conversations" + (qs || "")); },

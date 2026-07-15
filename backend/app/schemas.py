@@ -242,6 +242,20 @@ class AppointmentOut(BaseModel):
         from_attributes = True
 
 
+# =================== ROI SETTINGS ===================
+class ROISettingsUpdate(BaseModel):
+    average_ticket: float = Field(0, ge=0)
+    currency: str = Field("BRL", max_length=10)
+
+
+class ROISettingsOut(BaseModel):
+    average_ticket: float = 0
+    currency: str = "BRL"
+
+    class Config:
+        from_attributes = True
+
+
 # =================== DASHBOARD ===================
 class DashboardMetrics(BaseModel):
     flows_count: int
