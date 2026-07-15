@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
-from ..models import Flow, User
+from ..models import Flow, ROISettings, User
 
 
 def _node(node_id: str, ntype: str, content: str = "", **extra) -> dict:
@@ -166,9 +166,59 @@ def get_package(package_id: str) -> Dict[str, Any]:
     return PACKAGES[package_id]
 
 
-def apply_package(db: Session, user: User, package_id: str, business_name: Optional[str] = None) -> Dict[str, Any]:
+
+def _profile_lines(profile: Optional[Dict[str, Any]]) -> str:
+    profile = profile or {}
+    lines = []
+    mapping = [
+        ("business_name", "Nome do negócio"),
+        ("address", "Endereço"),
+        ("hours", "Horário de atendimento"),
+        ("services", "Serviços/produtos principais"),
+        ("human_contact", "Contato humano"),
+        ("payment_methods", "Formas de pagamento"),
+        ("extra_info", "Informações extras"),
+    ]
+    for key, label in mapping:
+        val = (profile.get(key) or "").strip() if isinstance(profile.get(key), str) else profile.get(key)
+        if val:
+            lines.append(f"- {label}: {val}")
+    return "\n".join(lines)
+
+
+def _customize_seed(seed: str, profile: Optional[Dict[str, Any]]) -> str:
+    extra = _profile_lines(profile)
+    if not extra:
+        return seed
+    return seed + "\n\nDados informados no setup:\n" + extra
+
+
+def _save_roi_if_present(db: Session, user: User, profile: Optional[Dict[str, Any]]):
+    profile = profile or {}
+    raw = profile.get("average_ticket")
+    try:
+        ticket = float(raw) if raw not in (None, "") else None
+    except Exception:
+        ticket = None
+    if ticket is None or ticket < 0:
+        return None
+    settings = db.query(ROISettings).filter(ROISettings.owner_id == user.id).first()
+    if settings is None:
+        settings = ROISettings(owner_id=user.id, average_ticket=ticket, currency="BRL")
+        db.add(settings)
+    else:
+        settings.average_ticket = ticket
+        settings.currency = settings.currency or "BRL"
+    db.flush()
+    return ticket
+
+
+def apply_package(db: Session, user: User, package_id: str, business_name: Optional[str] = None, profile: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     pkg = get_package(package_id)
+    profile = profile or {}
+    business_name = business_name or profile.get("business_name")
     name_suffix = f" - {business_name.strip()}" if business_name else ""
+    average_ticket_saved = _save_roi_if_present(db, user, profile)
     flow = Flow(
         owner_id=user.id,
         name=f"{pkg['flow_name']}{name_suffix}",
@@ -190,7 +240,9 @@ def apply_package(db: Session, user: User, package_id: str, business_name: Optio
         "pipeline_type": pkg["pipeline_type"],
         "appointment_types": pkg["appointment_types"],
         "suggested_tags": pkg["suggested_tags"],
-        "knowledge_base_seed": pkg["knowledge_base_seed"],
+        "knowledge_base_seed": _customize_seed(pkg["knowledge_base_seed"], profile),
+        "business_profile": profile,
+        "average_ticket_saved": average_ticket_saved,
         "next_steps": [
             "Revise o fluxo criado no Builder.",
             "Cole o texto sugerido em IA > Base de conhecimento e adapte ao negócio.",

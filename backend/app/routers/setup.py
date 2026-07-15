@@ -19,6 +19,13 @@ router = APIRouter()
 class ApplyPackageRequest(BaseModel):
     package_id: str = Field(..., min_length=2, max_length=50)
     business_name: Optional[str] = Field(None, max_length=255)
+    address: Optional[str] = Field(None, max_length=500)
+    hours: Optional[str] = Field(None, max_length=500)
+    services: Optional[str] = Field(None, max_length=1000)
+    human_contact: Optional[str] = Field(None, max_length=500)
+    payment_methods: Optional[str] = Field(None, max_length=500)
+    average_ticket: Optional[float] = Field(None, ge=0)
+    extra_info: Optional[str] = Field(None, max_length=1500)
 
 
 @router.get("/niches")
@@ -37,6 +44,6 @@ def apply_niche_package(
 ):
     """Aplica pacote criando um fluxo pronto e retornando orientações."""
     try:
-        return niche_setup_service.apply_package(db, current_user, payload.package_id, payload.business_name)
+        return niche_setup_service.apply_package(db, current_user, payload.package_id, payload.business_name, payload.model_dump())
     except KeyError:
         raise HTTPException(404, "Pacote de nicho não encontrado.")
