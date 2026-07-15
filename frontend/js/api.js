@@ -78,6 +78,10 @@
     updateAppointment: function (id, b) { return request("/api/appointments/" + id, { method: "PUT", body: b }); },
     deleteAppointment: function (id) { return request("/api/appointments/" + id, { method: "DELETE" }); },
 
+    // ---- Setup / Nichos ----
+    listNichePackages: function () { return request("/api/setup/niches"); },
+    applyNichePackage: function (b) { return request("/api/setup/apply", { method: "POST", body: b }); },
+
     // ---- Google Calendar ----
     calendarAuthUrl: function () { return request("/api/calendar/google/auth-url"); },
     calendarStatus: function () { return request("/api/calendar/status"); },

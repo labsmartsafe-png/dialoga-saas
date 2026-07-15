@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Setup por Nicho - dIAloga+</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .setup-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}.pkg-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:18px}.pkg-card h3{margin:0 0 8px}.pkg-meta{font-size:13px;color:var(--muted);margin:8px 0}.tag{display:inline-flex;border-radius:999px;background:#f3f4f6;padding:4px 8px;margin:3px;font-size:11px}.result{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-top:18px}.seed{white-space:pre-wrap;background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:12px;font-size:13px;max-height:260px;overflow:auto}body.dark-mode .pkg-card,body.dark-mode .result{background:#171d2b;border-color:#262e40;color:#e6eaf2}body.dark-mode .tag{background:#1f2636;color:#e6eaf2}body.dark-mode .seed{background:#0f172a;border-color:#334155;color:#e6eaf2}
+  </style>
+</head>
+<body>
+<script>if(localStorage.getItem("dialoga-dark-mode")==="1")document.body.classList.add("dark-mode");</script>
+<nav class="navbar">
+  <div class="brand"><img src="img/logo-dialoga.png" alt="dIAloga+"></div>
+  <nav>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="setup.html" class="active">Setup</a>
+    <a href="builder.html">Fluxos</a>
+    <a href="leads.html">Leads</a>
+    <a href="inbox.html">Inbox</a>
+    <a href="agenda.html">Agenda</a>
+    <a href="ia.html">IA</a>
+    <a href="configuracoes.html">Configurações</a>
+  </nav>
+  <div class="user-area" id="user-area"></div>
+</nav>
+
+<main class="container container-lg">
+  <div class="flex justify-between items-center mb-3">
+    <div><h1 style="font-size:26px;">Setup por Nicho</h1><p class="text-muted">Escolha um pacote pronto para criar um fluxo inicial e receber orientações de configuração.</p></div>
+  </div>
+  <div id="alert-area"></div>
+
+  <div class="card" style="margin-bottom:18px;">
+    <div class="form-group">
+      <label>Nome do negócio (opcional)</label>
+      <input class="form-control" id="business-name" placeholder="Ex: Clínica Sorriso, Pet Feliz, Auto Prime">
+    </div>
+  </div>
+
+  <div class="setup-grid" id="packages"><div class="empty-state"><div class="spinner"></div></div></div>
+  <div id="result"></div>
+</main>
+
+<script>window.API_BASE="https://dialoga-backend-1slr.onrender.com";</script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script>
+(async function(){
+  const alertArea=document.getElementById('alert-area');
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+  function alert(msg,type){alertArea.innerHTML='<div class="alert alert-'+(type||'error')+'">'+esc(msg)+'</div>';setTimeout(()=>alertArea.innerHTML='',5000)}
+  function renderPackages(items){const el=document.getElementById('packages');if(!items.length){el.innerHTML='<div class="empty-state">Nenhum pacote disponível.</div>';return}el.innerHTML=items.map(p=>'<div class="pkg-card"><h3>'+esc(p.title)+'</h3><p class="pkg-meta">'+esc(p.description)+'</p><div class="pkg-meta"><strong>Pipeline:</strong> '+esc(p.pipeline_type)+'</div><div>'+((p.suggested_tags||[]).map(t=>'<span class="tag">🏷️ '+esc(t)+'</span>').join(''))+'</div><div class="pkg-meta"><strong>Agenda:</strong> '+esc((p.appointment_types||[]).join(', '))+'</div><button class="btn btn-primary" data-apply="'+esc(p.id)+'">Usar este pacote</button></div>').join('');el.querySelectorAll('[data-apply]').forEach(btn=>btn.addEventListener('click',()=>apply(btn.dataset.apply)))}
+  async function apply(id){if(!confirm('Criar um novo fluxo com este pacote?'))return;try{const res=await WFApi.applyNichePackage({package_id:id,business_name:document.getElementById('business-name').value||null});renderResult(res);alert('Pacote aplicado com sucesso!','success')}catch(e){alert(e.message)}}
+  function renderResult(r){document.getElementById('result').innerHTML='<div class="result"><h2>Pacote aplicado ✅</h2><p><strong>Fluxo criado:</strong> '+esc(r.flow_name)+' (#'+esc(r.flow_id)+')</p><p><strong>Pipeline:</strong> '+esc(r.pipeline_type)+'</p><p><strong>Tipos de agenda:</strong> '+esc((r.appointment_types||[]).join(', '))+'</p><p><strong>Tags sugeridas:</strong><br>'+((r.suggested_tags||[]).map(t=>'<span class="tag">🏷️ '+esc(t)+'</span>').join(''))+'</p><h3>Base de conhecimento sugerida</h3><div class="seed">'+esc(r.knowledge_base_seed||'')+'</div><h3>Próximos passos</h3><ol>'+(r.next_steps||[]).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol><div class="flex gap-1"><a class="btn btn-primary" href="builder.html?flow='+esc(r.flow_id)+'">Abrir fluxo</a><a class="btn btn-secondary" href="ia.html">Configurar IA</a><a class="btn btn-secondary" href="configuracoes.html">Conectar WhatsApp</a></div></div>'}
+  const user=await WFAuth.requireAuth();if(!user)return;WFAuth.renderUserChip(document.getElementById('user-area'),user);try{renderPackages(await WFApi.listNichePackages())}catch(e){alert(e.message)}
+})();
+</script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1ba553e2b78a660',t:'MTc4NDEzNDkyNw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
