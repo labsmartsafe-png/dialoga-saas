@@ -30,6 +30,7 @@ class User(Base):
     phone = Column(String(50), nullable=True)
     plan = Column(String(50), default="basico")
     is_active = Column(Boolean, default=True)
+    is_admin = Column(Boolean, default=False)
     created_at = Column(DateTime, default=utcnow)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 

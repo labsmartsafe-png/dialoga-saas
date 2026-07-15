@@ -78,6 +78,11 @@
     updateAppointment: function (id, b) { return request("/api/appointments/" + id, { method: "PUT", body: b }); },
     deleteAppointment: function (id) { return request("/api/appointments/" + id, { method: "DELETE" }); },
 
+    // ---- Admin ----
+    adminOverview: function () { return request("/api/admin/overview"); },
+    adminUsers: function (qs) { return request("/api/admin/users" + (qs || "")); },
+    adminUpdateUser: function (id, b) { return request("/api/admin/users/" + id, { method: "PUT", body: b }); },
+
     // ---- Setup / Nichos ----
     listNichePackages: function () { return request("/api/setup/niches"); },
     applyNichePackage: function (b) { return request("/api/setup/apply", { method: "POST", body: b }); },

@@ -30,6 +30,7 @@ class UserOut(BaseModel):
     full_name: Optional[str] = None
     phone: Optional[str] = None
     plan: str = "basico"
+    is_admin: bool = False
     created_at: datetime
 
     class Config:

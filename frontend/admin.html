@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - dIAloga+</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .admin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px}.admin-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:16px}.admin-card .label{font-size:12px;color:var(--muted);text-transform:uppercase;font-weight:800}.admin-card .value{font-size:26px;font-weight:900;color:var(--text);margin-top:6px}.admin-table{width:100%;font-size:13px}.admin-table th{text-align:left;font-size:11px;text-transform:uppercase;color:var(--muted);padding:8px;border-bottom:1px solid var(--border)}.admin-table td{padding:10px 8px;border-bottom:1px solid var(--border);vertical-align:top}.badge{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800}.badge.ok{background:#dcfce7;color:#166534}.badge.err{background:#fee2e2;color:#991b1b}.badge.info{background:#dbeafe;color:#1e40af}.actions{display:flex;gap:6px;flex-wrap:wrap}.search-row{display:flex;gap:8px;margin-bottom:14px}.search-row input{flex:1}body.dark-mode .admin-card{background:#171d2b;border-color:#262e40}body.dark-mode .admin-card .value{color:#e6eaf2}body.dark-mode .admin-table th,body.dark-mode .admin-table td{border-color:#262e40}
+  </style>
+</head>
+<body>
+<script>if(localStorage.getItem("dialoga-dark-mode")==="1")document.body.classList.add("dark-mode");</script>
+<nav class="navbar">
+  <div class="brand"><img src="img/logo-dialoga.png" alt="dIAloga+"></div>
+  <nav>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="setup.html">Setup</a>
+    <a href="builder.html">Fluxos</a>
+    <a href="leads.html">Leads</a>
+    <a href="inbox.html">Inbox</a>
+    <a href="agenda.html">Agenda</a>
+    <a href="ia.html">IA</a>
+    <a href="configuracoes.html">Configurações</a>
+    <a href="admin.html" class="active">Admin</a>
+  </nav>
+  <div class="user-area" id="user-area"></div>
+</nav>
+<main class="container container-lg">
+  <div class="flex justify-between items-center mb-3"><div><h1 style="font-size:26px;">Painel Admin</h1><p class="text-muted">Visão geral dos clientes e operação do SaaS.</p></div><button class="btn btn-secondary" id="btn-refresh">Atualizar</button></div>
+  <div id="alert-area"></div>
+  <section class="admin-grid" id="overview"><div class="admin-card"><div class="label">Carregando</div><div class="value">...</div></div></section>
+  <section class="card">
+    <div class="flex justify-between items-center mb-2"><div class="card-title">Usuários / Clientes</div></div>
+    <div class="search-row"><input class="form-control" id="q" placeholder="Buscar por email ou empresa"><button class="btn btn-primary" id="btn-search">Buscar</button><button class="btn btn-secondary" id="btn-clear">Limpar</button></div>
+    <div id="users"><div class="empty-state"><div class="spinner"></div></div></div>
+  </section>
+</main>
+<script>window.API_BASE="https://dialoga-backend-1slr.onrender.com";</script>
+<script src="js/api.js"></script><script src="js/auth.js"></script>
+<script>
+(async function(){
+ const alertArea=document.getElementById('alert-area');let users=[];
+ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+ function alert(msg,type){alertArea.innerHTML='<div class="alert alert-'+(type||'error')+'">'+esc(msg)+'</div>';setTimeout(()=>alertArea.innerHTML='',6000)}
+ function fmt(iso){if(!iso)return'-';try{return new Date(iso).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}catch{return iso}}
+ function card(label,value){return '<div class="admin-card"><div class="label">'+esc(label)+'</div><div class="value">'+esc(value)+'</div></div>'}
+ async function load(){try{const o=await WFApi.adminOverview();renderOverview(o);await loadUsers()}catch(e){alert(e.message)}}
+ function renderOverview(o){document.getElementById('overview').innerHTML=[card('Usuários',o.users_total),card('Usuários ativos',o.users_active),card('Leads reais',o.real_leads_total),card('Conexões WhatsApp',o.whatsapp_connections_total),card('Agendamentos',o.appointments_total),card('Bases IA',o.knowledge_bases_total),card('Conversas',o.conversations_total)].join('')}
+ async function loadUsers(){const q=document.getElementById('q').value.trim();users=await WFApi.adminUsers(q?'?q='+encodeURIComponent(q):'');renderUsers()}
+ function renderUsers(){const el=document.getElementById('users');if(!users.length){el.innerHTML='<div class="empty-state">Nenhum usuário encontrado.</div>';return}let html='<div class="table-wrap"><table class="admin-table"><thead><tr><th>Empresa</th><th>Email</th><th>Plano</th><th>Status</th><th>Métricas</th><th>IA</th><th>Criado</th><th>Ações</th></tr></thead><tbody>';users.forEach(u=>{html+='<tr><td><strong>'+esc(u.company_name)+'</strong><br>'+esc(u.full_name||'')+'</td><td>'+esc(u.email)+(u.is_admin?' <span class="badge info">admin</span>':'')+'</td><td>'+esc(u.plan||'-')+'</td><td>'+(u.is_active?'<span class="badge ok">ativo</span>':'<span class="badge err">inativo</span>')+'</td><td>Fluxos: '+u.flows_count+'<br>Leads: '+u.leads_count+' / reais '+u.real_leads_count+'<br>WhatsApp: '+u.connections_count+'<br>Agenda: '+u.appointments_count+'</td><td>'+u.monthly_ai_used+' / '+u.monthly_ai_limit+'</td><td>'+fmt(u.created_at)+'</td><td><div class="actions"><button class="btn btn-secondary btn-sm" data-toggle="'+u.id+'">'+(u.is_active?'Desativar':'Ativar')+'</button><button class="btn btn-secondary btn-sm" data-plan="'+u.id+'">Plano</button><button class="btn btn-secondary btn-sm" data-admin="'+u.id+'">'+(u.is_admin?'Remover admin':'Tornar admin')+'</button></div></td></tr>'});html+='</tbody></table></div>';el.innerHTML=html;bindActions()}
+ function bindActions(){document.querySelectorAll('[data-toggle]').forEach(b=>b.onclick=async()=>{const id=Number(b.dataset.toggle);const u=users.find(x=>x.id===id);if(!u)return;if(!confirm((u.is_active?'Desativar':'Ativar')+' este usuário?'))return;await WFApi.adminUpdateUser(id,{is_active:!u.is_active});await load()});document.querySelectorAll('[data-admin]').forEach(b=>b.onclick=async()=>{const id=Number(b.dataset.admin);const u=users.find(x=>x.id===id);if(!u)return;if(!confirm((u.is_admin?'Remover admin de':'Tornar admin')+' '+u.email+'?'))return;await WFApi.adminUpdateUser(id,{is_admin:!u.is_admin});await load()});document.querySelectorAll('[data-plan]').forEach(b=>b.onclick=async()=>{const id=Number(b.dataset.plan);const u=users.find(x=>x.id===id);const plan=prompt('Plano (essencial, profissional, performance, basico, enterprise):',u.plan||'essencial');if(!plan)return;await WFApi.adminUpdateUser(id,{plan});await load()})}
+ document.getElementById('btn-refresh').onclick=load;document.getElementById('btn-search').onclick=loadUsers;document.getElementById('btn-clear').onclick=()=>{document.getElementById('q').value='';loadUsers()};const user=await WFAuth.requireAuth();if(!user)return;WFAuth.renderUserChip(document.getElementById('user-area'),user);await load();
+})();
+</script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1bbb044392c785e',t:'MTc4NDE0OTE0MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body></html>

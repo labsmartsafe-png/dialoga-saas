@@ -63,6 +63,7 @@ def get_db() -> Session:
 # --------------------------------------------------------------------------- #
 _ADDITIVE_COLUMNS = [
     ("flows", "mode", "VARCHAR(20)", "guided"),
+    ("users", "is_admin", "BOOLEAN", False),
 
     # WhatsAppConnection evoluiu em fases (Meta -> Evolution/QR).
     ("whatsapp_connections", "phone_number", "VARCHAR(40)", None),

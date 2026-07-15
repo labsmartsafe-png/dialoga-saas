@@ -5,6 +5,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     app_env: str = "development"
     debug: bool = True
+    # Emails com acesso ao Painel Admin (separados por virgula).
+    # Ex.: ADMIN_EMAILS=admin@seudominio.com.br,voce@gmail.com
+    admin_emails: str = ""
     secret_key: str = "chave-padrao-desenvolvimento-troque-em-producao-64-caracteres-min"
     jwt_algorithm: str = "HS256"
     jwt_expiration_minutes: int = 43200
