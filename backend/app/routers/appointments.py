@@ -18,6 +18,38 @@ from ..schemas import AppointmentCreate, AppointmentUpdate, AppointmentOut
 
 router = APIRouter()
 
+PIPELINE_RULES = {
+    "generic": {"solicitado": "agendamento_pendente", "confirmado": "agendado", "realizado": "realizado", "nao_compareceu": "no_show", "cancelado": "cancelado"},
+    "clinica": {"solicitado": "agendamento_pendente", "confirmado": "avaliacao_marcada", "realizado": "compareceu", "nao_compareceu": "no_show", "cancelado": "cancelado"},
+    "petshop": {"solicitado": "agendamento_pendente", "confirmado": "banho_tosa_marcado", "realizado": "atendido", "nao_compareceu": "no_show", "cancelado": "cancelado"},
+    "veiculos": {"solicitado": "agendamento_pendente", "confirmado": "visita_marcada", "realizado": "compareceu", "nao_compareceu": "no_show", "cancelado": "cancelado"},
+    "suporte_tecnico": {"solicitado": "agendamento_pendente", "confirmado": "agendado", "realizado": "resolvido", "nao_compareceu": "no_show", "cancelado": "cancelado"},
+}
+
+
+def _pipeline_type_from_appointment_type(appointment_type: str | None) -> str:
+    mapping = {
+        "avaliacao": "clinica",
+        "consulta": "clinica",
+        "banho_tosa": "petshop",
+        "visita": "veiculos",
+        "test_drive": "veiculos",
+        "suporte": "suporte_tecnico",
+    }
+    return mapping.get(appointment_type or "", "generic")
+
+
+def _sync_lead_pipeline_from_appointment(lead: Lead | None, appt: Appointment):
+    if not lead:
+        return
+    ptype = lead.pipeline_type or _pipeline_type_from_appointment_type(appt.appointment_type)
+    if ptype == "generic" and appt.appointment_type:
+        ptype = _pipeline_type_from_appointment_type(appt.appointment_type)
+    lead.pipeline_type = ptype
+    stage = PIPELINE_RULES.get(ptype, PIPELINE_RULES["generic"]).get(appt.status)
+    if stage:
+        lead.pipeline_stage = stage
+
 
 def _now():
     return datetime.now(timezone.utc)
@@ -104,9 +136,13 @@ def create_appointment(
         title=payload.title,
         scheduled_at=payload.scheduled_at,
         status=payload.status or "solicitado",
+        appointment_type=payload.appointment_type or "generic",
         notes=payload.notes,
+        calendar_sync_status="not_synced",
     )
     db.add(appt)
+    db.flush()
+    _sync_lead_pipeline_from_appointment(lead, appt)
     db.commit()
     db.refresh(appt)
     return _serialize(db, appt)
@@ -145,9 +181,13 @@ def update_appointment(
         appt.scheduled_at = data["scheduled_at"]
     if "status" in data and data["status"] is not None:
         appt.status = data["status"]
+    if "appointment_type" in data and data["appointment_type"] is not None:
+        appt.appointment_type = data["appointment_type"] or "generic"
     if "notes" in data:
         appt.notes = data["notes"]
     appt.updated_at = _now()
+    lead_for_pipeline = db.query(Lead).filter(Lead.id == appt.lead_id, Lead.owner_id == current_user.id).first() if appt.lead_id else None
+    _sync_lead_pipeline_from_appointment(lead_for_pipeline, appt)
 
     db.commit()
     db.refresh(appt)

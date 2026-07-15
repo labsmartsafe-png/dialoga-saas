@@ -88,6 +88,15 @@ _ADDITIVE_COLUMNS = [
     ("leads", "deal_value", "FLOAT", None),
     ("leads", "converted_at", "TIMESTAMP", None),
     ("leads", "lost_reason", "TEXT", None),
+    ("leads", "pipeline_type", "VARCHAR(50)", "generic"),
+    ("leads", "pipeline_stage", "VARCHAR(100)", "novo"),
+
+    # Agenda avançada / preparação Google Calendar (C.2)
+    ("appointments", "appointment_type", "VARCHAR(50)", "generic"),
+    ("appointments", "external_calendar_provider", "VARCHAR(50)", None),
+    ("appointments", "external_event_id", "VARCHAR(255)", None),
+    ("appointments", "calendar_sync_status", "VARCHAR(50)", "not_synced"),
+    ("appointments", "calendar_last_error", "TEXT", None),
 
     # Futuras colunas aditivas em tabelas existentes entram aqui.
     # Ex.: ("users", "is_admin", "BOOLEAN", "0"),

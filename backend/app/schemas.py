@@ -150,6 +150,8 @@ class LeadOut(BaseModel):
     deal_value: Optional[float] = None
     converted_at: Optional[datetime] = None
     lost_reason: Optional[str] = None
+    pipeline_type: Optional[str] = "generic"
+    pipeline_stage: Optional[str] = "novo"
     conversation_id: Optional[int] = None
     connection_id: Optional[int] = None
     last_interaction_at: Optional[datetime] = None
@@ -167,6 +169,8 @@ class LeadUpdate(BaseModel):
     tags: Optional[List[str]] = None
     deal_value: Optional[float] = None
     lost_reason: Optional[str] = None
+    pipeline_type: Optional[str] = None
+    pipeline_stage: Optional[str] = None
 
 
 class LeadNoteCreate(BaseModel):
@@ -216,6 +220,7 @@ class AppointmentCreate(BaseModel):
     lead_id: Optional[int] = None
     flow_id: Optional[int] = None
     status: Optional[Literal["solicitado", "confirmado", "cancelado", "realizado", "nao_compareceu"]] = "solicitado"
+    appointment_type: Optional[str] = "generic"
     notes: Optional[str] = None
 
 
@@ -225,6 +230,7 @@ class AppointmentUpdate(BaseModel):
     lead_id: Optional[int] = None
     flow_id: Optional[int] = None
     status: Optional[Literal["solicitado", "confirmado", "cancelado", "realizado", "nao_compareceu"]] = None
+    appointment_type: Optional[str] = None
     notes: Optional[str] = None
 
 
@@ -236,7 +242,12 @@ class AppointmentOut(BaseModel):
     title: str
     scheduled_at: datetime
     status: str
+    appointment_type: Optional[str] = "generic"
     notes: Optional[str] = None
+    external_calendar_provider: Optional[str] = None
+    external_event_id: Optional[str] = None
+    calendar_sync_status: Optional[str] = "not_synced"
+    calendar_last_error: Optional[str] = None
     created_at: datetime
     updated_at: datetime
     lead_name: Optional[str] = None

@@ -105,6 +105,10 @@ class Lead(Base):
     converted_at = Column(DateTime, nullable=True)    # quando virou convertido
     lost_reason = Column(Text, nullable=True)         # motivo quando perdido
 
+    # Pipeline por nicho (C.2)
+    pipeline_type = Column(String(50), default="generic", index=True)
+    pipeline_stage = Column(String(100), default="novo", index=True)
+
     conversation_id = Column(Integer, nullable=True, index=True)
     connection_id = Column(Integer, nullable=True, index=True)
     last_interaction_at = Column(DateTime, nullable=True)
@@ -160,7 +164,14 @@ class Appointment(Base):
     title = Column(String(255), nullable=False)
     scheduled_at = Column(DateTime, nullable=False, index=True)
     status = Column(String(50), default="solicitado", index=True)  # solicitado|confirmado|cancelado|realizado|nao_compareceu
+    appointment_type = Column(String(50), default="generic", index=True)  # generic|avaliacao|consulta|banho_tosa|visita|test_drive|retorno|suporte
     notes = Column(Text, nullable=True)
+
+    # Preparação para Google Calendar (C.2.3 futura)
+    external_calendar_provider = Column(String(50), nullable=True)
+    external_event_id = Column(String(255), nullable=True, index=True)
+    calendar_sync_status = Column(String(50), default="not_synced")  # not_synced|synced|error|disabled
+    calendar_last_error = Column(Text, nullable=True)
     created_at = Column(DateTime, default=utcnow, index=True)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 

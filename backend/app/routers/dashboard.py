@@ -196,6 +196,23 @@ def metrics(
     flows_performance.sort(key=lambda x: (x["leads"], x["revenue"]), reverse=True)
     flows_performance = flows_performance[:10]
 
+    pipeline_summary = []
+    pipeline_map = {}
+    for lead in real_leads_q.all():
+        ptype = lead.pipeline_type or "generic"
+        stage = lead.pipeline_stage or "novo"
+        key = (ptype, stage)
+        item = pipeline_map.setdefault(key, {"pipeline_type": ptype, "pipeline_stage": stage, "total": 0, "converted": 0, "revenue": 0.0})
+        item["total"] += 1
+        if lead.status == "convertido":
+            item["converted"] += 1
+            item["revenue"] += float(lead.deal_value or 0)
+    for item in pipeline_map.values():
+        item["conversion_rate"] = round((item["converted"] / item["total"]) * 100, 1) if item["total"] else 0.0
+        item["revenue"] = round(item["revenue"], 2)
+        pipeline_summary.append(item)
+    pipeline_summary.sort(key=lambda x: (x["pipeline_type"], x["total"]), reverse=False)
+
     # Leads por dia (últimos 7 dias)
     leads_by_day = []
     for i in range(6, -1, -1):
@@ -246,4 +263,5 @@ def metrics(
         "leads_by_source": leads_by_source,
         "tags_summary": tags_summary,
         "flows_performance": flows_performance,
+        "pipeline_summary": pipeline_summary,
     }

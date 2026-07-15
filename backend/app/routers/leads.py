@@ -96,6 +96,10 @@ def update_lead(
             lead.converted_at = datetime.now(timezone.utc)
     if payload.lost_reason is not None:
         lead.lost_reason = payload.lost_reason
+    if payload.pipeline_type is not None:
+        lead.pipeline_type = payload.pipeline_type or "generic"
+    if payload.pipeline_stage is not None:
+        lead.pipeline_stage = payload.pipeline_stage or "novo"
     if payload.stage is not None:
         lead.stage = payload.stage
     if payload.tags is not None:

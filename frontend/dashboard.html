@@ -114,6 +114,10 @@
       <div class="card-title">Performance por fluxo</div>
       <div id="flow-performance"><div class="empty-state"><div class="spinner"></div></div></div>
     </div>
+    <div class="card" style="grid-column:1 / -1;">
+      <div class="card-title">Pipeline por nicho/etapa</div>
+      <div id="pipeline-performance"><div class="empty-state"><div class="spinner"></div></div></div>
+    </div>
   </div>
 </main>
 
@@ -139,6 +143,7 @@ window.API_BASE = "https://dialoga-backend-1slr.onrender.com";
       renderSourcePerformance(m.leads_by_source || []);
       renderTagPerformance(m.tags_summary || []);
       renderFlowPerformance(m.flows_performance || []);
+      renderPipelinePerformance(m.pipeline_summary || []);
       await loadUpcomingAppointments();
     } catch (e) {
       alertArea.innerHTML = '<div class="alert alert-error">' + e.message + '</div>';
@@ -241,6 +246,18 @@ window.API_BASE = "https://dialoga-backend-1slr.onrender.com";
     c.innerHTML = html + '</tbody></table></div>';
   }
 
+
+  function renderPipelinePerformance(items) {
+    const c = document.getElementById("pipeline-performance");
+    if (!c) return;
+    if (!items.length) { c.innerHTML = '<div class="empty-state">Sem dados de pipeline.</div>'; return; }
+    let html = '<div class="table-wrap"><table class="table"><thead><tr><th>Pipeline</th><th>Etapa</th><th>Leads</th><th>Convertidos</th><th>Conv.</th><th>Receita</th></tr></thead><tbody>';
+    items.forEach(function(i){
+      html += '<tr><td>' + escapeHtml(i.pipeline_type || '-') + '</td><td>' + escapeHtml(i.pipeline_stage || '-') + '</td><td>' + (i.total||0) + '</td><td>' + (i.converted||0) + '</td><td>' + (i.conversion_rate||0) + '%</td><td>' + money(i.revenue||0) + '</td></tr>';
+    });
+    c.innerHTML = html + '</tbody></table></div>';
+  }
+
   async function loadUpcomingAppointments() {
     const c = document.getElementById("upcoming-appointments");
     if (!c || !WFApi.listAppointments) return;
@@ -302,6 +319,6 @@ window.API_BASE = "https://dialoga-backend-1slr.onrender.com";
   load();
 })();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1b942f81ce0c03f',t:'MTc4NDEyMzY5Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1b95fdf5a4f8e52',t:'MTc4NDEyNDg3Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
