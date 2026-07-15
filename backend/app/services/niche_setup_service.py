@@ -18,6 +18,8 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy.orm import Session
 
 from ..models import Flow, ROISettings, User
+from ..models_rag import AISettings, KnowledgeBase
+from ..services import rag_service
 
 
 def _node(node_id: str, ntype: str, content: str = "", **extra) -> dict:
@@ -213,6 +215,35 @@ def _save_roi_if_present(db: Session, user: User, profile: Optional[Dict[str, An
     return ticket
 
 
+
+def _create_and_index_kb(db: Session, user: User, name: str, text: str) -> Dict[str, Any]:
+    """Cria base de conhecimento e tenta indexar o texto.
+
+    Se Gemini/cota falhar, a base fica criada e retornamos warning sem quebrar o setup.
+    """
+    kb = KnowledgeBase(owner_id=user.id, name=name, description="Criada automaticamente pelo Setup por Nicho")
+    db.add(kb)
+    db.commit()
+    db.refresh(kb)
+
+    chunks_created = 0
+    warning = None
+    try:
+        chunks_created = rag_service.index_text(db, kb, text, source="setup_nicho")
+    except Exception as exc:
+        db.rollback()
+        warning = f"Base criada, mas a indexação falhou: {exc}"
+
+    ai = db.query(AISettings).filter(AISettings.owner_id == user.id).first()
+    if ai is None:
+        ai = AISettings(owner_id=user.id)
+        db.add(ai)
+    ai.knowledge_base_id = kb.id
+    db.commit()
+
+    return {"kb_id": kb.id, "kb_name": kb.name, "chunks_created": chunks_created, "warning": warning}
+
+
 def apply_package(db: Session, user: User, package_id: str, business_name: Optional[str] = None, profile: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     pkg = get_package(package_id)
     profile = profile or {}
@@ -232,6 +263,15 @@ def apply_package(db: Session, user: User, package_id: str, business_name: Optio
     db.add(flow)
     db.commit()
     db.refresh(flow)
+
+    knowledge_base_seed = _customize_seed(pkg["knowledge_base_seed"], profile)
+    kb_result = None
+    if profile.get("create_knowledge_base", True):
+        kb_name = f"Base {pkg['title']}"
+        if business_name:
+            kb_name += f" - {business_name.strip()}"
+        kb_result = _create_and_index_kb(db, user, kb_name, knowledge_base_seed)
+
     return {
         "ok": True,
         "package_id": package_id,
@@ -240,12 +280,13 @@ def apply_package(db: Session, user: User, package_id: str, business_name: Optio
         "pipeline_type": pkg["pipeline_type"],
         "appointment_types": pkg["appointment_types"],
         "suggested_tags": pkg["suggested_tags"],
-        "knowledge_base_seed": _customize_seed(pkg["knowledge_base_seed"], profile),
+        "knowledge_base_seed": knowledge_base_seed,
+        "knowledge_base": kb_result,
         "business_profile": profile,
         "average_ticket_saved": average_ticket_saved,
         "next_steps": [
             "Revise o fluxo criado no Builder.",
-            "Cole o texto sugerido em IA > Base de conhecimento e adapte ao negócio.",
+            "Revise a base de conhecimento criada automaticamente em IA e ajuste se necessário." if kb_result else "Cole o texto sugerido em IA > Base de conhecimento e adapte ao negócio.",
             "Conecte ou selecione este fluxo na conexão WhatsApp.",
             "Configure ticket médio no Dashboard para ROI.",
             "Crie agendamentos usando os tipos sugeridos para atualizar o pipeline.",

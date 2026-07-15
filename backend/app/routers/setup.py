@@ -26,6 +26,7 @@ class ApplyPackageRequest(BaseModel):
     payment_methods: Optional[str] = Field(None, max_length=500)
     average_ticket: Optional[float] = Field(None, ge=0)
     extra_info: Optional[str] = Field(None, max_length=1500)
+    create_knowledge_base: bool = True
 
 
 @router.get("/niches")
