@@ -14,6 +14,7 @@ from ..auth import get_current_user
 from ..database import get_db
 from ..models import Appointment, Flow, Lead, User
 from ..schemas import AppointmentCreate, AppointmentUpdate, AppointmentOut
+from ..services import google_calendar_service as gcal
 
 
 router = APIRouter()
@@ -37,6 +38,13 @@ def _pipeline_type_from_appointment_type(appointment_type: str | None) -> str:
         "suporte": "suporte_tecnico",
     }
     return mapping.get(appointment_type or "", "generic")
+
+
+def _try_sync_google_calendar(db: Session, owner_id: int, appt: Appointment):
+    """Sincroniza com Google se houver conexão ativa. Nunca quebra o CRUD da agenda."""
+    conn = gcal.get_connection(db, owner_id)
+    if conn and conn.status == "connected":
+        gcal.sync_appointment(db, owner_id, appt)
 
 
 def _sync_lead_pipeline_from_appointment(lead: Lead | None, appt: Appointment):
@@ -143,6 +151,7 @@ def create_appointment(
     db.add(appt)
     db.flush()
     _sync_lead_pipeline_from_appointment(lead, appt)
+    _try_sync_google_calendar(db, current_user.id, appt)
     db.commit()
     db.refresh(appt)
     return _serialize(db, appt)
@@ -188,6 +197,7 @@ def update_appointment(
     appt.updated_at = _now()
     lead_for_pipeline = db.query(Lead).filter(Lead.id == appt.lead_id, Lead.owner_id == current_user.id).first() if appt.lead_id else None
     _sync_lead_pipeline_from_appointment(lead_for_pipeline, appt)
+    _try_sync_google_calendar(db, current_user.id, appt)
 
     db.commit()
     db.refresh(appt)

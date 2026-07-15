@@ -174,6 +174,13 @@
       <div id="evo-qr-area" style="margin-top:16px;"></div>
     </div>
 
+    <!-- Google Calendar -->
+    <div class="cfg-card full">
+      <h2>🗓️ Google Calendar</h2>
+      <p class="hint">Conecte sua agenda Google para sincronizar os agendamentos internos do dIAloga+.</p>
+      <div id="calendar-area"><div class="cfg-empty">Carregando status do calendário...</div></div>
+    </div>
+
     <!-- Lista -->
     <div class="cfg-card full">
       <h2>📋 Conexões cadastradas</h2>
@@ -400,10 +407,45 @@
     setTimeout(function(){ if (evoPollTimer) { clearInterval(evoPollTimer); evoPollTimer = null; } }, 180000);
   }
 
+  async function loadCalendarStatus() {
+    const area = document.getElementById("calendar-area");
+    if (!area || !WFApi.calendarStatus) return;
+    try {
+      const st = await WFApi.calendarStatus();
+      if (st.connected) {
+        area.innerHTML = '<div class="cfg-alert ok">✅ Google Calendar conectado. Calendário: ' + escapeHtml(st.calendar_id || "primary") + '</div>' +
+          '<button class="cfg-btn danger" id="btn-cal-disconnect" type="button">Desconectar calendário</button>';
+        document.getElementById("btn-cal-disconnect").addEventListener("click", async function(){
+          if (!confirm("Desconectar Google Calendar? Os agendamentos internos continuarão salvos.")) return;
+          await WFApi.calendarDisconnect();
+          showAlert("Google Calendar desconectado.", "success");
+          loadCalendarStatus();
+        });
+      } else {
+        area.innerHTML = '<p class="hint">Nenhum Google Calendar conectado.</p><button class="cfg-btn" id="btn-cal-connect" type="button">Conectar Google Calendar</button>';
+        document.getElementById("btn-cal-connect").addEventListener("click", async function(){
+          try {
+            const res = await WFApi.calendarAuthUrl();
+            window.location.href = res.auth_url;
+          } catch (e) {
+            showAlert(e.message);
+          }
+        });
+      }
+    } catch (e) {
+      area.innerHTML = '<div class="cfg-alert err">' + escapeHtml(e.message) + '</div>';
+    }
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("calendar") === "connected") showAlert("Google Calendar conectado com sucesso!", "success");
+  if (params.get("calendar") === "error") showAlert("Falha ao conectar Google Calendar. Verifique as configurações.");
+
   await loadFlows();
   await loadConnections();
+  await loadCalendarStatus();
 })();
 </script>
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1b1b2fe6b68dba8',t:'MTc4NDA0NDM5NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1b97a395937d525',t:'MTc4NDEyNTk1Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
 </html>

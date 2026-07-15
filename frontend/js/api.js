@@ -78,6 +78,12 @@
     updateAppointment: function (id, b) { return request("/api/appointments/" + id, { method: "PUT", body: b }); },
     deleteAppointment: function (id) { return request("/api/appointments/" + id, { method: "DELETE" }); },
 
+    // ---- Google Calendar ----
+    calendarAuthUrl: function () { return request("/api/calendar/google/auth-url"); },
+    calendarStatus: function () { return request("/api/calendar/status"); },
+    calendarDisconnect: function () { return request("/api/calendar/disconnect", { method: "POST" }); },
+    calendarSyncAppointment: function (id) { return request("/api/calendar/sync-appointment/" + id, { method: "POST" }); },
+
     // ---- WhatsApp Conexões (Fase 3) ----
     listConnections: function () { return request("/api/whatsapp/connections"); },
     createConnection: function (b) { return request("/api/whatsapp/connections", { method: "POST", body: b }); },

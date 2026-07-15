@@ -150,6 +150,25 @@ class ROISettings(Base):
     owner = relationship("User")
 
 
+class CalendarConnection(Base):
+    """Conexão OAuth com calendário externo (Google Calendar inicialmente)."""
+    __tablename__ = "calendar_connections"
+
+    id = Column(Integer, primary_key=True, index=True)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    provider = Column(String(50), default="google", nullable=False, index=True)
+    status = Column(String(50), default="connected")
+    calendar_id = Column(String(255), default="primary")
+    access_token_enc = Column(Text, nullable=True)
+    refresh_token_enc = Column(Text, nullable=True)
+    token_expires_at = Column(DateTime, nullable=True)
+    last_error = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+    owner = relationship("User")
+
+
 class Appointment(Base):
     """Agendamento interno vinculado a lead/fluxo.
 

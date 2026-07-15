@@ -46,6 +46,13 @@ class Settings(BaseSettings):
     # URL publica DESTE backend (p/ a Evolution mandar webhook de volta)
     public_base_url: str = "https://dialoga-backend-1slr.onrender.com"
 
+    # --- Google Calendar (Agenda C.2.3) ---
+    google_calendar_enabled: bool = False
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    google_redirect_uri: str = ""  # default: PUBLIC_BASE_URL + /api/calendar/google/callback
+    frontend_base_url: str = "https://dialoga-frontend-8p28.onrender.com"
+
     # --- IA / Gemini (Fase A) ---
     gemini_api_key: str = ""                     # Google AI Studio API key
     gemini_chat_model: str = "gemini-2.0-flash"  # modelo de chat (rapido e barato)
