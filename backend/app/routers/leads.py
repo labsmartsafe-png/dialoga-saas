@@ -88,6 +88,14 @@ def update_lead(
         lead.name = payload.name
     if payload.status is not None:
         lead.status = payload.status
+        if payload.status == "convertido" and not getattr(lead, "converted_at", None):
+            lead.converted_at = datetime.now(timezone.utc)
+    if payload.deal_value is not None:
+        lead.deal_value = float(payload.deal_value)
+        if lead.status == "convertido" and not getattr(lead, "converted_at", None):
+            lead.converted_at = datetime.now(timezone.utc)
+    if payload.lost_reason is not None:
+        lead.lost_reason = payload.lost_reason
     if payload.stage is not None:
         lead.stage = payload.stage
     if payload.tags is not None:
@@ -231,7 +239,7 @@ def export_leads_csv(
 
     header = [
         "id", "nome", "telefone", "email", "fluxo", "status", "etapa", "origem",
-        "conversation_id", "connection_id", "tags", "ultima_interacao", "data_criacao",
+        "conversation_id", "connection_id", "tags", "valor_venda", "motivo_perda", "convertido_em", "ultima_interacao", "data_criacao",
     ]
     header += context_keys
     writer.writerow(header)
@@ -250,6 +258,9 @@ def export_leads_csv(
             getattr(l, "conversation_id", None) or "",
             getattr(l, "connection_id", None) or "",
             ", ".join(l.tags or []) if getattr(l, "tags", None) else "",
+            getattr(l, "deal_value", None) or "",
+            getattr(l, "lost_reason", None) or "",
+            l.converted_at.isoformat() if getattr(l, "converted_at", None) else "",
             l.last_interaction_at.isoformat() if getattr(l, "last_interaction_at", None) else "",
             l.created_at.isoformat() if l.created_at else "",
         ]

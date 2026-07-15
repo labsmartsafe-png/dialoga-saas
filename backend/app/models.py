@@ -100,6 +100,11 @@ class Lead(Base):
     status = Column(String(50), default="novo")
     tags = Column(MutableList.as_mutable(JSON), nullable=True, default=list)
 
+    # Pipeline comercial simples (ROI real/manual)
+    deal_value = Column(Float, nullable=True)          # valor real da venda quando convertido
+    converted_at = Column(DateTime, nullable=True)    # quando virou convertido
+    lost_reason = Column(Text, nullable=True)         # motivo quando perdido
+
     conversation_id = Column(Integer, nullable=True, index=True)
     connection_id = Column(Integer, nullable=True, index=True)
     last_interaction_at = Column(DateTime, nullable=True)

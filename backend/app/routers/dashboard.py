@@ -120,6 +120,10 @@ def metrics(
 
     human_pending = leads_q.filter(Lead.status == lead_service.STATUS_AGUARDANDO_HUMANO).count()
     human_active = leads_q.filter(Lead.status == lead_service.STATUS_EM_ATENDIMENTO_HUMANO).count()
+    converted_count = real_leads_q.filter(Lead.status == "convertido").count()
+    lost_count = real_leads_q.filter(Lead.status == "perdido").count()
+    real_conversion_rate = round((converted_count / real_leads_count) * 100, 1) if real_leads_count else 0.0
+    actual_revenue = round(sum(float(v or 0) for (v,) in real_leads_q.filter(Lead.status == "convertido").with_entities(Lead.deal_value).all()), 2)
 
     # Conversão operacional simples: leads reais que têm ao menos um agendamento / total leads reais.
     lead_ids_with_appt = {
@@ -163,6 +167,10 @@ def metrics(
         "simulator_leads_count": simulator_leads_count,
         "human_pending_count": human_pending,
         "human_active_count": human_active,
+        "converted_count": converted_count,
+        "lost_count": lost_count,
+        "real_conversion_rate": real_conversion_rate,
+        "actual_revenue": actual_revenue,
         "appointments_total": appointments_total,
         "appointments_requested": appointments_requested,
         "appointments_confirmed": appointments_confirmed,

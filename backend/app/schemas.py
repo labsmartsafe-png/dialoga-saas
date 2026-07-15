@@ -147,6 +147,9 @@ class LeadOut(BaseModel):
     source: str
     status: str
     tags: Optional[List[str]] = None
+    deal_value: Optional[float] = None
+    converted_at: Optional[datetime] = None
+    lost_reason: Optional[str] = None
     conversation_id: Optional[int] = None
     connection_id: Optional[int] = None
     last_interaction_at: Optional[datetime] = None
@@ -162,6 +165,8 @@ class LeadUpdate(BaseModel):
     status: Optional[str] = None
     stage: Optional[str] = None
     tags: Optional[List[str]] = None
+    deal_value: Optional[float] = None
+    lost_reason: Optional[str] = None
 
 
 class LeadNoteCreate(BaseModel):
