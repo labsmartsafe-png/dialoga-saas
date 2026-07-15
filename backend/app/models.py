@@ -237,6 +237,46 @@ class Message(Base):
     conversation = relationship("Conversation", back_populates="messages")
 
 
+class Subscription(Base):
+    """Assinatura/acesso comercial do usuário no SaaS.
+
+    Fase E.3: base para Hotmart/Eduzz e billing futuro.
+    """
+    __tablename__ = "subscriptions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    provider = Column(String(50), nullable=False, default="manual", index=True)
+    external_id = Column(String(255), nullable=True, index=True)
+    plan = Column(String(50), nullable=False, default="profissional")
+    status = Column(String(50), nullable=False, default="active")  # active|inactive|canceled|refunded|overdue
+    buyer_email = Column(String(255), nullable=True, index=True)
+    product_name = Column(String(255), nullable=True)
+    raw_payload = Column(JSON, nullable=True)
+    started_at = Column(DateTime, nullable=True)
+    canceled_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=utcnow, index=True)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+    owner = relationship("User")
+
+
+class BillingWebhookEvent(Base):
+    """Log de webhooks de billing para auditoria/idempotência."""
+    __tablename__ = "billing_webhook_events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    provider = Column(String(50), nullable=False, index=True)
+    external_event_id = Column(String(255), nullable=False, index=True)
+    event_type = Column(String(100), nullable=True)
+    buyer_email = Column(String(255), nullable=True, index=True)
+    raw_payload = Column(JSON, nullable=False)
+    status = Column(String(50), default="received")  # received|processed|ignored|failed
+    error = Column(Text, nullable=True)
+    received_at = Column(DateTime, default=utcnow, index=True)
+    processed_at = Column(DateTime, nullable=True)
+
+
 # --- WhatsApp real + billing (tabelas NOVAS, aditivas) ---
 from .models_whatsapp import (  # noqa: E402,F401
     WhatsAppConnection,

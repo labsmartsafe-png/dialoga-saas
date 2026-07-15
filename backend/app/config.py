@@ -63,7 +63,10 @@ class Settings(BaseSettings):
 
     # --- Billing ---
     billing_enabled: bool = False
-    billing_provider: str = "asaas"              # asaas | stripe
+    billing_provider: str = "manual"             # manual | hotmart | eduzz | asaas | stripe
+    billing_default_plan: str = "profissional"
+    hotmart_webhook_token: str = ""
+    eduzz_webhook_token: str = ""
     asaas_api_key: str = ""
     asaas_webhook_token: str = ""
     stripe_secret_key: str = ""
