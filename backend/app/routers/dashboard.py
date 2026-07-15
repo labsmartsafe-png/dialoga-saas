@@ -137,6 +137,65 @@ def metrics(
     real_leads_with_appointment = len(real_lead_ids.intersection(lead_ids_with_appt))
     appointment_conversion_rate = round((real_leads_with_appointment / real_leads_count) * 100, 1) if real_leads_count else 0.0
 
+    # Quebras por origem, tags e fluxo (ROI por canal/nicho operacional)
+    leads_by_source = []
+    sources = [row[0] for row in leads_q.with_entities(Lead.source).distinct().all()]
+    for src in sources:
+        src = src or "desconhecido"
+        src_q = leads_q.filter(Lead.source == src)
+        src_total = src_q.count()
+        src_converted = src_q.filter(Lead.status == "convertido").count()
+        src_revenue = round(sum(float(v or 0) for (v,) in src_q.filter(Lead.status == "convertido").with_entities(Lead.deal_value).all()), 2)
+        leads_by_source.append({
+            "source": src,
+            "total": src_total,
+            "converted": src_converted,
+            "conversion_rate": round((src_converted / src_total) * 100, 1) if src_total else 0.0,
+            "revenue": src_revenue,
+        })
+    leads_by_source.sort(key=lambda x: x["total"], reverse=True)
+
+    tag_map = {}
+    for lead in leads_q.all():
+        for tag in (lead.tags or []):
+            key = str(tag).strip()
+            if not key:
+                continue
+            item = tag_map.setdefault(key.lower(), {"tag": key, "total": 0, "converted": 0, "revenue": 0.0})
+            item["total"] += 1
+            if lead.status == "convertido":
+                item["converted"] += 1
+                item["revenue"] += float(lead.deal_value or 0)
+    tags_summary = []
+    for item in tag_map.values():
+        total = item["total"] or 0
+        item["conversion_rate"] = round((item["converted"] / total) * 100, 1) if total else 0.0
+        item["revenue"] = round(item["revenue"], 2)
+        tags_summary.append(item)
+    tags_summary.sort(key=lambda x: (x["total"], x["revenue"]), reverse=True)
+    tags_summary = tags_summary[:10]
+
+    flows_performance = []
+    for flow in flows_q.all():
+        fq = leads_q.filter(Lead.flow_id == flow.id)
+        total = fq.count()
+        if not total:
+            continue
+        converted = fq.filter(Lead.status == "convertido").count()
+        appts = appt_q.filter(Appointment.flow_id == flow.id).count()
+        revenue = round(sum(float(v or 0) for (v,) in fq.filter(Lead.status == "convertido").with_entities(Lead.deal_value).all()), 2)
+        flows_performance.append({
+            "flow_id": flow.id,
+            "flow_name": flow.name,
+            "leads": total,
+            "appointments": appts,
+            "converted": converted,
+            "conversion_rate": round((converted / total) * 100, 1) if total else 0.0,
+            "revenue": revenue,
+        })
+    flows_performance.sort(key=lambda x: (x["leads"], x["revenue"]), reverse=True)
+    flows_performance = flows_performance[:10]
+
     # Leads por dia (últimos 7 dias)
     leads_by_day = []
     for i in range(6, -1, -1):
@@ -184,4 +243,7 @@ def metrics(
         "estimated_confirmed_revenue": estimated_confirmed_revenue,
         "estimated_done_revenue": estimated_done_revenue,
         "estimated_pipeline_revenue": estimated_pipeline_revenue,
+        "leads_by_source": leads_by_source,
+        "tags_summary": tags_summary,
+        "flows_performance": flows_performance,
     }
