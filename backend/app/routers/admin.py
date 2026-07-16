@@ -127,6 +127,130 @@ def _billing_event_summary(ev) -> dict:
     }
 
 
+def _health_item(key: str, label: str, status: str, message: str, *, secret: bool = False) -> dict:
+    return {"key": key, "label": label, "status": status, "message": message, "secret": secret}
+
+
+def _present(value: str | None) -> bool:
+    return bool(str(value or "").strip())
+
+
+@router.get("/system-health")
+def admin_system_health(admin: User = Depends(require_admin)):
+    """Checklist de saúde para produção/go-live.
+
+    Não expõe valores secretos; apenas indica ausente/configurado e alerta riscos.
+    """
+    items = []
+
+    default_secret = "chave-padrao-desenvolvimento" in (settings.secret_key or "")
+    items.append(_health_item(
+        "secret_key", "SECRET_KEY", "error" if default_secret else "ok",
+        "Troque a SECRET_KEY padrão antes de produção." if default_secret else "SECRET_KEY configurada.",
+        secret=True,
+    ))
+    items.append(_health_item(
+        "database_url", "DATABASE_URL", "ok" if _present(settings.database_url) else "error",
+        "Banco configurado." if _present(settings.database_url) else "DATABASE_URL ausente.",
+        secret=True,
+    ))
+    cors = settings.cors_origins or ""
+    items.append(_health_item(
+        "cors_origins", "CORS_ORIGINS", "warn" if "localhost" in cors and "dialoga-frontend" not in cors else "ok",
+        "CORS ainda parece conter apenas localhost; confirme domínio de produção." if "localhost" in cors and "dialoga-frontend" not in cors else "CORS configurado.",
+    ))
+    items.append(_health_item(
+        "wa_fernet_keys", "WA_FERNET_KEYS", "ok" if _present(settings.wa_fernet_keys) else "error",
+        "Chave Fernet configurada." if _present(settings.wa_fernet_keys) else "WA_FERNET_KEYS ausente: tokens não podem ser criptografados.",
+        secret=True,
+    ))
+
+    # Evolution / QR
+    if settings.evolution_enabled:
+        ok = _present(settings.evolution_base_url) and _present(settings.evolution_global_api_key) and _present(settings.public_base_url)
+        items.append(_health_item(
+            "evolution", "Evolution API / QR", "ok" if ok else "error",
+            "Evolution configurada." if ok else "Evolution habilitada, mas faltam BASE_URL, API_KEY ou PUBLIC_BASE_URL.",
+            secret=True,
+        ))
+    else:
+        items.append(_health_item("evolution", "Evolution API / QR", "warn", "Evolution desabilitada."))
+
+    # Gemini
+    items.append(_health_item(
+        "gemini", "Gemini IA", "ok" if _present(settings.gemini_api_key) else "warn",
+        "GEMINI_API_KEY configurada." if _present(settings.gemini_api_key) else "GEMINI_API_KEY ausente: IA/RAG/áudio podem falhar.",
+        secret=True,
+    ))
+    if (settings.gemini_chat_model or "") == "gemini-2.0-flash":
+        items.append(_health_item("gemini_model", "GEMINI_CHAT_MODEL", "warn", "Modelo padrão antigo detectado. Recomenda-se gemini-2.5-flash ou flash-lite."))
+    else:
+        items.append(_health_item("gemini_model", "GEMINI_CHAT_MODEL", "ok", f"Modelo: {settings.gemini_chat_model}"))
+
+    # Google Calendar
+    if settings.google_calendar_enabled:
+        ok = _present(settings.google_client_id) and _present(settings.google_client_secret)
+        items.append(_health_item(
+            "google_calendar", "Google Calendar", "ok" if ok else "error",
+            "Google Calendar habilitado e credenciais configuradas." if ok else "Google Calendar habilitado, mas faltam CLIENT_ID/SECRET.",
+            secret=True,
+        ))
+    else:
+        items.append(_health_item("google_calendar", "Google Calendar", "warn", "Google Calendar desabilitado."))
+
+    # Billing
+    if settings.billing_enabled:
+        provider = (settings.billing_provider or "manual").lower()
+        token_ok = True
+        if provider == "hotmart":
+            token_ok = _present(settings.hotmart_webhook_token)
+        elif provider == "eduzz":
+            token_ok = _present(settings.eduzz_webhook_token)
+        items.append(_health_item(
+            "billing", "Billing", "ok" if token_ok else "warn",
+            f"Billing habilitado ({provider})." if token_ok else f"Billing habilitado ({provider}), mas token de webhook não configurado.",
+            secret=True,
+        ))
+    else:
+        items.append(_health_item("billing", "Billing", "warn", "Billing desabilitado; acesso ainda depende de controle manual/webhooks em teste."))
+
+    # Meta
+    if settings.whatsapp_meta_enabled:
+        meta_ok = _present(settings.meta_app_secret)
+        items.append(_health_item(
+            "meta", "Meta Cloud API", "warn" if meta_ok else "error",
+            "Meta configurada, mas lembre de Business Verification e erro 130497 para Brasil." if meta_ok else "Meta habilitada, mas META_APP_SECRET ausente.",
+            secret=True,
+        ))
+    else:
+        items.append(_health_item("meta", "Meta Cloud API", "warn", "Meta Cloud API desabilitada ou em shadow/teste."))
+
+    # Admin / Domínio / go-live
+    items.append(_health_item(
+        "admin_emails", "ADMIN_EMAILS", "ok" if _present(settings.admin_emails) else "warn",
+        "ADMIN_EMAILS configurado." if _present(settings.admin_emails) else "ADMIN_EMAILS ausente: primeiro admin pode depender de is_admin no banco.",
+    ))
+    render_domain = "onrender.com" in (settings.public_base_url or "") or "onrender.com" in (settings.frontend_base_url or "")
+    items.append(_health_item(
+        "custom_domain", "Domínio próprio", "warn" if render_domain else "ok",
+        "Ainda usando domínio onrender.com. Para go-live, configurar domínio próprio e atualizar OAuth/webhooks." if render_domain else "Domínio próprio parece configurado.",
+    ))
+    items.append(_health_item(
+        "render_plan", "Render", "warn",
+        "Se estiver no plano Free, o backend dorme e pode estourar memória. Para go-live, usar plano pago.",
+    ))
+    items.append(_health_item(
+        "email_official", "E-mail oficial", "warn",
+        "E-mails atuais são temporários. Antes de produção, configurar domínio/e-mail oficial e política de privacidade/termos.",
+    ))
+
+    counts = {"ok": 0, "warn": 0, "error": 0}
+    for item in items:
+        counts[item["status"]] = counts.get(item["status"], 0) + 1
+    overall = "error" if counts["error"] else ("warn" if counts["warn"] else "ok")
+    return {"overall": overall, "counts": counts, "items": items}
+
+
 @router.get("/plans")
 def admin_plans(admin: User = Depends(require_admin)):
     """Tabela de limites dos planos disponíveis."""
