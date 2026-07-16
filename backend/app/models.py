@@ -261,6 +261,26 @@ class Subscription(Base):
     owner = relationship("User")
 
 
+class PendingBillingAccount(Base):
+    """Compra recebida antes do usuário se cadastrar.
+
+    Quando o comprador se registra com o mesmo email, aplicamos o plano automaticamente.
+    """
+    __tablename__ = "pending_billing_accounts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    provider = Column(String(50), nullable=False, index=True)
+    external_id = Column(String(255), nullable=True, index=True)
+    buyer_email = Column(String(255), nullable=False, index=True)
+    plan = Column(String(50), nullable=False, default="profissional")
+    status = Column(String(50), nullable=False, default="pending")  # pending|claimed|canceled|ignored
+    product_name = Column(String(255), nullable=True)
+    raw_payload = Column(JSON, nullable=True)
+    claimed_user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    created_at = Column(DateTime, default=utcnow, index=True)
+    claimed_at = Column(DateTime, nullable=True)
+
+
 class BillingWebhookEvent(Base):
     """Log de webhooks de billing para auditoria/idempotência."""
     __tablename__ = "billing_webhook_events"

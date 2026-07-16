@@ -16,7 +16,7 @@ from typing import Any, Optional
 from sqlalchemy.orm import Session
 
 from ..config import settings
-from ..models import BillingWebhookEvent, Subscription, User
+from ..models import BillingWebhookEvent, PendingBillingAccount, Subscription, User
 from ..services import plan_limits
 
 ACTIVE_STATUSES = {"approved", "complete", "completed", "paid", "active", "trial", "billet_printed"}
@@ -94,6 +94,71 @@ def is_valid_token(provider: str, token: Optional[str]) -> bool:
     return bool(token) and token == expected
 
 
+
+def create_pending_account(db: Session, provider: str, payload: dict, email: str, plan: str, ext_id: str) -> PendingBillingAccount:
+    pending = (
+        db.query(PendingBillingAccount)
+        .filter(PendingBillingAccount.buyer_email == email,
+                PendingBillingAccount.provider == provider,
+                PendingBillingAccount.status == "pending")
+        .order_by(PendingBillingAccount.created_at.desc())
+        .first()
+    )
+    if pending is None:
+        pending = PendingBillingAccount(
+            provider=provider,
+            external_id=ext_id,
+            buyer_email=email,
+            plan=plan,
+            status="pending",
+            product_name=product_name(payload),
+            raw_payload=payload,
+        )
+        db.add(pending)
+    else:
+        pending.plan = plan
+        pending.external_id = ext_id
+        pending.product_name = product_name(payload)
+        pending.raw_payload = payload
+    db.flush()
+    return pending
+
+
+def claim_pending_for_user(db: Session, user: User) -> PendingBillingAccount | None:
+    """Aplica compra pendente ao usuário recém-cadastrado com mesmo email."""
+    email = (user.email or "").lower()
+    pending = (
+        db.query(PendingBillingAccount)
+        .filter(PendingBillingAccount.buyer_email == email,
+                PendingBillingAccount.status == "pending")
+        .order_by(PendingBillingAccount.created_at.desc())
+        .first()
+    )
+    if pending is None:
+        return None
+
+    user.plan = plan_limits.normalize_plan(pending.plan)
+    user.is_active = True
+    plan_limits.sync_ai_limit_for_user(db, user)
+
+    sub = Subscription(
+        owner_id=user.id,
+        provider=pending.provider,
+        external_id=pending.external_id,
+        buyer_email=pending.buyer_email,
+        product_name=pending.product_name,
+        raw_payload=pending.raw_payload,
+        plan=user.plan,
+        status="active",
+        started_at=datetime.now(timezone.utc),
+    )
+    db.add(sub)
+    pending.status = "claimed"
+    pending.claimed_user_id = user.id
+    pending.claimed_at = datetime.now(timezone.utc)
+    db.flush()
+    return pending
+
 def process_billing_webhook(db: Session, provider: str, payload: dict) -> dict:
     provider = provider.lower().strip()
     ext_id = event_id(provider, payload)
@@ -125,18 +190,25 @@ def process_billing_webhook(db: Session, provider: str, payload: dict) -> dict:
         db.commit()
         return {"ok": False, "ignored": True, "reason": event.error, "event_id": ext_id}
 
+    status = purchase_status(payload)
+    plan = infer_plan(payload)
+    active = status in ACTIVE_STATUSES or (not status or status == "unknown")
+    inactive = status in INACTIVE_STATUSES
+
     user = db.query(User).filter(User.email == email).first()
     if not user:
+        if active:
+            pending = create_pending_account(db, provider, payload, email, plan, ext_id)
+            event.status = "processed"
+            event.error = None
+            event.processed_at = datetime.now(timezone.utc)
+            db.commit()
+            return {"ok": True, "pending": True, "email": email, "plan": plan, "pending_id": pending.id, "event_id": ext_id}
         event.status = "ignored"
         event.error = f"usuario nao encontrado para email {email}"
         event.processed_at = datetime.now(timezone.utc)
         db.commit()
         return {"ok": False, "ignored": True, "reason": event.error, "email": email, "event_id": ext_id}
-
-    status = purchase_status(payload)
-    plan = infer_plan(payload)
-    active = status in ACTIVE_STATUSES or (not status or status == "unknown")
-    inactive = status in INACTIVE_STATUSES
 
     sub = db.query(Subscription).filter(Subscription.owner_id == user.id, Subscription.provider == provider).first()
     if sub is None:

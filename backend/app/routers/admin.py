@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from ..auth import get_current_user
 from ..config import settings
 from ..database import get_db
-from ..models import Appointment, Conversation, Flow, Lead, Subscription, User
+from ..models import Appointment, Conversation, Flow, Lead, PendingBillingAccount, Subscription, User
 from ..models_rag import AISettings, KnowledgeBase
 from ..models_whatsapp import WhatsAppConnection
 from ..services import plan_limits
@@ -90,6 +90,7 @@ def admin_overview(
     return {
         "subscriptions_total": db.query(Subscription).count(),
         "subscriptions_active": db.query(Subscription).filter(Subscription.status == "active").count(),
+        "pending_billing_total": db.query(PendingBillingAccount).filter(PendingBillingAccount.status == "pending").count(),
         "users_total": users_total,
         "users_active": users_active,
         "flows_total": db.query(Flow).count(),
