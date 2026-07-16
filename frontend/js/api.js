@@ -83,6 +83,9 @@
     adminPlans: function () { return request("/api/admin/plans"); },
     adminUsers: function (qs) { return request("/api/admin/users" + (qs || "")); },
     adminUpdateUser: function (id, b) { return request("/api/admin/users/" + id, { method: "PUT", body: b }); },
+    adminPendingBilling: function (qs) { return request("/api/admin/pending-billing" + (qs || "")); },
+    adminClaimPendingBilling: function (id, b) { return request("/api/admin/pending-billing/" + id + "/claim", { method: "POST", body: b || {} }); },
+    adminIgnorePendingBilling: function (id) { return request("/api/admin/pending-billing/" + id + "/ignore", { method: "POST" }); },
 
     // ---- Setup / Nichos ----
     listNichePackages: function () { return request("/api/setup/niches"); },

@@ -18,7 +18,7 @@ from ..database import get_db
 from ..models import Appointment, Conversation, Flow, Lead, PendingBillingAccount, Subscription, User
 from ..models_rag import AISettings, KnowledgeBase
 from ..models_whatsapp import WhatsAppConnection
-from ..services import plan_limits
+from ..services import plan_limits, billing_service
 
 router = APIRouter()
 
@@ -27,6 +27,10 @@ class AdminUserUpdate(BaseModel):
     is_active: Optional[bool] = None
     is_admin: Optional[bool] = None
     plan: Optional[str] = Field(None, max_length=50)
+
+
+class PendingBillingClaimRequest(BaseModel):
+    user_id: Optional[int] = None
 
 
 def _admin_email_set() -> set[str]:
@@ -74,6 +78,21 @@ def _user_summary(db: Session, user: User) -> dict:
     }
 
 
+def _pending_summary(p: PendingBillingAccount) -> dict:
+    return {
+        "id": p.id,
+        "provider": p.provider,
+        "external_id": p.external_id,
+        "buyer_email": p.buyer_email,
+        "plan": p.plan,
+        "status": p.status,
+        "product_name": p.product_name,
+        "claimed_user_id": p.claimed_user_id,
+        "created_at": p.created_at.isoformat() if p.created_at else None,
+        "claimed_at": p.claimed_at.isoformat() if p.claimed_at else None,
+    }
+
+
 @router.get("/plans")
 def admin_plans(admin: User = Depends(require_admin)):
     """Tabela de limites dos planos disponíveis."""
@@ -116,6 +135,67 @@ def admin_list_users(
         query = query.filter((User.email.ilike(like)) | (User.company_name.ilike(like)))
     users = query.order_by(User.created_at.desc()).all()
     return [_user_summary(db, u) for u in users]
+
+
+@router.get("/pending-billing")
+def admin_pending_billing(
+    status: Optional[str] = "pending",
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    """Lista compras pendentes/claimed/canceled para acompanhamento."""
+    q = db.query(PendingBillingAccount)
+    if status:
+        q = q.filter(PendingBillingAccount.status == status)
+    items = q.order_by(PendingBillingAccount.created_at.desc()).limit(200).all()
+    return [_pending_summary(p) for p in items]
+
+
+@router.post("/pending-billing/{pending_id}/claim")
+def admin_claim_pending_billing(
+    pending_id: int,
+    payload: PendingBillingClaimRequest = PendingBillingClaimRequest(),
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    """Vincula compra pendente a usuário existente.
+
+    Se user_id não for informado, tenta encontrar usuário pelo email comprador.
+    """
+    pending = db.query(PendingBillingAccount).filter(PendingBillingAccount.id == pending_id).first()
+    if not pending:
+        raise HTTPException(404, "Compra pendente não encontrada.")
+    if pending.status != "pending":
+        raise HTTPException(400, "Compra não está pendente.")
+
+    user = None
+    if payload.user_id:
+        user = db.query(User).filter(User.id == payload.user_id).first()
+    else:
+        user = db.query(User).filter(User.email == pending.buyer_email).first()
+    if not user:
+        raise HTTPException(404, "Usuário para vincular não encontrado.")
+
+    billing_service.claim_pending_for_user(db, user)
+    db.commit()
+    db.refresh(pending)
+    return {"ok": True, "pending": _pending_summary(pending), "user": _user_summary(db, user)}
+
+
+@router.post("/pending-billing/{pending_id}/ignore")
+def admin_ignore_pending_billing(
+    pending_id: int,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    """Marca compra pendente como ignorada."""
+    pending = db.query(PendingBillingAccount).filter(PendingBillingAccount.id == pending_id).first()
+    if not pending:
+        raise HTTPException(404, "Compra pendente não encontrada.")
+    pending.status = "ignored"
+    db.commit()
+    db.refresh(pending)
+    return {"ok": True, "pending": _pending_summary(pending)}
 
 
 @router.put("/users/{user_id}")
