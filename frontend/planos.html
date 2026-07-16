@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Planos - dIAloga+</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .plans-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}.plan-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:22px;display:flex;flex-direction:column;gap:12px}.plan-card.current{border:2px solid var(--primary);box-shadow:0 0 0 4px rgba(79,70,229,.08)}.plan-title{font-size:20px;font-weight:900}.price{font-size:30px;font-weight:900;color:var(--text)}.price small{font-size:13px;color:var(--muted)}.limit{font-size:14px;color:var(--text);padding:6px 0;border-bottom:1px solid var(--border)}.badge-current{display:inline-flex;border-radius:999px;padding:4px 10px;background:#d1fae5;color:#065f46;font-size:12px;font-weight:900}body.dark-mode .plan-card{background:#171d2b;border-color:#262e40;color:#e6eaf2}body.dark-mode .plan-card.current{border-color:#22d3ee}body.dark-mode .price{color:#e6eaf2}body.dark-mode .limit{border-color:#262e40;color:#e6eaf2}
+  </style>
+</head>
+<body>
+<script>if(localStorage.getItem("dialoga-dark-mode")==="1")document.body.classList.add("dark-mode");</script>
+<nav class="navbar"><div class="brand"><img src="img/logo-dialoga.png" alt="dIAloga+"></div><nav>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="setup.html">Setup</a>
+    <a href="builder.html">Fluxos</a>
+    <a href="leads.html">Leads</a>
+    <a href="inbox.html">Inbox</a>
+    <a href="agenda.html">Agenda</a>
+    <a href="ia.html">IA</a>
+    <a href="planos.html" class="active">Planos</a>
+    <a href="configuracoes.html">Configurações</a>
+    <a href="admin.html" data-admin-only style="display:none">Admin</a>
+  </nav><div class="user-area" id="user-area"></div></nav>
+<main class="container container-lg">
+  <div class="flex justify-between items-center mb-3"><div><h1 style="font-size:26px;">Planos</h1><p class="text-muted">Escolha o plano ideal para sua operação. Os limites protegem sua margem e ajudam a escalar.</p></div></div>
+  <div id="alert-area"></div>
+  <div class="plans-grid" id="plans"><div class="empty-state"><div class="spinner"></div></div></div>
+</main>
+<script>window.API_BASE="https://dialoga-backend-1slr.onrender.com";</script><script src="js/api.js"></script><script src="js/auth.js"></script>
+<script>
+(async function(){
+ const alertArea=document.getElementById('alert-area');
+ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+ function fmtLimit(v){return v===null||v===undefined?'Ilimitado':String(v)}
+ function alert(msg,type){alertArea.innerHTML='<div class="alert alert-'+(type||'error')+'">'+esc(msg)+'</div>';setTimeout(()=>alertArea.innerHTML='',6000)}
+ function render(data){const el=document.getElementById('plans');el.innerHTML=(data.plans||[]).map(p=>'<div class="plan-card '+(p.current?'current':'')+'"><div>'+(p.current?'<span class="badge-current">Plano atual</span>':'')+'<div class="plan-title">'+esc(p.name)+'</div><p class="text-muted">'+esc(p.description)+'</p></div><div class="price">R$ '+esc(p.price_brl)+'<small>/mês</small></div><div><div class="limit">Fluxos: <strong>'+fmtLimit(p.limits.flows)+'</strong></div><div class="limit">Conexões WhatsApp: <strong>'+fmtLimit(p.limits.whatsapp_connections)+'</strong></div><div class="limit">Bases IA: <strong>'+fmtLimit(p.limits.knowledge_bases)+'</strong></div><div class="limit">IA/mês: <strong>'+fmtLimit(p.limits.monthly_ai_limit)+'</strong></div></div><button class="btn btn-primary" data-checkout="'+esc(p.checkout_url||'')+'" '+(p.current?'disabled':'')+'>'+(p.current?'Plano atual':'Quero este plano')+'</button></div>').join('');el.querySelectorAll('[data-checkout]').forEach(btn=>btn.onclick=()=>{const url=btn.dataset.checkout;if(url){window.open(url,'_blank')}else{alert('Checkout ainda não configurado. Fale com o suporte para alterar o plano.','info')}})}
+ const user=await WFAuth.requireAuth();if(!user)return;WFAuth.renderUserChip(document.getElementById('user-area'),user);try{render(await WFApi.listPlans())}catch(e){alert(e.message)}
+})();
+</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1c3df50adfcdf55',t:'MTc4NDIzNDk1NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body></html>

@@ -11,7 +11,18 @@
 </head>
 <body>
 <script>if(localStorage.getItem("dialoga-dark-mode")==="1")document.body.classList.add("dark-mode");</script>
-<nav class="navbar"><div class="brand"><img src="img/logo-dialoga.png" alt="dIAloga+"></div><nav><a href="dashboard.html">Dashboard</a><a href="setup.html" class="active">Setup</a><a href="builder.html">Fluxos</a><a href="leads.html">Leads</a><a href="inbox.html">Inbox</a><a href="agenda.html">Agenda</a><a href="ia.html">IA</a><a href="configuracoes.html">Configurações</a><a href="admin.html">Admin</a></nav><div class="user-area" id="user-area"></div></nav>
+<nav class="navbar"><div class="brand"><img src="img/logo-dialoga.png" alt="dIAloga+"></div><nav>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="setup.html" class="active">Setup</a>
+    <a href="builder.html">Fluxos</a>
+    <a href="leads.html">Leads</a>
+    <a href="inbox.html">Inbox</a>
+    <a href="agenda.html">Agenda</a>
+    <a href="ia.html">IA</a>
+    <a href="planos.html">Planos</a>
+    <a href="configuracoes.html">Configurações</a>
+    <a href="admin.html" data-admin-only style="display:none">Admin</a>
+  </nav><div class="user-area" id="user-area"></div></nav>
 <main class="container container-lg">
   <div class="flex justify-between items-center mb-3"><div><h1 style="font-size:26px;">Setup Guiado</h1><p class="text-muted">Configure por etapas para evitar travamentos e deixar tudo claro.</p></div></div>
   <div id="alert-area"></div>
@@ -76,5 +87,5 @@
  document.getElementById('btn-skip-index').onclick=()=>{document.getElementById('done-result').innerHTML='<p>Fluxo criado: #'+esc(flowRes.flow_id)+'</p><p>Base IA criada: #'+esc(kbRes.kb_id)+'</p><p>IA ainda não foi ensinada. Você pode abrir a tela IA e indexar o conteúdo depois.</p>';setScreen('done')};
  const user=await WFAuth.requireAuth();if(!user)return;WFAuth.renderUserChip(document.getElementById('user-area'),user);packages=await WFApi.listNichePackages();renderPackages();renderSteps();
 })();
-</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1bbafc4294a785e',t:'MTc4NDE0OTEyMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
-</body></html>
+</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1c3e2fa3a7edf55',t:'MTc4NDIzNTEwNA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body></html>

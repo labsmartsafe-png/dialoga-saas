@@ -78,6 +78,9 @@
     updateAppointment: function (id, b) { return request("/api/appointments/" + id, { method: "PUT", body: b }); },
     deleteAppointment: function (id) { return request("/api/appointments/" + id, { method: "DELETE" }); },
 
+    // ---- Planos ----
+    listPlans: function () { return request("/api/plans"); },
+
     // ---- Admin ----
     adminOverview: function () { return request("/api/admin/overview"); },
     adminPlans: function () { return request("/api/admin/plans"); },
