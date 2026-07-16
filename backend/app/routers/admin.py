@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from ..auth import get_current_user
 from ..config import settings
 from ..database import get_db
-from ..models import Appointment, Conversation, Flow, Lead, PendingBillingAccount, Subscription, User
+from ..models import Appointment, BillingWebhookEvent, Conversation, Flow, Lead, PendingBillingAccount, Subscription, User
 from ..models_rag import AISettings, KnowledgeBase
 from ..models_whatsapp import WhatsAppConnection
 from ..services import plan_limits, billing_service
@@ -93,6 +93,40 @@ def _pending_summary(p: PendingBillingAccount) -> dict:
     }
 
 
+def _subscription_summary(db: Session, sub: Subscription) -> dict:
+    user = db.query(User).filter(User.id == sub.owner_id).first()
+    return {
+        "id": sub.id,
+        "owner_id": sub.owner_id,
+        "user_email": user.email if user else None,
+        "company_name": user.company_name if user else None,
+        "provider": sub.provider,
+        "external_id": sub.external_id,
+        "plan": sub.plan,
+        "status": sub.status,
+        "buyer_email": sub.buyer_email,
+        "product_name": sub.product_name,
+        "started_at": sub.started_at.isoformat() if sub.started_at else None,
+        "canceled_at": sub.canceled_at.isoformat() if sub.canceled_at else None,
+        "created_at": sub.created_at.isoformat() if sub.created_at else None,
+        "updated_at": sub.updated_at.isoformat() if sub.updated_at else None,
+    }
+
+
+def _billing_event_summary(ev) -> dict:
+    return {
+        "id": ev.id,
+        "provider": ev.provider,
+        "external_event_id": ev.external_event_id,
+        "event_type": ev.event_type,
+        "buyer_email": ev.buyer_email,
+        "status": ev.status,
+        "error": ev.error,
+        "received_at": ev.received_at.isoformat() if ev.received_at else None,
+        "processed_at": ev.processed_at.isoformat() if ev.processed_at else None,
+    }
+
+
 @router.get("/plans")
 def admin_plans(admin: User = Depends(require_admin)):
     """Tabela de limites dos planos disponíveis."""
@@ -121,6 +155,38 @@ def admin_overview(
         "conversations_total": db.query(Conversation).count(),
         "admin_email_mode": bool(_admin_email_set()),
     }
+
+
+@router.get("/subscriptions")
+def admin_subscriptions(
+    status: Optional[str] = None,
+    provider: Optional[str] = None,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    q = db.query(Subscription)
+    if status:
+        q = q.filter(Subscription.status == status)
+    if provider:
+        q = q.filter(Subscription.provider == provider)
+    items = q.order_by(Subscription.updated_at.desc()).limit(300).all()
+    return [_subscription_summary(db, s) for s in items]
+
+
+@router.get("/billing-events")
+def admin_billing_events(
+    status: Optional[str] = None,
+    provider: Optional[str] = None,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    q = db.query(BillingWebhookEvent)
+    if status:
+        q = q.filter(BillingWebhookEvent.status == status)
+    if provider:
+        q = q.filter(BillingWebhookEvent.provider == provider)
+    items = q.order_by(BillingWebhookEvent.received_at.desc()).limit(300).all()
+    return [_billing_event_summary(e) for e in items]
 
 
 @router.get("/users")

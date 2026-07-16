@@ -89,6 +89,8 @@
     adminPendingBilling: function (qs) { return request("/api/admin/pending-billing" + (qs || "")); },
     adminClaimPendingBilling: function (id, b) { return request("/api/admin/pending-billing/" + id + "/claim", { method: "POST", body: b || {} }); },
     adminIgnorePendingBilling: function (id) { return request("/api/admin/pending-billing/" + id + "/ignore", { method: "POST" }); },
+    adminSubscriptions: function (qs) { return request("/api/admin/subscriptions" + (qs || "")); },
+    adminBillingEvents: function (qs) { return request("/api/admin/billing-events" + (qs || "")); },
 
     // ---- Setup / Nichos ----
     listNichePackages: function () { return request("/api/setup/niches"); },
