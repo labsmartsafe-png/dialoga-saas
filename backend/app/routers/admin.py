@@ -240,8 +240,12 @@ def admin_system_health(admin: User = Depends(require_admin)):
         "Se estiver no plano Free, o backend dorme e pode estourar memória. Para go-live, usar plano pago.",
     ))
     items.append(_health_item(
+        "legal_pages", "Termos e Privacidade", "warn" if "onrender.com" in (settings.privacy_policy_url or "") else "ok",
+        f"Privacidade: {settings.privacy_policy_url} | Termos: {settings.terms_url}. Em produção, usar domínio próprio e revisar juridicamente.",
+    ))
+    items.append(_health_item(
         "email_official", "E-mail oficial", "warn",
-        "E-mails atuais são temporários. Antes de produção, configurar domínio/e-mail oficial e política de privacidade/termos.",
+        "E-mails atuais são temporários. Antes de produção, configurar domínio/e-mail oficial, SPF/DKIM/DMARC e provedor transacional.",
     ))
 
     counts = {"ok": 0, "warn": 0, "error": 0}

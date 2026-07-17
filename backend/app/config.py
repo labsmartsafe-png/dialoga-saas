@@ -55,6 +55,8 @@ class Settings(BaseSettings):
     google_client_secret: str = ""
     google_redirect_uri: str = ""  # default: PUBLIC_BASE_URL + /api/calendar/google/callback
     frontend_base_url: str = "https://dialoga-frontend-8p28.onrender.com"
+    privacy_policy_url: str = "https://dialoga-frontend-8p28.onrender.com/privacidade.html"
+    terms_url: str = "https://dialoga-frontend-8p28.onrender.com/termos.html"
 
     # --- IA / Gemini (Fase A) ---
     gemini_api_key: str = ""                     # Google AI Studio API key
