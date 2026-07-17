@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Editor - dIAloga+</title>
   <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/app-shell.css">
   <style>
     body.dark-mode { background: #0f172a !important; color: #e2e8f0 !important; }
     body.dark-mode .navbar { background: #1e293b !important; border-bottom-color: #334155 !important; }
@@ -98,7 +99,7 @@
     body.dark-mode .connection-menu .cm-item:hover { background: #334155; }
   </style>
 </head>
-<body>
+<body class="app-shell-body">
 
 <script>
   if (localStorage.getItem("dialoga-dark-mode") === "1") {
@@ -106,25 +107,14 @@
   }
 </script>
 
-<nav class="navbar">
-  <div class="brand">
-    <img src="img/logo-dialoga.png" alt="dIAloga+">
-  </div>
-  <nav>
-    <a href="dashboard.html">Dashboard</a>
-    <a href="setup.html">Setup</a>
-    <a href="builder.html" class="active">Fluxos</a>
-    <a href="leads.html">Leads</a>
-    <a href="inbox.html">Inbox</a>
-    <a href="agenda.html">Agenda</a>
-    <a href="ia.html">IA</a>
-    <a href="planos.html">Planos</a>
-    <a href="configuracoes.html">Configurações</a>
-    <a href="admin.html" data-admin-only style="display:none">Admin</a>
-  </nav>
-  <div class="user-area" id="user-area"></div>
-</nav>
-
+<div class="app-shell">
+  <aside class="shell-sidebar" id="app-sidebar"></aside>
+  <div class="shell-main">
+    <header class="shell-topbar">
+      <div class="shell-title" id="app-topbar-title"></div>
+      <div class="shell-top-actions"><div id="app-topbar-actions"></div><div class="user-area" id="user-area"></div></div>
+    </header>
+    <main class="shell-content">
 <div class="builder-layout">
   <aside class="nodes-list">
     <h3>Meus Fluxos</h3>
@@ -262,12 +252,20 @@
   </div>
 </div>
 
+    </main>
+  </div>
+</div>
 <script src="js/config.js"></script>
 <script src="js/api.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/layout.js"></script>
+<script>
+  if (window.WFLayout) WFLayout.render({ active: "builder", title: "Fluxos", subtitle: "Construa e ajuste seus fluxos de atendimento." });
+</script>
 <script src="js/canvas.js"></script>
 <script src="js/builder.js"></script>
 <script src="js/simulator.js"></script>
 </body>
 </html>
+
 

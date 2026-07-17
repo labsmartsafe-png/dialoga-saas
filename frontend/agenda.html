@@ -5,30 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Agenda - dIAloga+</title>
   <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/app-shell.css">
   <style>
     .agenda-grid{display:grid;grid-template-columns:360px 1fr;gap:18px}.card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:18px}.field{margin-bottom:12px}.field label{display:block;font-size:12px;font-weight:800;color:var(--muted);margin-bottom:5px;text-transform:uppercase}.field input,.field select,.field textarea{width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:10px;padding:10px;font-family:inherit}.field textarea{min-height:80px}.appt{border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;background:#fff}.appt-title{font-weight:900;color:var(--text)}.appt-meta{font-size:13px;color:var(--muted);margin-top:4px}.status{display:inline-flex;border-radius:999px;padding:4px 9px;font-size:11px;font-weight:900}.status.solicitado{background:#dbeafe;color:#1e40af}.status.confirmado{background:#d1fae5;color:#065f46}.status.cancelado{background:#fee2e2;color:#991b1b}.status.realizado{background:#ede9fe;color:#5b21b6}.status.nao_compareceu{background:#fef3c7;color:#92400e}.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.filters-bar{align-items:end}.empty{padding:40px;text-align:center;color:var(--muted)}body.dark-mode .card,body.dark-mode .appt{background:#171d2b;border-color:#262e40;color:#e6eaf2}body.dark-mode .field input,body.dark-mode .field select,body.dark-mode .field textarea{background:#1f2636;color:#e6eaf2;border-color:#323b50}body.dark-mode .appt-title{color:#e6eaf2}body.dark-mode .appt-meta{color:#9aa3b2}@media(max-width:900px){.agenda-grid{grid-template-columns:1fr}}
   </style>
 </head>
-<body>
+<body class="app-shell-body">
 <script>if(localStorage.getItem("dialoga-dark-mode")==="1")document.body.classList.add("dark-mode");</script>
-<nav class="navbar">
-  <div class="brand"><img src="img/logo-dialoga.png" alt="dIAloga+"></div>
-  <nav>
-    <a href="dashboard.html">Dashboard</a>
-    <a href="setup.html">Setup</a>
-    <a href="builder.html">Fluxos</a>
-    <a href="leads.html">Leads</a>
-    <a href="inbox.html">Inbox</a>
-    <a href="agenda.html" class="active">Agenda</a>
-    <a href="ia.html">IA</a>
-    <a href="planos.html">Planos</a>
-    <a href="configuracoes.html">Configurações</a>
-    <a href="admin.html" data-admin-only style="display:none">Admin</a>
-  </nav>
-  <div class="user-area" id="user-area"></div>
-</nav>
-
-<main class="container container-lg">
+<div class="app-shell">
+  <aside class="shell-sidebar" id="app-sidebar"></aside>
+  <div class="shell-main">
+    <header class="shell-topbar">
+      <div class="shell-title" id="app-topbar-title"></div>
+      <div class="shell-top-actions"><div id="app-topbar-actions"></div><div class="user-area" id="user-area"></div></div>
+    </header>
+    <main class="shell-content">
   <div class="flex justify-between items-center mb-3">
     <div><h1 style="font-size:26px;">Agenda</h1><p class="text-muted">Agendamentos internos vinculados aos seus leads.</p></div>
     <button class="btn btn-secondary" id="btn-refresh">Atualizar</button>
@@ -61,10 +52,16 @@
     </section>
   </div>
 </main>
+  </div>
+</div>
 
 <script src="js/config.js"></script>
 <script src="js/api.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/layout.js"></script>
+<script>
+  if (window.WFLayout) WFLayout.render({ active: "agenda", title: "Agenda", subtitle: "Agendamentos internos e Google Calendar." });
+</script>
 <script>
 (async function(){
   const alertArea=document.getElementById('alert-area');let leads=[];let appointments=[];const urlParams=new URLSearchParams(window.location.search);const preLeadId=urlParams.get('lead_id');
@@ -89,4 +86,5 @@
 </script>
 </body>
 </html>
+
 

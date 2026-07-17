@@ -5,29 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin - dIAloga+</title>
   <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/app-shell.css">
   <style>
     .admin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px}.admin-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:16px}.admin-card .label{font-size:12px;color:var(--muted);text-transform:uppercase;font-weight:800}.admin-card .value{font-size:26px;font-weight:900;color:var(--text);margin-top:6px}.admin-table{width:100%;font-size:13px}.admin-table th{text-align:left;font-size:11px;text-transform:uppercase;color:var(--muted);padding:8px;border-bottom:1px solid var(--border)}.admin-table td{padding:10px 8px;border-bottom:1px solid var(--border);vertical-align:top}.badge{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800}.badge.ok{background:#dcfce7;color:#166534}.badge.err{background:#fee2e2;color:#991b1b}.badge.info{background:#dbeafe;color:#1e40af}.actions{display:flex;gap:6px;flex-wrap:wrap}.search-row{display:flex;gap:8px;margin-bottom:14px}.search-row input{flex:1}body.dark-mode .admin-card{background:#171d2b;border-color:#262e40}body.dark-mode .admin-card .value{color:#e6eaf2}body.dark-mode .admin-table th,body.dark-mode .admin-table td{border-color:#262e40}
   </style>
 </head>
-<body>
+<body class="app-shell-body">
 <script>if(localStorage.getItem("dialoga-dark-mode")==="1")document.body.classList.add("dark-mode");</script>
-<nav class="navbar">
-  <div class="brand"><img src="img/logo-dialoga.png" alt="dIAloga+"></div>
-  <nav>
-    <a href="dashboard.html">Dashboard</a>
-    <a href="setup.html">Setup</a>
-    <a href="builder.html">Fluxos</a>
-    <a href="leads.html">Leads</a>
-    <a href="inbox.html">Inbox</a>
-    <a href="agenda.html">Agenda</a>
-    <a href="ia.html">IA</a>
-    <a href="planos.html">Planos</a>
-    <a href="configuracoes.html">Configurações</a>
-    <a href="admin.html" class="active" data-admin-only style="display:none">Admin</a>
-  </nav>
-  <div class="user-area" id="user-area"></div>
-</nav>
-<main class="container container-lg">
+<div class="app-shell">
+  <aside class="shell-sidebar" id="app-sidebar"></aside>
+  <div class="shell-main">
+    <header class="shell-topbar">
+      <div class="shell-title" id="app-topbar-title"></div>
+      <div class="shell-top-actions"><div id="app-topbar-actions"></div><div class="user-area" id="user-area"></div></div>
+    </header>
+    <main class="shell-content">
   <div class="flex justify-between items-center mb-3"><div><h1 style="font-size:26px;">Painel Admin</h1><p class="text-muted">Visão geral dos clientes e operação do SaaS.</p></div><button class="btn btn-secondary" id="btn-refresh">Atualizar</button></div>
   <div id="alert-area"></div>
   <section class="admin-grid" id="overview"><div class="admin-card"><div class="label">Carregando</div><div class="value">...</div></div></section>
@@ -60,8 +52,14 @@
     <div id="users"><div class="empty-state"><div class="spinner"></div></div></div>
   </section>
 </main>
+  </div>
+</div>
 <script src="js/config.js"></script>
 <script src="js/api.js"></script><script src="js/auth.js"></script>
+<script src="js/layout.js"></script>
+<script>
+  if (window.WFLayout) WFLayout.render({ active: "admin", title: "Admin", subtitle: "Gestão do SaaS, clientes, billing e saúde do sistema." });
+</script>
 <script>
 (async function(){
  const alertArea=document.getElementById('alert-area');let users=[];let pending=[];let subscriptions=[];let billingEvents=[];let health=null;
@@ -89,4 +87,5 @@ async function loadUsers(){const q=document.getElementById('q').value.trim();use
 })();
 </script>
 </body></html>
+
 

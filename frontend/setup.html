@@ -5,25 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Setup Guiado - dIAloga+</title>
   <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/app-shell.css">
   <style>
     .steps{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.step{padding:8px 12px;border-radius:999px;background:#f3f4f6;color:#6b7280;font-size:12px;font-weight:800}.step.active{background:#dbeafe;color:#1e40af}.step.done{background:#d1fae5;color:#065f46}.setup-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}.pkg-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:18px;cursor:pointer}.pkg-card.active{border:2px solid var(--primary);background:#eef2ff}.pkg-card h3{margin:0 0 8px}.pkg-meta{font-size:13px;color:var(--muted);margin:8px 0}.tag{display:inline-flex;border-radius:999px;background:#f3f4f6;padding:4px 8px;margin:3px;font-size:11px}.result,.setup-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-top:18px}.seed{white-space:pre-wrap;background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:12px;font-size:13px;max-height:260px;overflow:auto}.seed-editor{width:100%;min-height:280px;box-sizing:border-box;background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:12px;font-size:13px;font-family:inherit;line-height:1.45;resize:vertical;color:var(--text)}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}body.dark-mode .pkg-card,body.dark-mode .result,body.dark-mode .setup-card{background:#171d2b;border-color:#262e40;color:#e6eaf2}body.dark-mode .pkg-card.active{background:#1f2a44;border-color:#22d3ee}body.dark-mode .tag{background:#1f2636;color:#e6eaf2}body.dark-mode .seed,body.dark-mode .seed-editor{background:#0f172a;border-color:#334155;color:#e6eaf2}body.dark-mode .step{background:#1f2636;color:#9aa3b2}body.dark-mode .step.active{background:#1f2a44;color:#93c5fd}body.dark-mode .step.done{background:#0c2a1f;color:#86efac}
   </style>
 </head>
-<body>
+<body class="app-shell-body">
 <script>if(localStorage.getItem("dialoga-dark-mode")==="1")document.body.classList.add("dark-mode");</script>
-<nav class="navbar"><div class="brand"><img src="img/logo-dialoga.png" alt="dIAloga+"></div><nav>
-    <a href="dashboard.html">Dashboard</a>
-    <a href="setup.html" class="active">Setup</a>
-    <a href="builder.html">Fluxos</a>
-    <a href="leads.html">Leads</a>
-    <a href="inbox.html">Inbox</a>
-    <a href="agenda.html">Agenda</a>
-    <a href="ia.html">IA</a>
-    <a href="planos.html">Planos</a>
-    <a href="configuracoes.html">Configurações</a>
-    <a href="admin.html" data-admin-only style="display:none">Admin</a>
-  </nav><div class="user-area" id="user-area"></div></nav>
-<main class="container container-lg">
+<div class="app-shell">
+  <aside class="shell-sidebar" id="app-sidebar"></aside>
+  <div class="shell-main">
+    <header class="shell-topbar">
+      <div class="shell-title" id="app-topbar-title"></div>
+      <div class="shell-top-actions"><div id="app-topbar-actions"></div><div class="user-area" id="user-area"></div></div>
+    </header>
+    <main class="shell-content">
   <div class="flex justify-between items-center mb-3"><div><h1 style="font-size:26px;">Setup Guiado</h1><p class="text-muted">Configure por etapas para evitar travamentos e deixar tudo claro.</p></div></div>
   <div id="alert-area"></div>
   <div class="steps" id="steps"></div>
@@ -61,7 +57,13 @@
 
   <section class="setup-card" id="screen-done" style="display:none;"><h2>Setup concluído ✅</h2><div id="done-result"></div><div class="actions"><a class="btn btn-primary" href="configuracoes.html">Conectar WhatsApp</a><a class="btn btn-secondary" href="dashboard.html">Ir ao Dashboard</a><a class="btn btn-secondary" href="ia.html">Ver IA</a></div></section>
 </main>
+  </div>
+</div>
 <script src="js/config.js"></script><script src="js/api.js"></script><script src="js/auth.js"></script>
+<script src="js/layout.js"></script>
+<script>
+  if (window.WFLayout) WFLayout.render({ active: "setup", title: "Setup guiado", subtitle: "Configure seu negócio por etapas." });
+</script>
 <script>
 (async function(){
  const alertArea=document.getElementById('alert-area');let packages=[],selected=null,flowRes=null,kbRes=null,current='niche';
@@ -88,4 +90,5 @@
  const user=await WFAuth.requireAuth();if(!user)return;WFAuth.renderUserChip(document.getElementById('user-area'),user);packages=await WFApi.listNichePackages();renderPackages();renderSteps();
 })();
 </script></body></html>
+
 

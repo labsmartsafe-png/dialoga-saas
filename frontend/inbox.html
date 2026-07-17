@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Inbox Humano - dIAloga+</title>
   <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/app-shell.css">
   <style>
     .inbox-layout{display:grid;grid-template-columns:360px 1fr;gap:18px;min-height:calc(100vh - 150px)}
     .panel{background:#fff;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}.panel-head{padding:16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px}.panel-body{padding:0}.thread-list{max-height:calc(100vh - 245px);overflow:auto}.thread{padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:.15s;background:#fff}.thread:hover{background:#f8fafc}.thread.active{background:#eef2ff;border-left:4px solid var(--primary)}.thread-title{font-weight:800;color:var(--text);font-size:14px;display:flex;justify-content:space-between;gap:8px}.thread-meta{font-size:12px;color:var(--muted);margin-top:4px}.thread-last{font-size:13px;color:var(--text);margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.unread-dot{width:9px;height:9px;border-radius:50%;background:#22c55e;display:inline-block;flex-shrink:0}.badge-human{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800}.badge-human.wait{background:#fef3c7;color:#92400e}.badge-human.active{background:#ffedd5;color:#9a3412}.chat{display:flex;flex-direction:column;height:calc(100vh - 190px)}.chat-head{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.chat-title{font-size:18px;font-weight:900}.chat-sub{font-size:13px;color:var(--muted);margin-top:3px}.messages{flex:1;overflow:auto;padding:18px;background:#f8fafc}.msg{max-width:75%;margin-bottom:12px;padding:10px 12px;border-radius:14px;font-size:14px;line-height:1.45;box-shadow:0 1px 2px rgba(0,0,0,.04)}.msg.inbound{background:#fff;border:1px solid var(--border);margin-right:auto}.msg.outbound{background:#dcfce7;border:1px solid #bbf7d0;margin-left:auto}.msg.bot{background:#eef2ff;border-color:#c7d2fe}.msg.system{background:#f3f4f6;border-color:#e5e7eb;margin-left:auto;margin-right:auto;text-align:center;color:#6b7280}.msg-meta{font-size:10px;color:#6b7280;margin-top:5px}.composer{padding:14px;border-top:1px solid var(--border);display:flex;gap:10px;background:#fff}.composer textarea{flex:1;min-height:48px;max-height:120px;resize:vertical;border:1px solid var(--border);border-radius:12px;padding:10px 12px;font-family:inherit}.empty-chat{display:flex;align-items:center;justify-content:center;flex:1;color:var(--muted);text-align:center;padding:30px}.context-box{padding:12px 16px;border-bottom:1px solid var(--border);background:#fafafa}.ctx-tag{display:inline-flex;background:#f3f4f6;border-radius:7px;padding:4px 8px;margin:3px;font-size:11px}.note-item{border:1px solid var(--border);border-radius:8px;padding:8px;margin-top:6px;background:#fff;font-size:12px}.note-date{color:var(--muted);font-size:10px;margin-top:4px}.mini-form{display:flex;gap:6px;margin-top:8px}.mini-form input{flex:1;border:1px solid var(--border);border-radius:8px;padding:8px}.mini-form button{padding:8px 10px}.filters{display:flex;gap:8px;align-items:center}.filters select{padding:8px;border:1px solid var(--border);border-radius:8px}@media(max-width:900px){.inbox-layout{grid-template-columns:1fr}.chat{height:70vh}.thread-list{max-height:320px}}
@@ -88,26 +89,16 @@
     }
   </style>
 </head>
-<body>
+<body class="app-shell-body">
 <script>if(localStorage.getItem("dialoga-dark-mode")==="1")document.body.classList.add("dark-mode");</script>
-<nav class="navbar">
-  <div class="brand"><img src="img/logo-dialoga.png" alt="dIAloga+"></div>
-  <nav>
-    <a href="dashboard.html">Dashboard</a>
-    <a href="setup.html">Setup</a>
-    <a href="builder.html">Fluxos</a>
-    <a href="leads.html">Leads</a>
-    <a href="inbox.html" class="active">Inbox</a>
-    <a href="agenda.html">Agenda</a>
-    <a href="ia.html">IA</a>
-    <a href="planos.html">Planos</a>
-    <a href="configuracoes.html">Configurações</a>
-    <a href="admin.html" data-admin-only style="display:none">Admin</a>
-  </nav>
-  <div class="user-area" id="user-area"></div>
-</nav>
-
-<main class="container container-lg">
+<div class="app-shell">
+  <aside class="shell-sidebar" id="app-sidebar"></aside>
+  <div class="shell-main">
+    <header class="shell-topbar">
+      <div class="shell-title" id="app-topbar-title"></div>
+      <div class="shell-top-actions"><div id="app-topbar-actions"></div><div class="user-area" id="user-area"></div></div>
+    </header>
+    <main class="shell-content">
   <div class="flex justify-between items-center mb-3">
     <div>
       <h1 style="font-size:26px;">Inbox Humano</h1>
@@ -155,10 +146,16 @@
     </section>
   </div>
 </main>
+  </div>
+</div>
 
 <script src="js/config.js"></script>
 <script src="js/api.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/layout.js"></script>
+<script>
+  if (window.WFLayout) WFLayout.render({ active: "inbox", title: "Inbox humano", subtitle: "Atendimentos em que o bot está pausado." });
+</script>
 <script>
 (async function(){
   const alertArea=document.getElementById('alert-area');let threads=[];let current=null;
@@ -185,4 +182,5 @@
 </script>
 </body>
 </html>
+
 

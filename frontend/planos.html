@@ -5,30 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Planos - dIAloga+</title>
   <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/app-shell.css">
   <style>
     .plans-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}.plan-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:22px;display:flex;flex-direction:column;gap:12px}.plan-card.current{border:2px solid var(--primary);box-shadow:0 0 0 4px rgba(79,70,229,.08)}.plan-title{font-size:20px;font-weight:900}.price{font-size:30px;font-weight:900;color:var(--text)}.price small{font-size:13px;color:var(--muted)}.limit{font-size:14px;color:var(--text);padding:6px 0;border-bottom:1px solid var(--border)}.badge-current{display:inline-flex;border-radius:999px;padding:4px 10px;background:#d1fae5;color:#065f46;font-size:12px;font-weight:900}body.dark-mode .plan-card{background:#171d2b;border-color:#262e40;color:#e6eaf2}body.dark-mode .plan-card.current{border-color:#22d3ee}body.dark-mode .price{color:#e6eaf2}body.dark-mode .limit{border-color:#262e40;color:#e6eaf2}
   </style>
 </head>
-<body>
+<body class="app-shell-body">
 <script>if(localStorage.getItem("dialoga-dark-mode")==="1")document.body.classList.add("dark-mode");</script>
-<nav class="navbar"><div class="brand"><img src="img/logo-dialoga.png" alt="dIAloga+"></div><nav>
-    <a href="dashboard.html">Dashboard</a>
-    <a href="setup.html">Setup</a>
-    <a href="builder.html">Fluxos</a>
-    <a href="leads.html">Leads</a>
-    <a href="inbox.html">Inbox</a>
-    <a href="agenda.html">Agenda</a>
-    <a href="ia.html">IA</a>
-    <a href="planos.html" class="active">Planos</a>
-    <a href="configuracoes.html">Configurações</a>
-    <a href="admin.html" data-admin-only style="display:none">Admin</a>
-  </nav><div class="user-area" id="user-area"></div></nav>
-<main class="container container-lg">
+<div class="app-shell">
+  <aside class="shell-sidebar" id="app-sidebar"></aside>
+  <div class="shell-main">
+    <header class="shell-topbar">
+      <div class="shell-title" id="app-topbar-title"></div>
+      <div class="shell-top-actions"><div id="app-topbar-actions"></div><div class="user-area" id="user-area"></div></div>
+    </header>
+    <main class="shell-content">
   <div class="flex justify-between items-center mb-3"><div><h1 style="font-size:26px;">Planos</h1><p class="text-muted">Escolha o plano ideal para sua operação. Os limites protegem sua margem e ajudam a escalar.</p></div></div>
   <div id="alert-area"></div>
   <div class="plans-grid" id="plans"><div class="empty-state"><div class="spinner"></div></div></div>
 </main>
+  </div>
+</div>
 <script src="js/config.js"></script><script src="js/api.js"></script><script src="js/auth.js"></script>
+<script src="js/layout.js"></script>
+<script>
+  if (window.WFLayout) WFLayout.render({ active: "planos", title: "Planos", subtitle: "Limites, recursos e upgrade." });
+</script>
 <script>
 (async function(){
  const alertArea=document.getElementById('alert-area');
@@ -39,4 +41,5 @@
  const user=await WFAuth.requireAuth();if(!user)return;WFAuth.renderUserChip(document.getElementById('user-area'),user);try{render(await WFApi.listPlans())}catch(e){alert(e.message)}
 })();
 </script></body></html>
+
 

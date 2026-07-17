@@ -53,12 +53,12 @@ body.app-shell-body{
 .shell-brand{
   display:flex;
   align-items:center;
-  height:56px;
-  padding:2px 8px 18px;
-  margin-bottom:12px;
+  min-height:112px;
+  padding:8px 10px 22px;
+  margin-bottom:14px;
   border-bottom:1px solid var(--shell-border-muted);
 }
-.shell-brand img{width:72px;max-height:34px;height:auto;display:block;object-fit:contain;}
+.shell-brand img{width:144px;max-width:100%;height:auto;display:block;object-fit:contain;}
 .shell-nav{display:flex;flex-direction:column;gap:14px;}
 .shell-group{padding-bottom:2px;}
 .shell-group-title{
