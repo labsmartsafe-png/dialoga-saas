@@ -18,8 +18,10 @@
 
   function showAlert(msg, type) {
     type = type || "error";
+    if (!alertArea) return;
     alertArea.innerHTML = '<div class="alert alert-' + type + '">' + msg + '</div>';
-    setTimeout(function () { alertArea.innerHTML = ""; }, 5000);
+    clearTimeout(showAlert._timer);
+    showAlert._timer = setTimeout(function () { alertArea.innerHTML = ""; }, 3500);
   }
 
   const user = await WFAuth.requireAuth();
@@ -117,6 +119,7 @@
       $("#flow-description").value = flow.description || "";
       var modeSel = $("#flow-mode");
       if (modeSel) modeSel.value = state.currentFlowMode;
+      updateModeHelp();
       $("#btn-delete").style.display = "";
       renderFlowsList();
       renderCanvas();
@@ -443,13 +446,28 @@
     return modeSel ? modeSel.value : (state.currentFlowMode || "guided");
   }
 
+  function updateModeHelp() {
+    var help = $("#flow-mode-help");
+    var mode = currentModeValue();
+    if (!help) return;
+    if (mode === "ai_agent") {
+      help.textContent = "Atendente IA não precisa de nós. Use a descrição como saudação e defina a base em IA.";
+    } else {
+      help.textContent = "Fluxo guiado usa os nós do canvas para conduzir a conversa.";
+    }
+  }
+
+  var modeSelect = $("#flow-mode");
+  if (modeSelect) modeSelect.addEventListener("change", updateModeHelp);
+  updateModeHelp();
+
   $("#btn-save").addEventListener("click", async function () {
     const btn = $("#btn-save");
     // OPCAO 1 (UX): se nao ha fluxo aberto, cria um novo com o nome digitado no topo.
     if (!state.currentFlowId) {
       const nome = ($("#flow-name").value || "").trim();
       if (!nome) {
-        showAlert("Digite um nome no campo do topo (ou clique em '+ Novo fluxo').");
+        showAlert("Digite um nome no campo 'Nome do fluxo' ou clique em 'Novo fluxo'.");
         $("#flow-name").focus();
         return;
       }

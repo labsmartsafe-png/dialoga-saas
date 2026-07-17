@@ -132,6 +132,22 @@
     .node-editor{min-width:0;}
     @media(max-width:1100px){.builder-layout{grid-template-columns:1fr!important;height:auto}.node-editor{min-height:260px}.builder-topbar .flow-picker,.builder-topbar .flow-name-wrap{min-width:100%;max-width:none}}
 
+
+    /* Builder toolbar reorganizada */
+    #alert-area{position:fixed;right:24px;bottom:24px;z-index:9000;max-width:420px;pointer-events:none;}
+    #alert-area .alert{box-shadow:0 12px 36px rgba(0,0,0,.18);pointer-events:auto;margin:0;}
+    .builder-topbar{gap:10px!important;align-items:stretch!important;}
+    .builder-toolbar-group{display:flex;align-items:end;gap:8px;padding:8px;border:1px solid var(--shell-border,#d8dee4);border-radius:10px;background:var(--shell-surface,#fff);}
+    .builder-toolbar-group.primary{flex:1;min-width:360px;}
+    .builder-field{display:flex;flex-direction:column;gap:4px;}
+    .builder-field label{font-size:11px;line-height:14px;font-weight:800;color:var(--shell-muted,#656d76);letter-spacing:.02em;}
+    .builder-field.flow-name-wrap{flex:1;min-width:260px;}
+    .builder-field select,.builder-field input{height:38px;}
+    .builder-mode-help{font-size:11px;color:var(--shell-muted,#656d76);max-width:260px;line-height:1.25;padding:0 2px 2px;}
+    .builder-actions{display:flex;align-items:end;gap:6px;padding:8px;border:1px solid var(--shell-border,#d8dee4);border-radius:10px;background:var(--shell-surface,#fff);}
+    body.dark-mode .builder-toolbar-group,body.dark-mode .builder-actions{background:#171d2b;border-color:#30363d;}
+    @media(max-width:1250px){.builder-toolbar-group.primary{min-width:100%;}.builder-actions{width:100%;flex-wrap:wrap}.builder-mode-help{max-width:none}}
+
   </style>
 </head>
 <body class="app-shell-body">
@@ -153,40 +169,59 @@
 <div class="builder-layout">
   <main class="canvas-area" style="display: flex; flex-direction: column;">
     <div class="builder-topbar">
-      <select id="flows-list" class="form-control flow-picker" title="Meus fluxos"><option value="">Meus fluxos...</option></select>
-      <button class="btn btn-secondary btn-sm builder-icon-btn" id="btn-new-flow" title="Novo fluxo" type="button"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>Novo</button>
-      <div class="flow-name-wrap"><input type="text" id="flow-name" class="form-control" placeholder="Nome do fluxo (digite e clique em Salvar para criar)" style="font-size:16px;font-weight:650;"></div>
-      <select id="flow-mode" class="form-control" style="max-width:170px;" title="Modo de atendimento"><option value="guided">Fluxo guiado</option><option value="ai_agent">Atendente IA</option></select>
-
-      <div class="builder-dropdown" id="add-node-menu">
-        <button class="btn btn-secondary btn-sm" type="button" data-menu-toggle="add-node-menu" title="Adicionar nó"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>Nó</button>
-        <div class="builder-menu">
-          <div class="builder-menu-title">Adicionar nó</div>
-          <div class="builder-menu-grid">
-            <button class="btn btn-secondary btn-sm node-tool" data-add="message"><svg viewBox="0 0 24 24"><path d="M5 6h14v10H8l-3 3V6z"></path></svg>Mensagem</button>
-            <button class="btn btn-secondary btn-sm node-tool" data-add="question"><svg viewBox="0 0 24 24"><path d="M9.5 9a2.5 2.5 0 1 1 4.2 1.8c-.9.7-1.7 1.2-1.7 2.7"></path><path d="M12 17h.01"></path><circle cx="12" cy="12" r="9"></circle></svg>Pergunta</button>
-            <button class="btn btn-secondary btn-sm node-tool" data-add="input"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="2"></rect><path d="M8 10h8M8 14h5"></path></svg>Entrada</button>
-            <button class="btn btn-secondary btn-sm node-tool" data-add="ai"><svg viewBox="0 0 24 24"><path d="M12 3l1.4 4.1L17.5 8.5l-4.1 1.4L12 14l-1.4-4.1-4.1-1.4 4.1-1.4L12 3z"></path><path d="M18 14l.7 1.8 1.8.7-1.8.7L18 19l-.7-1.8-1.8-.7 1.8-.7L18 14z"></path></svg>IA</button>
-            <button class="btn btn-secondary btn-sm node-tool" data-add="condition"><svg viewBox="0 0 24 24"><path d="M6 4h12v6H6z"></path><path d="M12 10v4"></path><path d="M8 20h8"></path><path d="M12 14l-4 6M12 14l4 6"></path></svg>Condição</button>
-            <button class="btn btn-secondary btn-sm node-tool" data-add="delay"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7"></circle><path d="M12 13V9M12 13l3 2M9 2h6"></path></svg>Espera</button>
-            <button class="btn btn-secondary btn-sm node-tool" data-add="human"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3"></circle><path d="M5 20c1-4 3.4-6 7-6s6 2 7 6"></path></svg>Humano</button>
-            <button class="btn btn-secondary btn-sm node-tool" data-add="end"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><path d="M9 9l6 6M15 9l-6 6"></path></svg>Fim</button>
-          </div>
+      <div class="builder-toolbar-group primary">
+        <div class="builder-field flow-picker-wrap">
+          <label for="flows-list">Fluxo atual</label>
+          <select id="flows-list" class="form-control flow-picker" title="Selecione um fluxo existente"><option value="">Meus fluxos...</option></select>
+        </div>
+        <button class="btn btn-secondary btn-sm builder-icon-btn" id="btn-new-flow" title="Criar novo fluxo" type="button"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>Novo fluxo</button>
+        <div class="builder-field flow-name-wrap">
+          <label for="flow-name">Nome do fluxo</label>
+          <input type="text" id="flow-name" class="form-control" placeholder="Digite o nome e clique em Salvar" style="font-size:16px;font-weight:650;">
+        </div>
+        <div class="builder-field">
+          <label for="flow-mode">Modelo de atendimento</label>
+          <select id="flow-mode" class="form-control" style="min-width:190px;" title="Modelo de atendimento">
+            <option value="guided">Fluxo guiado — usa nós</option>
+            <option value="ai_agent">Atendente IA — sem montar fluxo</option>
+          </select>
+          <div class="builder-mode-help" id="flow-mode-help">Fluxo guiado usa os nós do canvas para conduzir a conversa.</div>
         </div>
       </div>
 
-      <div class="builder-dropdown" id="template-menu">
-        <button class="btn btn-secondary btn-sm" type="button" data-menu-toggle="template-menu" title="Importar template"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"></path><path d="M8 9h8M8 13h5"></path></svg>Templates</button>
-        <div class="builder-menu"><div class="builder-menu-title">Importar template</div><div class="builder-menu-grid" id="templates-list"></div></div>
+      <div class="builder-toolbar-group">
+        <div class="builder-dropdown" id="add-node-menu">
+          <button class="btn btn-secondary btn-sm" type="button" data-menu-toggle="add-node-menu" title="Adicionar nó"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>Adicionar nó</button>
+          <div class="builder-menu">
+            <div class="builder-menu-title">Adicionar nó ao canvas</div>
+            <div class="builder-menu-grid">
+              <button class="btn btn-secondary btn-sm node-tool" data-add="message"><svg viewBox="0 0 24 24"><path d="M5 6h14v10H8l-3 3V6z"></path></svg>Mensagem</button>
+              <button class="btn btn-secondary btn-sm node-tool" data-add="question"><svg viewBox="0 0 24 24"><path d="M9.5 9a2.5 2.5 0 1 1 4.2 1.8c-.9.7-1.7 1.2-1.7 2.7"></path><path d="M12 17h.01"></path><circle cx="12" cy="12" r="9"></circle></svg>Pergunta</button>
+              <button class="btn btn-secondary btn-sm node-tool" data-add="input"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="2"></rect><path d="M8 10h8M8 14h5"></path></svg>Entrada</button>
+              <button class="btn btn-secondary btn-sm node-tool" data-add="ai"><svg viewBox="0 0 24 24"><path d="M12 3l1.4 4.1L17.5 8.5l-4.1 1.4L12 14l-1.4-4.1-4.1-1.4 4.1-1.4L12 3z"></path><path d="M18 14l.7 1.8 1.8.7-1.8.7L18 19l-.7-1.8-1.8-.7 1.8-.7L18 14z"></path></svg>IA</button>
+              <button class="btn btn-secondary btn-sm node-tool" data-add="condition"><svg viewBox="0 0 24 24"><path d="M6 4h12v6H6z"></path><path d="M12 10v4"></path><path d="M8 20h8"></path><path d="M12 14l-4 6M12 14l4 6"></path></svg>Condição</button>
+              <button class="btn btn-secondary btn-sm node-tool" data-add="delay"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7"></circle><path d="M12 13V9M12 13l3 2M9 2h6"></path></svg>Espera</button>
+              <button class="btn btn-secondary btn-sm node-tool" data-add="human"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3"></circle><path d="M5 20c1-4 3.4-6 7-6s6 2 7 6"></path></svg>Humano</button>
+              <button class="btn btn-secondary btn-sm node-tool" data-add="end"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><path d="M9 9l6 6M15 9l-6 6"></path></svg>Fim</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="builder-dropdown" id="template-menu">
+          <button class="btn btn-secondary btn-sm" type="button" data-menu-toggle="template-menu" title="Importar template"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"></path><path d="M8 9h8M8 13h5"></path></svg>Templates</button>
+          <div class="builder-menu"><div class="builder-menu-title">Importar template</div><div class="builder-menu-grid" id="templates-list"></div></div>
+        </div>
       </div>
 
-      <button class="btn btn-secondary btn-sm" id="btn-undo" title="Desfazer (Ctrl+Z)">&#8630;</button>
-      <button class="btn btn-secondary btn-sm" id="btn-redo" title="Refazer (Ctrl+Y)">&#8631;</button>
-      <button class="btn btn-secondary btn-sm" id="btn-test">Testar</button>
-      <button class="btn btn-primary btn-sm" id="btn-save">Salvar</button>
-      <button class="btn btn-danger btn-sm" id="btn-delete" style="display:none;">Excluir</button>
-      <button class="btn-theme" id="btn-dark-mode" title="Alternar modo escuro (D)">&#127769;</button>
-
+      <div class="builder-actions">
+        <button class="btn btn-secondary btn-sm" id="btn-undo" title="Desfazer (Ctrl+Z)">&#8630;</button>
+        <button class="btn btn-secondary btn-sm" id="btn-redo" title="Refazer (Ctrl+Y)">&#8631;</button>
+        <button class="btn btn-secondary btn-sm" id="btn-test">Testar</button>
+        <button class="btn btn-primary btn-sm" id="btn-save">Salvar</button>
+        <button class="btn btn-danger btn-sm" id="btn-delete" style="display:none;">Excluir</button>
+        <button class="btn-theme" id="btn-dark-mode" title="Alternar modo escuro (D)">&#127769;</button>
+      </div>
+    </div>
     <textarea class="form-control" id="flow-description" placeholder="Descricao (opcional). No modo Atendente IA, este texto e' a saudacao inicial." style="margin-bottom: 12px; flex-shrink: 0;"></textarea>
 
     <div id="alert-area"></div>
@@ -297,6 +332,6 @@
 <script src="js/canvas.js"></script>
 <script src="js/builder.js"></script>
 <script src="js/simulator.js"></script>
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1cc3a97bc798b8d',t:'MTc4NDMyMjU3OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1cc4e6bcc4e34bf',t:'MTc4NDMyMzM5MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
 </html>
