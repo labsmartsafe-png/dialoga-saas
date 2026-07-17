@@ -98,55 +98,46 @@
     body.dark-mode .connection-menu { background: #1e293b; border-color: #334155; color: #e2e8f0; }
     body.dark-mode .connection-menu .cm-item:hover { background: #334155; }
 
-    /* Builder tools: seções recolhíveis e ícones SVG outline */
-    .builder-tools{ margin-top:18px; display:flex; flex-direction:column; gap:10px; }
-    .tool-section{ border:1px solid var(--shell-border, #d8dee4); border-radius:10px; background:var(--shell-surface, #fff); overflow:hidden; }
-    .tool-section summary{ list-style:none; cursor:pointer; padding:10px 12px; font-size:12px; font-weight:700; color:var(--shell-muted,#656d76); display:flex; align-items:center; justify-content:space-between; user-select:none; }
-    .tool-section summary::-webkit-details-marker{ display:none; }
-    .tool-section summary:after{ content:'+'; font-size:16px; color:var(--shell-muted,#656d76); }
-    .tool-section[open] summary:after{ content:'–'; }
-    .tool-body{ padding:0 10px 10px; }
-    .node-tool-grid{ display:grid; grid-template-columns:1fr; gap:6px; }
-    .node-tool{ width:100%; display:flex!important; align-items:center; gap:9px; justify-content:flex-start; padding:8px 10px!important; border-radius:8px!important; font-weight:600!important; }
-    .node-tool svg{ width:16px; height:16px; stroke:currentColor; stroke-width:1.8; fill:none; stroke-linecap:round; stroke-linejoin:round; opacity:.85; flex:0 0 auto; }
-    .template-collapse{ max-height:260px; overflow:auto; padding-right:2px; }
-    body.dark-mode .tool-section{ background:#171d2b; border-color:#30363d; }
-
-
-    /* Builder UX: canvas mais amplo, ferramentas em dropdown na barra superior */
+    /* Builder UX final: canvas amplo e barra superior compacta */
+    #alert-area{position:fixed;right:24px;bottom:24px;z-index:9000;max-width:420px;pointer-events:none;}
+    #alert-area .alert{box-shadow:0 12px 36px rgba(0,0,0,.18);pointer-events:auto;margin:0;}
     .builder-layout{display:grid!important;grid-template-columns:minmax(0,1fr) 340px!important;gap:14px!important;height:calc(100vh - 118px);}
     .builder-layout > .nodes-list{display:none!important;}
-    .canvas-area{min-width:0;}
-    .builder-topbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--shell-border,#d8dee4);border-radius:10px;background:var(--shell-surface,#fff);margin-bottom:10px;flex-shrink:0;}
-    .builder-topbar .flow-picker{min-width:210px;max-width:260px;}
-    .builder-topbar .flow-name-wrap{flex:1;min-width:260px;}
+    .canvas-area{min-width:0;overflow:hidden;}
+    .builder-topbar{
+      display:grid!important;
+      grid-template-columns:minmax(190px,240px) auto minmax(260px,1fr) minmax(210px,260px) auto;
+      gap:8px!important;
+      align-items:end!important;
+      padding:10px;
+      border:1px solid var(--shell-border,#d8dee4);
+      border-radius:10px;
+      background:var(--shell-surface,#fff);
+      margin-bottom:10px;
+      flex-shrink:0;
+      overflow:visible;
+    }
+    .builder-field{display:flex;flex-direction:column;gap:4px;min-width:0;}
+    .builder-field label{font-size:11px;line-height:14px;font-weight:800;color:var(--shell-muted,#656d76);letter-spacing:.02em;}
+    .builder-field select,.builder-field input{height:38px;min-width:0;width:100%;}
+    .builder-mode-help{grid-column:1 / -1;font-size:11px;color:var(--shell-muted,#656d76);line-height:1.25;margin-top:-2px;padding-left:2px;}
+    .builder-tool-actions{display:flex;align-items:end;gap:6px;white-space:nowrap;}
+    .builder-save-actions{display:flex;align-items:end;gap:6px;white-space:nowrap;}
     .builder-dropdown{position:relative;display:inline-flex;}
-    .builder-dropdown > button{display:inline-flex;align-items:center;gap:7px;}
+    .builder-dropdown > button,.builder-icon-btn{display:inline-flex!important;align-items:center;gap:7px;height:38px;}
     .builder-dropdown svg,.builder-icon-btn svg{width:16px;height:16px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;}
-    .builder-menu{display:none;position:absolute;top:calc(100% + 8px);right:0;z-index:5000;min-width:245px;background:var(--shell-surface,#fff);border:1px solid var(--shell-border,#d8dee4);border-radius:10px;box-shadow:0 16px 40px rgba(0,0,0,.14);padding:8px;}
+    .builder-menu{display:none;position:absolute;top:calc(100% + 8px);right:0;z-index:5000;min-width:255px;background:var(--shell-surface,#fff);border:1px solid var(--shell-border,#d8dee4);border-radius:10px;box-shadow:0 16px 40px rgba(0,0,0,.14);padding:8px;}
     .builder-dropdown.open .builder-menu{display:block;}
     .builder-menu-title{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--shell-muted,#656d76);font-weight:800;padding:4px 6px 8px;}
     .builder-menu-grid{display:grid;grid-template-columns:1fr;gap:6px;max-height:360px;overflow:auto;}
     .builder-menu .node-tool{width:100%;}
+    .node-tool{width:100%;display:flex!important;align-items:center;gap:9px;justify-content:flex-start;padding:8px 10px!important;border-radius:8px!important;font-weight:600!important;}
+    .node-tool svg{width:16px;height:16px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:.85;flex:0 0 auto;}
     .builder-menu #templates-list .node-item{margin-bottom:6px;}
     .node-editor{min-width:0;}
-    @media(max-width:1100px){.builder-layout{grid-template-columns:1fr!important;height:auto}.node-editor{min-height:260px}.builder-topbar .flow-picker,.builder-topbar .flow-name-wrap{min-width:100%;max-width:none}}
-
-
-    /* Builder toolbar reorganizada */
-    #alert-area{position:fixed;right:24px;bottom:24px;z-index:9000;max-width:420px;pointer-events:none;}
-    #alert-area .alert{box-shadow:0 12px 36px rgba(0,0,0,.18);pointer-events:auto;margin:0;}
-    .builder-topbar{gap:10px!important;align-items:stretch!important;}
-    .builder-toolbar-group{display:flex;align-items:end;gap:8px;padding:8px;border:1px solid var(--shell-border,#d8dee4);border-radius:10px;background:var(--shell-surface,#fff);}
-    .builder-toolbar-group.primary{flex:1;min-width:360px;}
-    .builder-field{display:flex;flex-direction:column;gap:4px;}
-    .builder-field label{font-size:11px;line-height:14px;font-weight:800;color:var(--shell-muted,#656d76);letter-spacing:.02em;}
-    .builder-field.flow-name-wrap{flex:1;min-width:260px;}
-    .builder-field select,.builder-field input{height:38px;}
-    .builder-mode-help{font-size:11px;color:var(--shell-muted,#656d76);max-width:260px;line-height:1.25;padding:0 2px 2px;}
-    .builder-actions{display:flex;align-items:end;gap:6px;padding:8px;border:1px solid var(--shell-border,#d8dee4);border-radius:10px;background:var(--shell-surface,#fff);}
-    body.dark-mode .builder-toolbar-group,body.dark-mode .builder-actions{background:#171d2b;border-color:#30363d;}
-    @media(max-width:1250px){.builder-toolbar-group.primary{min-width:100%;}.builder-actions{width:100%;flex-wrap:wrap}.builder-mode-help{max-width:none}}
+    body.dark-mode .builder-topbar,body.dark-mode .builder-menu{background:#171d2b;border-color:#30363d;}
+    @media(max-width:1300px){.builder-topbar{grid-template-columns:minmax(180px,1fr) auto minmax(220px,1fr);}.builder-mode{grid-column:1 / 2}.builder-tool-actions,.builder-save-actions{grid-column:auto}.builder-mode-help{grid-column:1 / -1}}
+    @media(max-width:1100px){.builder-layout{grid-template-columns:1fr!important;height:auto}.node-editor{min-height:260px}.builder-topbar{grid-template-columns:1fr}.builder-tool-actions,.builder-save-actions{flex-wrap:wrap}.builder-dropdown{position:static}.builder-menu{left:10px;right:10px;top:auto;margin-top:42px}}
 
   </style>
 </head>
@@ -169,27 +160,23 @@
 <div class="builder-layout">
   <main class="canvas-area" style="display: flex; flex-direction: column;">
     <div class="builder-topbar">
-      <div class="builder-toolbar-group primary">
-        <div class="builder-field flow-picker-wrap">
-          <label for="flows-list">Fluxo atual</label>
-          <select id="flows-list" class="form-control flow-picker" title="Selecione um fluxo existente"><option value="">Meus fluxos...</option></select>
-        </div>
-        <button class="btn btn-secondary btn-sm builder-icon-btn" id="btn-new-flow" title="Criar novo fluxo" type="button"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>Novo fluxo</button>
-        <div class="builder-field flow-name-wrap">
-          <label for="flow-name">Nome do fluxo</label>
-          <input type="text" id="flow-name" class="form-control" placeholder="Digite o nome e clique em Salvar" style="font-size:16px;font-weight:650;">
-        </div>
-        <div class="builder-field">
-          <label for="flow-mode">Modelo de atendimento</label>
-          <select id="flow-mode" class="form-control" style="min-width:190px;" title="Modelo de atendimento">
-            <option value="guided">Fluxo guiado — usa nós</option>
-            <option value="ai_agent">Atendente IA — sem montar fluxo</option>
-          </select>
-          <div class="builder-mode-help" id="flow-mode-help">Fluxo guiado usa os nós do canvas para conduzir a conversa.</div>
-        </div>
+      <div class="builder-field flow-picker-wrap">
+        <label for="flows-list">Fluxo atual</label>
+        <select id="flows-list" class="form-control flow-picker" title="Selecione um fluxo existente"><option value="">Meus fluxos...</option></select>
       </div>
-
-      <div class="builder-toolbar-group">
+      <button class="btn btn-secondary btn-sm builder-icon-btn" id="btn-new-flow" title="Criar novo fluxo" type="button"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>Novo fluxo</button>
+      <div class="builder-field flow-name-wrap">
+        <label for="flow-name">Nome do fluxo</label>
+        <input type="text" id="flow-name" class="form-control" placeholder="Digite o nome e clique em Salvar" style="font-size:16px;font-weight:650;">
+      </div>
+      <div class="builder-field builder-mode">
+        <label for="flow-mode">Modelo de atendimento</label>
+        <select id="flow-mode" class="form-control" title="Modelo de atendimento">
+          <option value="guided">Fluxo guiado — usa nós</option>
+          <option value="ai_agent">Atendente IA — sem montar fluxo</option>
+        </select>
+      </div>
+      <div class="builder-tool-actions">
         <div class="builder-dropdown" id="add-node-menu">
           <button class="btn btn-secondary btn-sm" type="button" data-menu-toggle="add-node-menu" title="Adicionar nó"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>Adicionar nó</button>
           <div class="builder-menu">
@@ -206,14 +193,12 @@
             </div>
           </div>
         </div>
-
         <div class="builder-dropdown" id="template-menu">
           <button class="btn btn-secondary btn-sm" type="button" data-menu-toggle="template-menu" title="Importar template"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"></path><path d="M8 9h8M8 13h5"></path></svg>Templates</button>
           <div class="builder-menu"><div class="builder-menu-title">Importar template</div><div class="builder-menu-grid" id="templates-list"></div></div>
         </div>
       </div>
-
-      <div class="builder-actions">
+      <div class="builder-save-actions">
         <button class="btn btn-secondary btn-sm" id="btn-undo" title="Desfazer (Ctrl+Z)">&#8630;</button>
         <button class="btn btn-secondary btn-sm" id="btn-redo" title="Refazer (Ctrl+Y)">&#8631;</button>
         <button class="btn btn-secondary btn-sm" id="btn-test">Testar</button>
@@ -221,6 +206,7 @@
         <button class="btn btn-danger btn-sm" id="btn-delete" style="display:none;">Excluir</button>
         <button class="btn-theme" id="btn-dark-mode" title="Alternar modo escuro (D)">&#127769;</button>
       </div>
+      <div class="builder-mode-help" id="flow-mode-help">Fluxo guiado usa os nós do canvas para conduzir a conversa.</div>
     </div>
     <textarea class="form-control" id="flow-description" placeholder="Descricao (opcional). No modo Atendente IA, este texto e' a saudacao inicial." style="margin-bottom: 12px; flex-shrink: 0;"></textarea>
 
