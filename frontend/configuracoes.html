@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -177,6 +177,21 @@
       <div id="evo-qr-area" style="margin-top:16px;"></div>
     </div>
 
+
+
+    <!-- ROI -->
+    <div class="cfg-card full">
+      <h2>ROI e ticket médio</h2>
+      <p class="hint">Configure o ticket médio usado no Dashboard para estimar receita, pipeline e retorno dos agendamentos.</p>
+      <form id="roi-form" style="display:flex; gap:10px; align-items:end; flex-wrap:wrap;">
+        <div class="cfg-field" style="min-width:220px; margin-bottom:0;">
+          <label for="roi-ticket">Ticket médio (R$)</label>
+          <input type="number" min="0" step="0.01" id="roi-ticket" placeholder="Ex: 250">
+        </div>
+        <button class="cfg-btn" type="submit">Salvar ROI</button>
+      </form>
+      <div id="roi-status" class="hint" style="margin-top:10px;"></div>
+    </div>
     <!-- Google Calendar -->
     <div class="cfg-card full">
       <h2>🗓️ Google Calendar</h2>
@@ -408,6 +423,31 @@
     setTimeout(function(){ if (evoPollTimer) { clearInterval(evoPollTimer); evoPollTimer = null; } }, 180000);
   }
 
+  async function loadRoiSettings() {
+    const input = document.getElementById("roi-ticket");
+    const status = document.getElementById("roi-status");
+    if (!input || !WFApi.getRoiSettings) return;
+    try {
+      const roi = await WFApi.getRoiSettings();
+      input.value = roi.average_ticket || 0;
+      status.textContent = "Ticket médio atual usado no Dashboard: " + Number(roi.average_ticket || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    } catch (e) {
+      status.textContent = "Não foi possível carregar ROI: " + e.message;
+    }
+  }
+
+  const roiForm = document.getElementById("roi-form");
+  if (roiForm) {
+    roiForm.addEventListener("submit", async function(ev){
+      ev.preventDefault();
+      try {
+        await WFApi.updateRoiSettings({ average_ticket: Number(document.getElementById("roi-ticket").value || 0), currency: "BRL" });
+        showAlert("Configuração de ROI salva.", "success");
+        loadRoiSettings();
+      } catch (e) { showAlert(e.message); }
+    });
+  }
+
   async function loadCalendarStatus() {
     const area = document.getElementById("calendar-area");
     if (!area || !WFApi.calendarStatus) return;
@@ -444,9 +484,10 @@
 
   await loadFlows();
   await loadConnections();
+  await loadRoiSettings();
   await loadCalendarStatus();
 })();
 </script>
-</body>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1cbd5ff5ae852e7',t:'MTc4NDMxODQ1OA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
-
