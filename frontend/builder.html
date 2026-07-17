@@ -112,6 +112,26 @@
     .template-collapse{ max-height:260px; overflow:auto; padding-right:2px; }
     body.dark-mode .tool-section{ background:#171d2b; border-color:#30363d; }
 
+
+    /* Builder UX: canvas mais amplo, ferramentas em dropdown na barra superior */
+    .builder-layout{display:grid!important;grid-template-columns:minmax(0,1fr) 340px!important;gap:14px!important;height:calc(100vh - 118px);}
+    .builder-layout > .nodes-list{display:none!important;}
+    .canvas-area{min-width:0;}
+    .builder-topbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--shell-border,#d8dee4);border-radius:10px;background:var(--shell-surface,#fff);margin-bottom:10px;flex-shrink:0;}
+    .builder-topbar .flow-picker{min-width:210px;max-width:260px;}
+    .builder-topbar .flow-name-wrap{flex:1;min-width:260px;}
+    .builder-dropdown{position:relative;display:inline-flex;}
+    .builder-dropdown > button{display:inline-flex;align-items:center;gap:7px;}
+    .builder-dropdown svg,.builder-icon-btn svg{width:16px;height:16px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+    .builder-menu{display:none;position:absolute;top:calc(100% + 8px);right:0;z-index:5000;min-width:245px;background:var(--shell-surface,#fff);border:1px solid var(--shell-border,#d8dee4);border-radius:10px;box-shadow:0 16px 40px rgba(0,0,0,.14);padding:8px;}
+    .builder-dropdown.open .builder-menu{display:block;}
+    .builder-menu-title{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--shell-muted,#656d76);font-weight:800;padding:4px 6px 8px;}
+    .builder-menu-grid{display:grid;grid-template-columns:1fr;gap:6px;max-height:360px;overflow:auto;}
+    .builder-menu .node-tool{width:100%;}
+    .builder-menu #templates-list .node-item{margin-bottom:6px;}
+    .node-editor{min-width:0;}
+    @media(max-width:1100px){.builder-layout{grid-template-columns:1fr!important;height:auto}.node-editor{min-height:260px}.builder-topbar .flow-picker,.builder-topbar .flow-name-wrap{min-width:100%;max-width:none}}
+
   </style>
 </head>
 <body class="app-shell-body">
@@ -131,51 +151,42 @@
     </header>
     <main class="shell-content">
 <div class="builder-layout">
-  <aside class="nodes-list">
-    <h3>Meus Fluxos</h3>
-    <div id="flows-list"></div>
-    <button class="btn btn-primary btn-sm" id="btn-new-flow" style="width: 100%; margin-top: 8px;">+ Novo fluxo</button>
-
-    <div class="builder-tools">
-      <details class="tool-section" open>
-        <summary>Adicionar nó</summary>
-        <div class="tool-body node-tool-grid">
-          <button class="btn btn-secondary btn-sm node-tool" data-add="message"><svg viewBox="0 0 24 24"><path d="M5 6h14v10H8l-3 3V6z"></path></svg>Mensagem</button>
-          <button class="btn btn-secondary btn-sm node-tool" data-add="question"><svg viewBox="0 0 24 24"><path d="M9.5 9a2.5 2.5 0 1 1 4.2 1.8c-.9.7-1.7 1.2-1.7 2.7"></path><path d="M12 17h.01"></path><circle cx="12" cy="12" r="9"></circle></svg>Pergunta</button>
-          <button class="btn btn-secondary btn-sm node-tool" data-add="input"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="2"></rect><path d="M8 10h8M8 14h5"></path></svg>Entrada</button>
-          <button class="btn btn-secondary btn-sm node-tool" data-add="ai"><svg viewBox="0 0 24 24"><path d="M12 3l1.4 4.1L17.5 8.5l-4.1 1.4L12 14l-1.4-4.1-4.1-1.4 4.1-1.4L12 3z"></path><path d="M18 14l.7 1.8 1.8.7-1.8.7L18 19l-.7-1.8-1.8-.7 1.8-.7L18 14z"></path></svg>IA</button>
-          <button class="btn btn-secondary btn-sm node-tool" data-add="condition"><svg viewBox="0 0 24 24"><path d="M6 4h12v6H6z"></path><path d="M12 10v4"></path><path d="M8 20h8"></path><path d="M12 14l-4 6M12 14l4 6"></path></svg>Condição</button>
-          <button class="btn btn-secondary btn-sm node-tool" data-add="delay"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7"></circle><path d="M12 13V9M12 13l3 2M9 2h6"></path></svg>Espera</button>
-          <button class="btn btn-secondary btn-sm node-tool" data-add="human"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3"></circle><path d="M5 20c1-4 3.4-6 7-6s6 2 7 6"></path></svg>Humano</button>
-          <button class="btn btn-secondary btn-sm node-tool" data-add="end"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><path d="M9 9l6 6M15 9l-6 6"></path></svg>Fim</button>
-        </div>
-      </details>
-
-      <details class="tool-section">
-        <summary>Importar template</summary>
-        <div class="tool-body template-collapse" id="templates-list"></div>
-      </details>
-    </div>
-  </aside>
-
   <main class="canvas-area" style="display: flex; flex-direction: column;">
-    <div class="flex justify-between items-center mb-2" style="flex-shrink: 0;">
-      <div style="flex: 1;">
-        <input type="text" id="flow-name" class="form-control" placeholder="Nome do fluxo (digite e clique em Salvar para criar)" style="font-size: 18px; font-weight: 700;">
+    <div class="builder-topbar">
+      <select id="flows-list" class="form-control flow-picker" title="Meus fluxos"><option value="">Meus fluxos...</option></select>
+      <button class="btn btn-secondary btn-sm builder-icon-btn" id="btn-new-flow" title="Novo fluxo" type="button"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>Novo</button>
+      <div class="flow-name-wrap"><input type="text" id="flow-name" class="form-control" placeholder="Nome do fluxo (digite e clique em Salvar para criar)" style="font-size:16px;font-weight:650;"></div>
+      <select id="flow-mode" class="form-control" style="max-width:170px;" title="Modo de atendimento"><option value="guided">Fluxo guiado</option><option value="ai_agent">Atendente IA</option></select>
+
+      <div class="builder-dropdown" id="add-node-menu">
+        <button class="btn btn-secondary btn-sm" type="button" data-menu-toggle="add-node-menu" title="Adicionar nó"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>Nó</button>
+        <div class="builder-menu">
+          <div class="builder-menu-title">Adicionar nó</div>
+          <div class="builder-menu-grid">
+            <button class="btn btn-secondary btn-sm node-tool" data-add="message"><svg viewBox="0 0 24 24"><path d="M5 6h14v10H8l-3 3V6z"></path></svg>Mensagem</button>
+            <button class="btn btn-secondary btn-sm node-tool" data-add="question"><svg viewBox="0 0 24 24"><path d="M9.5 9a2.5 2.5 0 1 1 4.2 1.8c-.9.7-1.7 1.2-1.7 2.7"></path><path d="M12 17h.01"></path><circle cx="12" cy="12" r="9"></circle></svg>Pergunta</button>
+            <button class="btn btn-secondary btn-sm node-tool" data-add="input"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="2"></rect><path d="M8 10h8M8 14h5"></path></svg>Entrada</button>
+            <button class="btn btn-secondary btn-sm node-tool" data-add="ai"><svg viewBox="0 0 24 24"><path d="M12 3l1.4 4.1L17.5 8.5l-4.1 1.4L12 14l-1.4-4.1-4.1-1.4 4.1-1.4L12 3z"></path><path d="M18 14l.7 1.8 1.8.7-1.8.7L18 19l-.7-1.8-1.8-.7 1.8-.7L18 14z"></path></svg>IA</button>
+            <button class="btn btn-secondary btn-sm node-tool" data-add="condition"><svg viewBox="0 0 24 24"><path d="M6 4h12v6H6z"></path><path d="M12 10v4"></path><path d="M8 20h8"></path><path d="M12 14l-4 6M12 14l4 6"></path></svg>Condição</button>
+            <button class="btn btn-secondary btn-sm node-tool" data-add="delay"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7"></circle><path d="M12 13V9M12 13l3 2M9 2h6"></path></svg>Espera</button>
+            <button class="btn btn-secondary btn-sm node-tool" data-add="human"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3"></circle><path d="M5 20c1-4 3.4-6 7-6s6 2 7 6"></path></svg>Humano</button>
+            <button class="btn btn-secondary btn-sm node-tool" data-add="end"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><path d="M9 9l6 6M15 9l-6 6"></path></svg>Fim</button>
+          </div>
+        </div>
       </div>
-      <div class="flex gap-1" style="align-items:center;">
-        <select id="flow-mode" class="form-control" style="max-width: 170px;" title="Modo de atendimento">
-          <option value="guided">Fluxo guiado</option>
-          <option value="ai_agent">Atendente IA</option>
-        </select>
-        <button class="btn btn-secondary btn-sm" id="btn-undo" title="Desfazer (Ctrl+Z)">&#8630;</button>
-        <button class="btn btn-secondary btn-sm" id="btn-redo" title="Refazer (Ctrl+Y)">&#8631;</button>
-        <button class="btn btn-secondary btn-sm" id="btn-test">Testar</button>
-        <button class="btn btn-primary btn-sm" id="btn-save">Salvar</button>
-        <button class="btn btn-danger btn-sm" id="btn-delete" style="display: none;">Excluir</button>
-        <button class="btn-theme" id="btn-dark-mode" title="Alternar modo escuro (D)">&#127769;</button>
+
+      <div class="builder-dropdown" id="template-menu">
+        <button class="btn btn-secondary btn-sm" type="button" data-menu-toggle="template-menu" title="Importar template"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"></path><path d="M8 9h8M8 13h5"></path></svg>Templates</button>
+        <div class="builder-menu"><div class="builder-menu-title">Importar template</div><div class="builder-menu-grid" id="templates-list"></div></div>
       </div>
-    </div>
+
+      <button class="btn btn-secondary btn-sm" id="btn-undo" title="Desfazer (Ctrl+Z)">&#8630;</button>
+      <button class="btn btn-secondary btn-sm" id="btn-redo" title="Refazer (Ctrl+Y)">&#8631;</button>
+      <button class="btn btn-secondary btn-sm" id="btn-test">Testar</button>
+      <button class="btn btn-primary btn-sm" id="btn-save">Salvar</button>
+      <button class="btn btn-danger btn-sm" id="btn-delete" style="display:none;">Excluir</button>
+      <button class="btn-theme" id="btn-dark-mode" title="Alternar modo escuro (D)">&#127769;</button>
+
     <textarea class="form-control" id="flow-description" placeholder="Descricao (opcional). No modo Atendente IA, este texto e' a saudacao inicial." style="margin-bottom: 12px; flex-shrink: 0;"></textarea>
 
     <div id="alert-area"></div>
@@ -287,5 +298,5 @@
 <script src="js/builder.js"></script>
 <script src="js/simulator.js"></script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1cc143a8b339892',t:'MTc4NDMyMTAwNw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1cc3a97bc798b8d',t:'MTc4NDMyMjU3OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

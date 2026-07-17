@@ -46,6 +46,25 @@
 
   function renderFlowsList() {
     const c = $("#flows-list");
+    if (!c) return;
+
+    // UX nova: #flows-list agora é um <select> compacto na barra superior.
+    if (c.tagName === "SELECT") {
+      if (!state.flows.length) {
+        c.innerHTML = '<option value="">Nenhum fluxo</option>';
+        return;
+      }
+      c.innerHTML = '<option value="">Meus fluxos...</option>' + state.flows.map(function (f) {
+        return '<option value="' + f.id + '" ' + (state.currentFlowId === f.id ? "selected" : "") + '>' +
+          escapeHtml(f.name) + ' (' + ((f.nodes || []).length) + ' nós)</option>';
+      }).join("");
+      c.onchange = function () {
+        if (c.value) loadFlow(parseInt(c.value, 10));
+      };
+      return;
+    }
+
+    // Compatibilidade com layout antigo.
     if (!state.flows.length) {
       c.innerHTML = '<p class="text-muted" style="font-size: 13px;">Nenhum fluxo. Clique em "+ Novo fluxo" abaixo.</p>';
       return;
@@ -381,8 +400,28 @@
     }
   }
 
+  document.querySelectorAll("[data-menu-toggle]").forEach(function (btn) {
+    btn.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      const id = btn.getAttribute("data-menu-toggle");
+      document.querySelectorAll(".builder-dropdown.open").forEach(function (menu) {
+        if (menu.id !== id) menu.classList.remove("open");
+      });
+      const menu = document.getElementById(id);
+      if (menu) menu.classList.toggle("open");
+    });
+  });
+  document.addEventListener("click", function (ev) {
+    if (!ev.target.closest || !ev.target.closest(".builder-dropdown")) {
+      document.querySelectorAll(".builder-dropdown.open").forEach(function (menu) { menu.classList.remove("open"); });
+    }
+  });
+
   document.querySelectorAll("[data-add]").forEach(function (btn) {
-    btn.addEventListener("click", function () { addNode(btn.dataset.add); });
+    btn.addEventListener("click", function () {
+      addNode(btn.dataset.add);
+      document.querySelectorAll(".builder-dropdown.open").forEach(function (menu) { menu.classList.remove("open"); });
+    });
   });
 
   $("#btn-new-flow").addEventListener("click", async function () {
