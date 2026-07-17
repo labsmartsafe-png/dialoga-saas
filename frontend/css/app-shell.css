@@ -53,9 +53,9 @@ body.app-shell-body{
 .shell-brand{
   display:flex;
   align-items:center;
-  min-height:112px;
-  padding:8px 10px 22px;
-  margin-bottom:14px;
+  min-height:54px;
+  padding:6px 10px 10px;
+  margin-bottom:10px;
   border-bottom:1px solid var(--shell-border-muted);
 }
 .shell-brand img{width:144px;max-width:100%;height:auto;display:block;object-fit:contain;}
@@ -196,3 +196,26 @@ body.app-shell-body{
 .dashboard-grid .card{padding:18px!important;}
 .card-title{font-size:14px!important;line-height:20px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
 @media(max-width:1000px){.dashboard-grid{grid-template-columns:1fr}.wf-user-meta{display:none}}
+
+
+/* Remove títulos duplicados dentro das páginas migradas para o App Shell.
+   O título oficial fica na topbar; mantemos botões de ação quando existirem. */
+.shell-content > .flex.justify-between.items-center.mb-3:first-child{
+  justify-content:flex-end;
+  margin-bottom:18px;
+}
+.shell-content > .flex.justify-between.items-center.mb-3:first-child > div:first-child{
+  display:none!important;
+}
+.shell-content > .flex.justify-between.items-center.mb-3:first-child:not(:has(button)):not(:has(a)){
+  display:none!important;
+}
+
+/* Refinos visuais para reduzir poluição em tabelas/cards após remoção dos títulos duplicados */
+.shell-content .filters-bar,
+.shell-content .table-wrap,
+.shell-content .card,
+.shell-content .cfg-card,
+.shell-content .setup-card{
+  border-color:var(--shell-border)!important;
+}
