@@ -15,9 +15,9 @@ from sqlalchemy.orm import Session
 from ..auth import get_current_user
 from ..config import settings
 from ..database import get_db
-from ..models import Appointment, BillingWebhookEvent, Conversation, Flow, Lead, PendingBillingAccount, Subscription, User
-from ..models_rag import AISettings, KnowledgeBase
-from ..models_whatsapp import WhatsAppConnection
+from ..models import Appointment, BillingWebhookEvent, CalendarConnection, Conversation, Flow, Lead, LeadNote, Message, PendingBillingAccount, ROISettings, Subscription, User
+from ..models_rag import AISettings, KnowledgeBase, KnowledgeChunk
+from ..models_whatsapp import WhatsAppConnection, WhatsAppInboundEvent, WhatsAppOutboundMessage, WhatsAppContactState
 from ..services import plan_limits, billing_service
 
 router = APIRouter()
@@ -419,3 +419,67 @@ def admin_update_user(
     db.commit()
     db.refresh(user)
     return _user_summary(db, user)
+
+
+@router.delete("/users/{user_id}", status_code=204)
+def admin_delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    """Exclui usuário e dados operacionais vinculados.
+
+    Ação destrutiva. Mantém BillingWebhookEvent como auditoria (não possui FK para User).
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(404, "Usuário não encontrado.")
+    if user.id == admin.id:
+        raise HTTPException(400, "Você não pode excluir sua própria conta admin.")
+
+    # IDs auxiliares
+    flow_ids = [x[0] for x in db.query(Flow.id).filter(Flow.owner_id == user.id).all()]
+    lead_ids = [x[0] for x in db.query(Lead.id).filter(Lead.owner_id == user.id).all()]
+    conn_ids = [x[0] for x in db.query(WhatsAppConnection.id).filter(WhatsAppConnection.owner_id == user.id).all()]
+    kb_ids = [x[0] for x in db.query(KnowledgeBase.id).filter(KnowledgeBase.owner_id == user.id).all()]
+
+    # WhatsApp dependentes
+    if conn_ids:
+        db.query(WhatsAppInboundEvent).filter(WhatsAppInboundEvent.connection_id.in_(conn_ids)).delete(synchronize_session=False)
+        db.query(WhatsAppOutboundMessage).filter(WhatsAppOutboundMessage.connection_id.in_(conn_ids)).delete(synchronize_session=False)
+        db.query(WhatsAppContactState).filter(WhatsAppContactState.connection_id.in_(conn_ids)).delete(synchronize_session=False)
+        db.query(WhatsAppConnection).filter(WhatsAppConnection.id.in_(conn_ids)).delete(synchronize_session=False)
+
+    # Conversas/mensagens por fluxos do usuário
+    if flow_ids:
+        conv_ids = [x[0] for x in db.query(Conversation.id).filter(Conversation.flow_id.in_(flow_ids)).all()]
+        if conv_ids:
+            db.query(Message).filter(Message.conversation_id.in_(conv_ids)).delete(synchronize_session=False)
+            db.query(Conversation).filter(Conversation.id.in_(conv_ids)).delete(synchronize_session=False)
+
+    # Leads e notas
+    if lead_ids:
+        db.query(LeadNote).filter(LeadNote.lead_id.in_(lead_ids)).delete(synchronize_session=False)
+        db.query(Appointment).filter(Appointment.lead_id.in_(lead_ids)).update({Appointment.lead_id: None}, synchronize_session=False)
+        db.query(Lead).filter(Lead.id.in_(lead_ids)).delete(synchronize_session=False)
+
+    # Fluxos
+    if flow_ids:
+        db.query(Flow).filter(Flow.id.in_(flow_ids)).delete(synchronize_session=False)
+
+    # Agenda/IA/Calendar/ROI/Billing
+    db.query(Appointment).filter(Appointment.owner_id == user.id).delete(synchronize_session=False)
+    if kb_ids:
+        db.query(KnowledgeChunk).filter(KnowledgeChunk.knowledge_base_id.in_(kb_ids)).delete(synchronize_session=False)
+        db.query(KnowledgeBase).filter(KnowledgeBase.id.in_(kb_ids)).delete(synchronize_session=False)
+    db.query(AISettings).filter(AISettings.owner_id == user.id).delete(synchronize_session=False)
+    db.query(CalendarConnection).filter(CalendarConnection.owner_id == user.id).delete(synchronize_session=False)
+    db.query(ROISettings).filter(ROISettings.owner_id == user.id).delete(synchronize_session=False)
+    db.query(Subscription).filter(Subscription.owner_id == user.id).delete(synchronize_session=False)
+    db.query(PendingBillingAccount).filter(
+        (PendingBillingAccount.claimed_user_id == user.id) | (PendingBillingAccount.buyer_email == user.email)
+    ).delete(synchronize_session=False)
+
+    db.delete(user)
+    db.commit()
+    return
