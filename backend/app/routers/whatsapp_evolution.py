@@ -59,6 +59,38 @@ def _auth_ok(conn: WhatsAppConnection, auth_header: str | None) -> bool:
     return bool(expected) and received == expected
 
 
+def _extract_push_name(data: dict) -> str | None:
+    """Extrai nome público do contato enviado pela Evolution/Baileys, quando disponível."""
+    candidates = [
+        data.get("pushName"),
+        data.get("pushname"),
+        data.get("senderName"),
+        data.get("notifyName"),
+        (data.get("message") or {}).get("pushName") if isinstance(data.get("message"), dict) else None,
+    ]
+    for c in candidates:
+        txt = str(c or "").strip()
+        if txt and txt.lower() not in ("none", "null", "undefined"):
+            return txt[:255]
+    return None
+
+
+def _set_conversation_name_context(convo: Conversation, push_name: str | None):
+    if not push_name:
+        return
+    state = dict(convo.state or {})
+    ctx = dict(state.get("context") or {})
+    if not ctx.get("nome") and not ctx.get("name"):
+        ctx["nome"] = push_name
+    state["context"] = ctx
+    convo.state = state
+
+
+def _apply_push_name_to_lead(lead: Lead | None, push_name: str | None):
+    if lead is not None and push_name and not lead.name:
+        lead.name = push_name
+
+
 @evo_webhook_router.post("/webhook/whatsapp/evo")
 async def evo_webhook(request: Request):
     if not settings.evolution_enabled:
@@ -181,6 +213,7 @@ def _handle_message(db: Session, conn: WhatsAppConnection, data: dict):
         return  # corrida: outro processou
 
     wa_id = evo.normalize_jid(remote)
+    push_name = _extract_push_name(data)
     message_obj = data.get("message") or {}
     text = evo.extract_text_from_message(message_obj)
     inbound_kind = "text"
@@ -206,6 +239,10 @@ def _handle_message(db: Session, conn: WhatsAppConnection, data: dict):
         db.add(cs)
     else:
         cs.last_inbound_at = now
+    if push_name:
+        cs_ctx = dict(cs.context or {})
+        cs_ctx["push_name"] = push_name
+        cs.context = cs_ctx
 
     # precisa de um flow para responder
     flow = db.query(Flow).get(conn.flow_id) if conn.flow_id else None
@@ -230,7 +267,7 @@ def _handle_message(db: Session, conn: WhatsAppConnection, data: dict):
     # CRM 1.0.3 — Pausa global da automação desta conexão/numero.
     # Diferente do handoff por lead: aqui nenhum contato desta conexão recebe bot.
     if getattr(conn, "automation_paused", False):
-        paused_lead = _record_global_paused_inbound(db, conn, flow, wa_id, text, now)
+        paused_lead = _record_global_paused_inbound(db, conn, flow, wa_id, text, now, push_name)
         ev.status = "processed"
         ev.processed_at = now
         db.commit()
@@ -242,7 +279,7 @@ def _handle_message(db: Session, conn: WhatsAppConnection, data: dict):
     # iniciar um novo fluxo nem responder automaticamente. Apenas registramos a mensagem.
     handoff_lead = _find_handoff_lead(db, conn, flow, wa_id)
     if handoff_lead is not None:
-        _record_handoff_inbound(db, handoff_lead, flow, wa_id, text, now)
+        _record_handoff_inbound(db, handoff_lead, flow, wa_id, text, now, push_name)
         ev.status = "processed"
         ev.processed_at = now
         db.commit()
@@ -271,7 +308,7 @@ def _handle_message(db: Session, conn: WhatsAppConnection, data: dict):
     try:
         is_new_conversation = convo is None
         if convo is None:
-            convo = flow_engine.start_conversation(db, flow, user_name=None, user_phone=wa_id, channel="whatsapp")
+            convo = flow_engine.start_conversation(db, flow, user_name=push_name, user_phone=wa_id, channel="whatsapp")
             # CRM 1.0: a origem real desta conversa é WhatsApp QR/Evolution.
             # O flow_engine cria o lead genérico da conversa; aqui refinamos source e connection_id.
             lead_service.sync_lead_from_conversation(
@@ -284,6 +321,11 @@ def _handle_message(db: Session, conn: WhatsAppConnection, data: dict):
                 status=lead_service.STATUS_EM_ATENDIMENTO,
             )
             db.commit()
+        else:
+            _set_conversation_name_context(convo, push_name)
+            if convo.lead_id:
+                existing_lead = db.query(Lead).filter(Lead.id == convo.lead_id, Lead.owner_id == conn.owner_id).first()
+                _apply_push_name_to_lead(existing_lead, push_name)
 
         # Em fluxo guiado, a primeira mensagem do WhatsApp é o gatilho que inicia o bot.
         # Ela NÃO deve ser tratada como resposta da primeira pergunta, senão um "Oi" já
@@ -334,7 +376,7 @@ def _transcribe_evolution_audio(conn: WhatsAppConnection, message_key: dict, mes
     return f"🎧 Áudio transcrito: {transcript}"
 
 
-def _record_global_paused_inbound(db: Session, conn: WhatsAppConnection, flow: Flow, wa_id: str, text: str, now: datetime) -> Lead:
+def _record_global_paused_inbound(db: Session, conn: WhatsAppConnection, flow: Flow, wa_id: str, text: str, now: datetime, push_name: str | None = None) -> Lead:
     """Registra mensagem inbound quando a automação da conexão está pausada.
 
     A pausa global é configurada na tela Configurações. Ela não deve acionar o bot.
@@ -355,7 +397,7 @@ def _record_global_paused_inbound(db: Session, conn: WhatsAppConnection, flow: F
             flow_id=flow.id,
             channel="whatsapp",
             user_phone=wa_id,
-            state={"current_node": None, "context": {}, "bot_paused": True, "paused_reason": "connection_paused"},
+            state={"current_node": None, "context": ({"nome": push_name} if push_name else {}), "bot_paused": True, "paused_reason": "connection_paused"},
             is_active=False,
             ended_at=now,
         )
@@ -391,6 +433,7 @@ def _record_global_paused_inbound(db: Session, conn: WhatsAppConnection, flow: F
             status=lead_service.STATUS_EM_ATENDIMENTO_HUMANO,
         )
     else:
+        _apply_push_name_to_lead(lead, push_name)
         lead.source = lead_service.SOURCE_WHATSAPP_EVOLUTION if lead.source == lead_service.SOURCE_WHATSAPP_GENERIC else lead.source
         lead.connection_id = getattr(lead, "connection_id", None) or conn.id
         lead.conversation_id = convo.id
@@ -548,7 +591,7 @@ def _find_handoff_lead(db: Session, conn: WhatsAppConnection, flow: Flow, wa_id:
     return q.order_by(Lead.created_at.desc()).first()
 
 
-def _record_handoff_inbound(db: Session, lead: Lead, flow: Flow, wa_id: str, text: str, now: datetime):
+def _record_handoff_inbound(db: Session, lead: Lead, flow: Flow, wa_id: str, text: str, now: datetime, push_name: str | None = None):
     """Registra inbound recebido enquanto bot está pausado para humano.
 
     Não chama flow_engine e não envia outbound. A mensagem fica no histórico da conversa
@@ -591,6 +634,8 @@ def _record_handoff_inbound(db: Session, lead: Lead, flow: Flow, wa_id: str, tex
     )
     db.add(_save_handoff_message)
 
+    _apply_push_name_to_lead(lead, push_name)
+    _set_conversation_name_context(convo, push_name)
     lead.conversation_id = convo.id
     lead.last_interaction_at = now
     if hasattr(lead, "updated_at"):
