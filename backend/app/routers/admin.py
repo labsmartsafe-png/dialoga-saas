@@ -469,10 +469,14 @@ def admin_delete_user(
 
     # Agenda/IA/Calendar/ROI/Billing
     db.query(Appointment).filter(Appointment.owner_id == user.id).delete(synchronize_session=False)
+
+    # IMPORTANTE: AISettings pode referenciar KnowledgeBase via knowledge_base_id.
+    # Portanto removemos AISettings ANTES de apagar KnowledgeBase, evitando erro de FK.
+    db.query(AISettings).filter(AISettings.owner_id == user.id).delete(synchronize_session=False)
     if kb_ids:
         db.query(KnowledgeChunk).filter(KnowledgeChunk.knowledge_base_id.in_(kb_ids)).delete(synchronize_session=False)
         db.query(KnowledgeBase).filter(KnowledgeBase.id.in_(kb_ids)).delete(synchronize_session=False)
-    db.query(AISettings).filter(AISettings.owner_id == user.id).delete(synchronize_session=False)
+
     db.query(CalendarConnection).filter(CalendarConnection.owner_id == user.id).delete(synchronize_session=False)
     db.query(ROISettings).filter(ROISettings.owner_id == user.id).delete(synchronize_session=False)
     db.query(Subscription).filter(Subscription.owner_id == user.id).delete(synchronize_session=False)
