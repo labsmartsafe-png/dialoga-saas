@@ -84,6 +84,7 @@
     // ---- Admin ----
     adminOverview: function () { return request("/api/admin/overview"); },
     adminSystemHealth: function () { return request("/api/admin/system-health"); },
+    adminBetaReadiness: function () { return request("/api/admin/beta-readiness"); },
     adminPlans: function () { return request("/api/admin/plans"); },
     adminUsers: function (qs) { return request("/api/admin/users" + (qs || "")); },
     adminUpdateUser: function (id, b) { return request("/api/admin/users/" + id, { method: "PUT", body: b }); },

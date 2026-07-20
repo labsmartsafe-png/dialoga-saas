@@ -135,6 +135,132 @@ def _present(value: str | None) -> bool:
     return bool(str(value or "").strip())
 
 
+def _readiness_check(key: str, label: str, ok: bool, message: str, *, required: bool = True) -> dict:
+    return {
+        "key": key,
+        "label": label,
+        "ok": bool(ok),
+        "status": "ok" if ok else ("error" if required else "warn"),
+        "required": required,
+        "message": message,
+    }
+
+
+def _user_beta_readiness(db: Session, user: User) -> dict:
+    """Mede se um cliente está pronto para entrar em beta fechado.
+
+    Usa apenas dados já existentes. Não cria dependência nova nem altera schema.
+    """
+    active_flows = db.query(Flow).filter(Flow.owner_id == user.id, Flow.active == True).count()  # noqa: E712
+    total_flows = db.query(Flow).filter(Flow.owner_id == user.id).count()
+    connected_connections = db.query(WhatsAppConnection).filter(
+        WhatsAppConnection.owner_id == user.id,
+        WhatsAppConnection.status == "connected",
+    ).count()
+    paused_connections = db.query(WhatsAppConnection).filter(
+        WhatsAppConnection.owner_id == user.id,
+        WhatsAppConnection.automation_paused == True,  # noqa: E712
+    ).count()
+    real_leads = db.query(Lead).filter(Lead.owner_id == user.id, Lead.source != "simulator").count()
+    appointments = db.query(Appointment).filter(Appointment.owner_id == user.id).count()
+    calendar_connected = db.query(CalendarConnection).filter(
+        CalendarConnection.owner_id == user.id,
+        CalendarConnection.status == "connected",
+    ).count()
+    kb_ids = [x[0] for x in db.query(KnowledgeBase.id).filter(KnowledgeBase.owner_id == user.id).all()]
+    kb_count = len(kb_ids)
+    chunks = 0
+    if kb_ids:
+        chunks = db.query(KnowledgeChunk).filter(KnowledgeChunk.knowledge_base_id.in_(kb_ids)).count()
+    sub_active = db.query(Subscription).filter(Subscription.owner_id == user.id, Subscription.status == "active").count()
+
+    checks = [
+        _readiness_check(
+            "account_active", "Conta ativa", bool(user.is_active),
+            "Conta ativa." if user.is_active else "Ative a conta antes de incluir no beta.",
+        ),
+        _readiness_check(
+            "flow_active", "Fluxo publicado", active_flows > 0,
+            f"{active_flows} fluxo(s) ativo(s)." if active_flows else "Criar ou ativar pelo menos um fluxo.",
+        ),
+        _readiness_check(
+            "whatsapp_connected", "WhatsApp conectado", connected_connections > 0,
+            f"{connected_connections} conexão(ões) conectada(s)." if connected_connections else "Conectar um WhatsApp e validar QR/status.",
+        ),
+        _readiness_check(
+            "knowledge_indexed", "Base de IA indexada", chunks > 0,
+            f"{kb_count} base(s), {chunks} trecho(s) indexado(s)." if chunks else "Subir conhecimento e indexar a base para testar IA/RAG.",
+        ),
+        _readiness_check(
+            "real_lead_test", "Teste real recebido", real_leads > 0,
+            f"{real_leads} lead(s) real(is) recebido(s)." if real_leads else "Enviar mensagem real pelo WhatsApp e confirmar lead/conversa.",
+        ),
+        _readiness_check(
+            "automation_unpaused", "Automação liberada", paused_connections == 0,
+            "Nenhuma conexão pausada." if paused_connections == 0 else f"{paused_connections} conexão(ões) com automação pausada.",
+            required=False,
+        ),
+        _readiness_check(
+            "calendar_connected", "Agenda conectada", calendar_connected > 0,
+            "Google Calendar conectado." if calendar_connected else "Conectar Google Calendar se o nicho usar agendamento.",
+            required=False,
+        ),
+        _readiness_check(
+            "billing_active", "Assinatura/billing", sub_active > 0,
+            "Assinatura ativa encontrada." if sub_active else "Para beta pode ser manual, mas antes de venda validar billing.",
+            required=False,
+        ),
+    ]
+
+    required_checks = [c for c in checks if c["required"]]
+    required_ok = sum(1 for c in required_checks if c["ok"])
+    optional_ok = sum(1 for c in checks if (not c["required"] and c["ok"]))
+    score = round(((required_ok / max(len(required_checks), 1)) * 80) + ((optional_ok / 3) * 20))
+    mandatory_ready = all(c["ok"] for c in required_checks)
+    warnings = [c for c in checks if (not c["required"] and not c["ok"])]
+
+    if mandatory_ready and not warnings:
+        status = "ready"
+        status_label = "Pronto para beta"
+    elif mandatory_ready:
+        status = "ready_with_warnings"
+        status_label = "Pronto com avisos"
+    elif bool(user.is_active) and (active_flows > 0 or connected_connections > 0):
+        status = "partial"
+        status_label = "Preparação parcial"
+    else:
+        status = "setup"
+        status_label = "Setup inicial"
+
+    next_actions = [c["message"] for c in checks if not c["ok"]][:4]
+    if not next_actions:
+        next_actions = ["Executar roteiro de beta com conversa real, áudio, handoff, agenda e ROI."]
+
+    return {
+        "user_id": user.id,
+        "email": user.email,
+        "company_name": user.company_name,
+        "full_name": user.full_name,
+        "plan": user.plan,
+        "score": score,
+        "status": status,
+        "status_label": status_label,
+        "next_actions": next_actions,
+        "metrics": {
+            "flows_total": total_flows,
+            "active_flows": active_flows,
+            "connected_connections": connected_connections,
+            "real_leads": real_leads,
+            "knowledge_bases": kb_count,
+            "knowledge_chunks": chunks,
+            "appointments": appointments,
+            "calendar_connected": calendar_connected,
+            "active_subscriptions": sub_active,
+        },
+        "checks": checks,
+    }
+
+
 @router.get("/system-health")
 def admin_system_health(admin: User = Depends(require_admin)):
     """Checklist de saúde para produção/go-live.
@@ -253,6 +379,47 @@ def admin_system_health(admin: User = Depends(require_admin)):
         counts[item["status"]] = counts.get(item["status"], 0) + 1
     overall = "error" if counts["error"] else ("warn" if counts["warn"] else "ok")
     return {"overall": overall, "counts": counts, "items": items}
+
+
+@router.get("/beta-readiness")
+def admin_beta_readiness(
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    """Painel de preparação para beta fechado.
+
+    Ajuda a escolher quais contas podem testar o produto completo antes do go-live comercial.
+    """
+    users = db.query(User).order_by(User.created_at.desc()).limit(200).all()
+    candidates = [_user_beta_readiness(db, u) for u in users]
+    counts = {
+        "ready": sum(1 for c in candidates if c["status"] == "ready"),
+        "ready_with_warnings": sum(1 for c in candidates if c["status"] == "ready_with_warnings"),
+        "partial": sum(1 for c in candidates if c["status"] == "partial"),
+        "setup": sum(1 for c in candidates if c["status"] == "setup"),
+    }
+    ordered = sorted(candidates, key=lambda c: (c["score"], c["metrics"]["real_leads"]), reverse=True)
+    return {
+        "phase": "Beta fechado / go-live técnico",
+        "goal": "Validar contas reais com WhatsApp, IA/RAG, Inbox, Agenda, ROI e Billing antes de vender em escala.",
+        "counts": counts,
+        "total_users": len(candidates),
+        "top_blockers": _beta_top_blockers(candidates),
+        "candidates": ordered,
+    }
+
+
+def _beta_top_blockers(candidates: list[dict]) -> list[dict]:
+    blockers: dict[str, dict] = {}
+    for candidate in candidates:
+        for check in candidate.get("checks", []):
+            if check.get("ok") or not check.get("required"):
+                continue
+            key = check["key"]
+            if key not in blockers:
+                blockers[key] = {"key": key, "label": check["label"], "count": 0, "message": check["message"]}
+            blockers[key]["count"] += 1
+    return sorted(blockers.values(), key=lambda x: x["count"], reverse=True)[:5]
 
 
 @router.get("/plans")
