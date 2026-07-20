@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -69,6 +69,11 @@
     .empty{ text-align:center; color:var(--cfg-muted); padding:24px 10px; font-size:14px; }
     .tag{ font-size:11px; padding:2px 8px; border-radius:999px; background:var(--bot-bg); color:var(--cfg-primary); margin-left:6px; }
     .cfg-toggle{ background:transparent; border:1px solid var(--cfg-input-border); color:var(--cfg-text); border-radius:10px; padding:8px 12px; cursor:pointer; font-size:13px; }
+    .cfg-card{order:1;}
+    .behavior-card{order:2;}
+    .test-card{order:3;grid-column:1 / -1;}
+    .test-card .chat{min-height:260px;max-height:420px;}
+
   </style>
 </head>
 <body class="app-shell-body">
@@ -85,7 +90,7 @@
     <main class="shell-content">
   <div class="cfg-head">
     <div>
-      <h1>🧠 Inteligência Artificial</h1>
+      <h1>Inteligência Artificial</h1>
       <p class="cfg-sub">Ensine a IA com o conteúdo do seu negócio e teste as respostas aqui mesmo.</p>
     </div>
     <button class="cfg-toggle" id="btn-theme" type="button">🌓 Tema</button>
@@ -96,7 +101,7 @@
   <div class="cfg-grid">
     <!-- Coluna esquerda: bases + conteúdo -->
     <div class="cfg-card">
-      <h2>📚 Bases de conhecimento</h2>
+      <h2>Bases de conhecimento</h2>
       <p class="hint">Uma "base" guarda o que a IA sabe (preços, horários, FAQ). Crie uma e adicione conteúdo.</p>
 
       <div class="cfg-field" style="display:flex; gap:8px;">
@@ -108,7 +113,7 @@
 
       <hr style="border:none; border-top:1px solid var(--cfg-border); margin:18px 0;">
 
-      <h2>✍️ Adicionar conteúdo à base selecionada</h2>
+      <h2>Adicionar conteúdo à base selecionada</h2>
       <p class="hint">Cole aqui as informações do negócio. A IA vai aprender com esse texto.</p>
       <div class="cfg-field">
         <textarea id="kb-text" placeholder="Ex: Corte de cabelo custa R$ 50. Atendemos de segunda a sexta, das 9h às 18h. Ficamos na Rua das Flores, 100. Aceitamos Pix e cartão."></textarea>
@@ -117,14 +122,14 @@
       <div id="index-status" class="hint" style="margin-top:10px;"></div>
 
       <hr style="border:none; border-top:1px solid var(--cfg-border); margin:16px 0;">
-      <h2 style="font-size:15px;">📖 O que esta IA já aprendeu</h2>
+      <h2 style="font-size:15px;">O que esta IA já aprendeu</h2>
       <p class="hint">Conteúdo indexado nesta base. É com base nisto que a IA responde.</p>
       <div id="chunks-list"><div class="empty">Selecione uma base para ver o conteúdo aprendido.</div></div>
     </div>
 
     <!-- Coluna direita: chat de teste -->
-    <div class="cfg-card">
-      <h2>💬 Testar a IA <span class="tag" id="active-kb-tag">nenhuma base</span></h2>
+    <div class="cfg-card test-card">
+      <h2>Testar a IA <span class="tag" id="active-kb-tag">nenhuma base</span></h2>
       <p class="hint">Faça perguntas como um cliente faria. A IA responde só com base no conteúdo que você ensinou.</p>
       <div class="chat" id="chat"><div class="empty">Selecione uma base, adicione conteúdo e comece a conversar.</div></div>
       <form class="chat-input" id="chat-form">
@@ -134,8 +139,8 @@
     </div>
 
     <!-- Configuração da IA -->
-    <div class="cfg-card full">
-      <h2>⚙️ Comportamento da IA</h2>
+    <div class="cfg-card behavior-card">
+      <h2>Comportamento da IA</h2>
       <p class="hint">Defina a personalidade e as regras. A IA usa isso ao responder.</p>
       <div class="cfg-grid" style="margin-top:0;">
         <div>
@@ -390,8 +395,6 @@
   await loadAiSettings();
 })();
 </script>
-</body>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1e23eec7f476c5a',t:'MTc4NDU1MzQ0Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
-
-
-

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -83,7 +83,7 @@
     <main class="shell-content">
   <div class="cfg-head">
     <div>
-      <h1>⚙️ Configurações de WhatsApp</h1>
+      <h1>Configurações</h1>
       <p class="cfg-sub">Conecte seu número via Meta Cloud API e envie uma mensagem de teste.</p>
     </div>
     <button class="cfg-toggle" id="btn-theme" type="button">🌓 Tema</button>
@@ -94,7 +94,7 @@
   <div class="cfg-grid">
     <!-- Nova conexão -->
     <div class="cfg-card">
-      <h2>🔗 Conectar via Meta API</h2>
+      <h2>Conectar via Meta API</h2>
       <p class="hint">Pegue o <strong>Token de acesso</strong> e o <strong>Phone Number ID</strong> no painel da Meta (Business → WhatsApp → Configuração da API).</p>
       <form id="conn-form">
         <div class="cfg-field">
@@ -124,7 +124,7 @@
 
     <!-- Enviar teste -->
     <div class="cfg-card">
-      <h2>📤 Enviar mensagem de teste</h2>
+      <h2>Enviar mensagem de teste</h2>
       <p class="hint">Escolha uma conexão e envie um texto. Em modo de teste da Meta, o destino precisa estar na lista de números permitidos, e a 1ª mensagem deve ser dentro da janela de 24h.</p>
       <form id="test-form">
         <div class="cfg-field">
@@ -145,7 +145,7 @@
 
     <!-- Conectar via QR Code (Evolution / nao-oficial) -->
     <div class="cfg-card full">
-      <h2>📱 Conectar via QR Code (não-oficial)</h2>
+      <h2>Conectar via QR Code (não-oficial)</h2>
       <p class="hint">
         Conecte um número escaneando um QR Code, sem conta na Meta. <strong>Atenção:</strong>
         é um método não-oficial — há <strong>risco de banimento do número</strong> pelo WhatsApp,
@@ -182,14 +182,14 @@
     </div>
     <!-- Google Calendar -->
     <div class="cfg-card full">
-      <h2>🗓️ Google Calendar</h2>
+      <h2>Google Calendar</h2>
       <p class="hint">Conecte sua agenda Google para sincronizar os agendamentos internos do dIAloga+.</p>
       <div id="calendar-area"><div class="cfg-empty">Carregando status do calendário...</div></div>
     </div>
 
     <!-- Lista -->
     <div class="cfg-card full">
-      <h2>📋 Conexões cadastradas</h2>
+      <h2>Conexões cadastradas</h2>
       <div id="conn-list"><div class="cfg-empty">Carregando…</div></div>
     </div>
   </div>
@@ -482,8 +482,6 @@
   await loadCalendarStatus();
 })();
 </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1e23ef949756c5a',t:'MTc4NDU1MzQ0NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
-
-
-
